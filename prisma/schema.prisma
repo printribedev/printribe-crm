@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Segment {
+  Reseller
+  Sports
+  Education
+  Corporate
+  NGO_Govt
+  B2C
+}
+
+enum Reliability {
+  High
+  Medium
+  Low
+}
+
+enum VendorCategory {
+  Production
+  Raw_Material
+  Printing
+  Operations
+}
+
+enum ProductCategory {
+  Apparel
+  Sportswear
+  Accessories
+  Service
+  Promotional
+}
+
+enum Stage {
+  enquiry
+  design
+  sampling
+  production
+  qc
+  dispatch
+  delivered
+}
+
+enum Priority {
+  Normal
+  High
+}
+
+enum AssetType {
+  Size_Chart
+  Catalog
+  Brand_File
+  Mockup
+  Other
+}
+
+enum ClientType {
+  All
+  Sports
+  Corporate
+  Education
+  Internal
+}
+
+enum AssetFormat {
+  PDF
+  ZIP
+  PSD
+  PNG
+  SVG
+  AI
+  Other
+}
+
+model Vendor {
+  id             Int            @id @default(autoincrement())
+  name           String
+  gstin          String?
+  type           String
+  city           String?
+  contact        String?
+  phone          String?
+  gstRate        String         @map("gst_rate")
+  totalPurchased Decimal        @default(0) @map("total_purchased") @db.Decimal(12, 2)
+  reliability    Reliability    @default(Medium)
+  category       VendorCategory @default(Raw_Material)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@map("vendors")
+}
+
+model Client {
+  id                Int      @id @default(autoincrement())
+  name              String
+  gstin             String?
+  type              String?
+  city              String?
+  contact           String?
+  phone             String?
+  email             String?
+  segment           Segment  @default(Corporate)
+  // manually-overridable stats (auto-computed is the default; override stored here)
+  totalValueOverride Decimal? @map("total_value_override") @db.Decimal(12, 2)
+  ordersOverride     Int?     @map("orders_override")
+  lastOrder         String?  @map("last_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  orders            Order[]
+
+  @@map("clients")
+}
+
+model Product {
+  id         Int             @id @default(autoincrement())
+  name       String
+  hsn        String
+  gstRate    String          @map("gst_rate")
+  category   ProductCategory @default(Apparel)
+  moq        Int             @default(20)
+  basePrice  Decimal         @map("base_price") @db.Decimal(10, 2)
+  gsm        String?
+  decoration String?
+  active     Boolean         @default(true)
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  @@map("products")
+}
+
+model Order {
+  id         String    @id
+  clientId   Int?      @map("client_id")
+  client     Client?   @relation(fields: [clientId], references: [id])
+  clientName String    @map("client_name")
+  product    String
+  segment    Segment   @default(Corporate)
+  date       DateTime
+  dueDate    DateTime? @map("due_date")
+  qty        Int
+  saleValue  Decimal   @map("sale_value") @db.Decimal(12, 2)
+  gst        Decimal   @db.Decimal(12, 2)
+  fabric     Decimal   @default(0) @db.Decimal(12, 2)
+  printing   Decimal   @default(0) @db.Decimal(12, 2)
+  transport  Decimal   @default(0) @db.Decimal(12, 2)
+  misc       Decimal   @default(0) @db.Decimal(12, 2)
+  jobWork    Decimal   @default(0) @map("job_work") @db.Decimal(12, 2)
+  packaging  Decimal   @default(0) @db.Decimal(12, 2)
+  design     Decimal   @default(0) @db.Decimal(12, 2)
+  stage      Stage     @default(enquiry)
+  priority   Priority  @default(Normal)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  notes      OrderNote[]
+  timeline   OrderTimeline[]
+
+  @@map("orders")
+}
+
+model OrderNote {
+  id        Int      @id @default(autoincrement())
+  orderId   String   @map("order_id")
+  order     Order    @relation(fields: [orderId], references: [id])
+  author    String   @default("Usman")
+  ts        DateTime @default(now())
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("order_notes")
+}
+
+model OrderTimeline {
+  id      Int      @id @default(autoincrement())
+  orderId String   @map("order_id")
+  order   Order    @relation(fields: [orderId], references: [id])
+  stage   Stage
+  done    Boolean  @default(false)
+  date    DateTime?
+
+  @@map("order_timeline")
+}
+
+model Asset {
+  id          Int         @id @default(autoincrement())
+  name        String
+  type        AssetType   @default(Other)
+  clientType  ClientType  @default(All) @map("client_type")
+  format      AssetFormat @default(PDF)
+  description String?
+  link        String?
+  storagePath String?     @map("storage_path")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@map("assets")
+}
+
+model MonthlySales {
+  id        Int      @id @default(autoincrement())
+  month     String   // "Apr 25", "May 25" etc.
+  sales     Decimal  @db.Decimal(12, 2)
+  orderCount Int     @map("order_count")
+  fyYear    String   @map("fy_year") // "2025-26" or "2026-27"
+
+  @@map("monthly_sales")
+}

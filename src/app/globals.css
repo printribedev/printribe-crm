@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --tribe-red: #EE3C30;
+  --bg: #F7F6F2;
+  --border: #E8E7E3;
+  --mid: #888888;
+  --black: #111111;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--black);
+}
+
+input, select, textarea, button {
+  font-family: inherit;
+}
