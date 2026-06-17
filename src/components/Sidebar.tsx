@@ -75,7 +75,7 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
 
       <div style={{ padding: "14px 18px", borderTop: `1px solid ${BORDER}` }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: BLACK }}>Usman</div>
-        <div style={{ fontSize: 10, color: MID, marginBottom: 8 }}>info@theprintribe.com</div>
+        <div style={{ fontSize: 10, color: MID, marginBottom: 8 }}>theprintribe@gmail.com</div>
         <button
           onClick={handleSignOut}
           style={{ fontSize: 11, color: MID, background: "none", border: "none", cursor: "pointer", padding: 0 }}

@@ -12,7 +12,7 @@ const MID = "#888";
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
-  const [email, setEmail] = useState("info@theprintribe.com");
+  const [email, setEmail] = useState("theprintribe@gmail.com");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
