@@ -44,12 +44,17 @@ function numInput(label: string, value: number, onChange: (v: number) => void, p
   );
 }
 
+// perPc tracks which cost lines are entered as "per piece" instead of total
+type PerPcMap = Record<string, boolean>;
+const BLANK_PER_PC: PerPcMap = { fabric: false, printing: false, jobWork: false, packaging: false, transport: false, design: false, misc: false };
+
 export default function QuotesPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productId, setProductId] = useState<number | "">("");
   const [qty, setQty] = useState(0);
   const [salePricePerUnit, setSalePricePerUnit] = useState(0);
   const [costs, setCosts] = useState<Costs>({ ...BLANK_COSTS });
+  const [perPc, setPerPc] = useState<PerPcMap>({ ...BLANK_PER_PC });
 
   useEffect(() => {
     fetch("/api/products").then(r => r.json()).then((data: Product[]) =>
@@ -62,12 +67,15 @@ export default function QuotesPage() {
 
   const saleValue = qty * salePricePerUnit;
   const gstAmount = saleValue * gstRate;
-  const totalCost = COST_LINES.reduce((s, l) => s + (costs[l.key] || 0), 0);
+  // resolve each cost line to its total value
+  const resolvedCosts = (key: string) => perPc[key] ? (costs[key] || 0) * qty : (costs[key] || 0);
+  const totalCost = COST_LINES.reduce((s, l) => s + resolvedCosts(l.key), 0);
   const grossProfit = saleValue - totalCost;
   const marginPct = saleValue > 0 ? grossProfit / saleValue : 0;
   const mc = marginColor(marginPct);
 
   const setCost = (key: string, v: number) => setCosts(p => ({ ...p, [key]: v }));
+  const togglePerPc = (key: string) => setPerPc(p => ({ ...p, [key]: !p[key] }));
 
   function handleProductChange(id: number | "") {
     setProductId(id);
@@ -82,9 +90,10 @@ export default function QuotesPage() {
     setQty(0);
     setSalePricePerUnit(0);
     setCosts({ ...BLANK_COSTS });
+    setPerPc({ ...BLANK_PER_PC });
   }
 
-  const activeCosts = COST_LINES.filter(l => costs[l.key] > 0);
+  const activeCosts = COST_LINES.filter(l => resolvedCosts(l.key) > 0);
 
   return (
     <div style={{ padding: "26px 28px" }}>
@@ -132,9 +141,41 @@ export default function QuotesPage() {
 
           {/* Cost lines */}
           <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 14 }}>Cost lines (total ₹, not per pc)</div>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Cost lines</div>
+            <div style={{ fontSize: 11, color: MID, marginBottom: 14 }}>Toggle each line between total order cost or per-piece cost</div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              {COST_LINES.map(l => numInput(l.label.toUpperCase(), costs[l.key] || 0, v => setCost(l.key, v)))}
+              {COST_LINES.map(l => (
+                <div key={l.key}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                    <div style={{ fontSize: 11, color: MID, fontWeight: 600 }}>{l.label.toUpperCase()}</div>
+                    <button
+                      onClick={() => togglePerPc(l.key)}
+                      title={perPc[l.key] ? "Currently: per piece — click to switch to total" : "Currently: total — click to switch to per piece"}
+                      style={{
+                        fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 10, cursor: "pointer", border: "none",
+                        background: perPc[l.key] ? BLUE + "18" : BG,
+                        color: perPc[l.key] ? BLUE : MID,
+                      }}
+                    >
+                      {perPc[l.key] ? "per pc" : "total"}
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", border: `1px solid ${BORDER}`, borderRadius: 7, overflow: "hidden" }}>
+                    <span style={{ padding: "8px 10px", background: BG, fontSize: 12, color: MID, borderRight: `1px solid ${BORDER}` }}>₹</span>
+                    <input
+                      type="number" value={costs[l.key] || ""}
+                      onChange={e => setCost(l.key, parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                      style={{ flex: 1, padding: "8px 10px", border: "none", fontSize: 13, outline: "none", background: WHITE }}
+                    />
+                  </div>
+                  {perPc[l.key] && qty > 0 && costs[l.key] > 0 && (
+                    <div style={{ fontSize: 10, color: BLUE, marginTop: 3 }}>
+                      = {fmt(resolvedCosts(l.key))} total ({qty} pcs)
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -194,12 +235,12 @@ export default function QuotesPage() {
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3, fontSize: 11 }}>
                       <span>{l.label}</span>
                       <span style={{ fontWeight: 600 }}>
-                        {fmt(costs[l.key])}
-                        <span style={{ color: MID, fontWeight: 400 }}> ({((costs[l.key] / totalCost) * 100).toFixed(0)}%)</span>
+                        {fmt(resolvedCosts(l.key))}
+                        <span style={{ color: MID, fontWeight: 400 }}> ({((resolvedCosts(l.key) / totalCost) * 100).toFixed(0)}%)</span>
                       </span>
                     </div>
                     <div style={{ height: 5, background: BG, borderRadius: 3 }}>
-                      <div style={{ width: `${(costs[l.key] / totalCost) * 100}%`, height: "100%", background: l.color, borderRadius: 3 }} />
+                      <div style={{ width: `${(resolvedCosts(l.key) / totalCost) * 100}%`, height: "100%", background: l.color, borderRadius: 3 }} />
                     </div>
                   </div>
                 ))}
