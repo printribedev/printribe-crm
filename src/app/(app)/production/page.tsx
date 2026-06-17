@@ -1,0 +1,251 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
+const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
+const GREEN = "#1A7A4A";
+
+const STAGES = [
+  { id: "enquiry",    label: "Enquiry",        color: MID },
+  { id: "design",     label: "Design",         color: PURPLE },
+  { id: "sampling",   label: "Sampling",       color: BLUE },
+  { id: "production", label: "In Production",  color: ORANGE },
+  { id: "qc",         label: "QC / Finishing", color: GOLD },
+  { id: "dispatch",   label: "Dispatched",     color: BLUE },
+  { id: "delivered",  label: "Delivered",      color: GREEN },
+];
+
+const SEG_COLORS: Record<string, string> = {
+  Reseller: R, Sports: BLUE, Education: GREEN, Corporate: GOLD, NGO_Govt: PURPLE, B2C: ORANGE,
+};
+
+type Order = {
+  id: string; clientName: string; product: string; segment: string;
+  date: string; dueDate: string | null; qty: number; saleValue: number;
+  fabric: number; printing: number; transport: number; misc: number;
+  jobWork: number; packaging: number; design: number;
+  stage: string; priority: string;
+};
+
+const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
+
+function calcMargin(o: Order) {
+  const cost = o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design;
+  const pct = o.saleValue > 0 ? (o.saleValue - cost) / o.saleValue : 0;
+  return pct;
+}
+function marginColor(m: number) { return m > 0.35 ? GREEN : m > 0.2 ? "#8a7300" : R; }
+
+function daysUntil(dateStr: string) {
+  const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+  return diff;
+}
+
+function OrderCard({ order, onAdvance, canAdvance }: { order: Order; onAdvance: () => void; canAdvance: boolean }) {
+  const margin = calcMargin(order);
+  const mc = marginColor(margin);
+  const due = order.dueDate ? daysUntil(order.dueDate) : null;
+  const dueColor = due === null ? MID : due < 0 ? R : due <= 3 ? ORANGE : GREEN;
+  const segColor = SEG_COLORS[order.segment] || MID;
+
+  return (
+    <div style={{
+      background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 9,
+      padding: "12px 13px", marginBottom: 8,
+      borderLeft: `3px solid ${order.priority === "High" ? R : BORDER}`,
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: R, letterSpacing: "0.05em" }}>{order.id}</div>
+        {order.priority === "High" && (
+          <span style={{ fontSize: 9, fontWeight: 700, background: R + "18", color: R, padding: "1px 6px", borderRadius: 10 }}>HIGH</span>
+        )}
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: BLACK, marginBottom: 2, lineHeight: 1.3 }}>{order.clientName}</div>
+      <div style={{ fontSize: 11, color: MID, marginBottom: 8 }}>{order.product}</div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
+        <span style={{ fontSize: 9, fontWeight: 700, background: segColor + "18", color: segColor, padding: "2px 7px", borderRadius: 10 }}>{order.segment}</span>
+        <span style={{ fontSize: 9, fontWeight: 700, background: mc + "18", color: mc, padding: "2px 7px", borderRadius: 10 }}>{(margin * 100).toFixed(0)}% margin</span>
+      </div>
+
+      <div style={{ fontSize: 11, color: MID, marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
+        <span>{order.qty.toLocaleString()} pcs · {fmt(order.saleValue)}</span>
+        {due !== null && (
+          <span style={{ color: dueColor, fontWeight: 600 }}>
+            {due < 0 ? `${Math.abs(due)}d overdue` : due === 0 ? "Due today" : `${due}d left`}
+          </span>
+        )}
+      </div>
+
+      {canAdvance && (
+        <button onClick={onAdvance} style={{
+          width: "100%", fontSize: 11, fontWeight: 600, padding: "6px 0",
+          borderRadius: 6, background: R, color: WHITE, border: "none", cursor: "pointer",
+        }}>
+          Advance →
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default function ProductionPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<"kanban" | "list">("kanban");
+
+  async function load() {
+    const res = await fetch("/api/orders");
+    setOrders(await res.json());
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function advance(order: Order) {
+    const idx = STAGES.findIndex(s => s.id === order.stage);
+    if (idx < 0 || idx >= STAGES.length - 1) return;
+    const nextStage = STAGES[idx + 1].id;
+    await fetch(`/api/orders/${order.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...order, stage: nextStage }),
+    });
+    await load();
+  }
+
+  if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading production board…</div>;
+
+  const activeOrders = orders.filter(o => o.stage !== "delivered");
+  const delivered = orders.filter(o => o.stage === "delivered");
+
+  // Kanban view
+  if (view === "kanban") {
+    return (
+      <div style={{ padding: "26px 28px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Production Board</div>
+            <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>
+              {activeOrders.length} active · {delivered.length} delivered
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setView("list")} style={{ fontSize: 12, padding: "7px 14px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>
+              List view
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(180px, 1fr))", gap: 10, overflowX: "auto", paddingBottom: 12 }}>
+          {STAGES.map(stage => {
+            const stageOrders = orders.filter(o => o.stage === stage.id)
+              .sort((a, b) => {
+                if (a.priority === "High" && b.priority !== "High") return -1;
+                if (b.priority === "High" && a.priority !== "High") return 1;
+                if (a.dueDate && b.dueDate) return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+                return 0;
+              });
+
+            return (
+              <div key={stage.id}>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: stage.color, marginBottom: 2 }}>
+                    {stage.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: MID }}>{stageOrders.length} order{stageOrders.length !== 1 ? "s" : ""}</div>
+                  <div style={{ height: 2, background: stage.color, borderRadius: 2, marginTop: 6 }} />
+                </div>
+                <div>
+                  {stageOrders.map(o => (
+                    <OrderCard
+                      key={o.id}
+                      order={o}
+                      canAdvance={stage.id !== "delivered"}
+                      onAdvance={() => advance(o)}
+                    />
+                  ))}
+                  {stageOrders.length === 0 && (
+                    <div style={{ fontSize: 11, color: BORDER, padding: "12px 0", textAlign: "center" }}>Empty</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // List view
+  const sorted = [...orders].sort((a, b) => {
+    const si = (o: Order) => STAGES.findIndex(s => s.id === o.stage);
+    if (si(a) !== si(b)) return si(a) - si(b);
+    if (a.priority === "High" && b.priority !== "High") return -1;
+    if (b.priority === "High" && a.priority !== "High") return 1;
+    return 0;
+  });
+
+  return (
+    <div style={{ padding: "26px 28px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Production — List View</div>
+          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{activeOrders.length} active · {delivered.length} delivered</div>
+        </div>
+        <button onClick={() => setView("kanban")} style={{ fontSize: 12, padding: "7px 14px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>
+          Kanban view
+        </button>
+      </div>
+
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ background: BLACK, color: WHITE }}>
+              {["Invoice", "Client", "Product", "Stage", "Priority", "Margin", "Due", ""].map(h => (
+                <th key={h} style={{ padding: "11px 13px", textAlign: "left", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((o, i) => {
+              const stage = STAGES.find(s => s.id === o.stage) || STAGES[0];
+              const margin = calcMargin(o);
+              const mc = marginColor(margin);
+              const due = o.dueDate ? daysUntil(o.dueDate) : null;
+              const dueColor = due === null ? MID : due < 0 ? R : due <= 3 ? ORANGE : GREEN;
+              const canAdvance = o.stage !== "delivered";
+              return (
+                <tr key={o.id} style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG }}>
+                  <td style={{ padding: "10px 13px", fontWeight: 600, color: R, fontSize: 11 }}>{o.id}</td>
+                  <td style={{ padding: "10px 13px", fontWeight: 500 }}>{o.clientName}</td>
+                  <td style={{ padding: "10px 13px", color: MID }}>{o.product}</td>
+                  <td style={{ padding: "10px 13px" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 8px", borderRadius: 20 }}>{stage.label}</span>
+                  </td>
+                  <td style={{ padding: "10px 13px" }}>
+                    {o.priority === "High" && <span style={{ fontSize: 10, fontWeight: 700, color: R, background: R + "18", padding: "2px 8px", borderRadius: 20 }}>High</span>}
+                  </td>
+                  <td style={{ padding: "10px 13px" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: mc }}>{(margin * 100).toFixed(0)}%</span>
+                  </td>
+                  <td style={{ padding: "10px 13px", color: dueColor, fontWeight: 600, fontSize: 11 }}>
+                    {due === null ? "—" : due < 0 ? `${Math.abs(due)}d overdue` : due === 0 ? "Today" : `${due}d`}
+                  </td>
+                  <td style={{ padding: "10px 13px" }}>
+                    {canAdvance && (
+                      <button onClick={() => advance(o)} style={{ fontSize: 10, padding: "4px 10px", borderRadius: 6, background: R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 600 }}>
+                        Advance →
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
