@@ -6,7 +6,7 @@ const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORA
 const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
 const GREEN = "#1A7A4A";
 
-type Product = { id: number; name: string; gstRate: string; basePrice: number; category: string };
+type Product = { id: number; name: string; gstRate: string; basePrice: number; category: string; active: boolean };
 
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 const fmtDec = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
