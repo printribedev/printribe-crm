@@ -17,7 +17,7 @@ const SEGMENTS = ["Reseller", "Sports", "Education", "Corporate", "NGO_Govt", "B
 
 type Client = {
   id: number; name: string; gstin: string | null; type: string | null;
-  city: string | null; contact: string | null; phone: string | null; email: string | null;
+  city: string | null; address: string | null; contact: string | null; phone: string | null; email: string | null;
   segment: string; lastOrder: string | null;
   orderCount: number; totalValue: number;
   totalValueOverride: number | null; ordersOverride: number | null;
@@ -26,7 +26,7 @@ type Client = {
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 
 const BLANK: Omit<Client, "id" | "orderCount" | "totalValue"> = {
-  name: "", gstin: "", type: "", city: "", contact: "", phone: "", email: "",
+  name: "", gstin: "", type: "", city: "", address: "", contact: "", phone: "", email: "",
   segment: "Corporate", lastOrder: "", totalValueOverride: null, ordersOverride: null,
 };
 
@@ -63,12 +63,13 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
             { key: "segment", label: "Segment", type: "select" },
             { key: "type", label: "Type" },
             { key: "city", label: "City" },
+            { key: "address", label: "Full Address", full: true, textarea: true },
             { key: "contact", label: "Contact Person" },
             { key: "phone", label: "Phone" },
             { key: "email", label: "Email", full: true },
             { key: "gstin", label: "GSTIN" },
             { key: "lastOrder", label: "Last Order (e.g. Jun 2026)" },
-          ].map((f: { key: string; label: string; type?: string; full?: boolean }) => (
+          ].map((f: { key: string; label: string; type?: string; full?: boolean; textarea?: boolean }) => (
             <div key={f.key} style={{ gridColumn: f.full ? "1 / -1" : "auto" }}>
               <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>{f.label}</div>
               {f.type === "select" ? (
@@ -76,6 +77,10 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
                   style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", background: WHITE }}>
                   {SEGMENTS.map(s => <option key={s} value={s}>{SEG_LABELS[s]}</option>)}
                 </select>
+              ) : f.textarea ? (
+                <textarea value={String(form[f.key as keyof typeof form] ?? "")} onChange={e => set(f.key, e.target.value)}
+                  rows={2} placeholder="e.g. #61, 1st Floor, 5th Main Road, Chamrajpet, Bengaluru, Karnataka, 560018"
+                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
               ) : (
                 <input value={String(form[f.key as keyof typeof form] ?? "")} onChange={e => set(f.key, e.target.value)}
                   style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none" }} />

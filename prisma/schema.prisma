@@ -101,6 +101,7 @@ model Client {
   gstin             String?
   type              String?
   city              String?
+  address           String?
   contact           String?
   phone             String?
   email             String?

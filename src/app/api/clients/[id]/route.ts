@@ -22,6 +22,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       gstin: body.gstin || null,
       type: body.type || null,
       city: body.city || null,
+      address: body.address || null,
       contact: body.contact || null,
       phone: body.phone || null,
       email: body.email || null,

@@ -335,6 +335,7 @@ export default function OrdersPage() {
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={() => setCostModal(o)} style={{ fontSize: 10, padding: "3px 8px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>Cost</button>
                       <button onClick={() => setEditModal(o)} style={{ fontSize: 10, padding: "3px 8px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>Edit</button>
+                      <button onClick={() => window.open(`/invoice/${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 10, padding: "3px 8px", borderRadius: 6, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, fontWeight: 600 }}>Invoice</button>
                     </div>
                   </td>
                 </tr>
