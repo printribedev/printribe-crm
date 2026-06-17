@@ -110,14 +110,19 @@ function EditModal({ order, clients, onSave, onClose, onDelete }: {
   onDelete?: () => void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
-  const [form, setForm] = useState({
-    id: "", clientId: null as number | null, clientName: "", product: "", segment: "Corporate",
-    date: today, dueDate: "", qty: 0, saleValue: 0, gst: 0,
-    fabric: 0, printing: 0, jobWork: 0, packaging: 0, transport: 0, design: 0, misc: 0,
-    stage: "enquiry", priority: "Normal",
-    ...order,
-    date: order.date ? order.date.slice(0, 10) : today,
-    dueDate: order.dueDate ? order.dueDate.slice(0, 10) : "",
+  const [form, setForm] = useState(() => {
+    const base = {
+      id: "", clientId: null as number | null, clientName: "", product: "", segment: "Corporate",
+      date: today, dueDate: "", qty: 0, saleValue: 0, gst: 0,
+      fabric: 0, printing: 0, jobWork: 0, packaging: 0, transport: 0, design: 0, misc: 0,
+      stage: "enquiry", priority: "Normal",
+    };
+    return {
+      ...base,
+      ...order,
+      date: order.date ? order.date.slice(0, 10) : today,
+      dueDate: order.dueDate ? order.dueDate.slice(0, 10) : "",
+    };
   });
   const set = (k: string, v: string | number | null) => setForm(p => ({ ...p, [k]: v }));
   const isNew = !order.id;
