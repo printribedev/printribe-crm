@@ -21,8 +21,11 @@ export async function GET() {
       },
     }),
     prisma.client.findMany({
-      select: { id: true, name: true, segment: true, totalValueOverride: true, ordersOverride: true },
-      include: { orders: { select: { saleValue: true } } },
+      select: {
+        id: true, name: true, segment: true,
+        totalValueOverride: true, ordersOverride: true,
+        orders: { select: { saleValue: true } },
+      },
     }),
     prisma.monthlySales.findMany({ orderBy: [{ fyYear: "asc" }, { id: "asc" }] }),
   ]);
