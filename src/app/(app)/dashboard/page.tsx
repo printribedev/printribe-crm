@@ -211,7 +211,7 @@ export default function DashboardPage() {
               <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 9, fill: MID }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} unit="%" />
-              <Tooltip formatter={(v: number) => v + "%"} />
+              <Tooltip formatter={(v) => Number(v).toFixed(1) + "%"} />
               <Bar dataKey="margin" radius={[3, 3, 0, 0]}>
                 {marginChartData.map((d, i) => <Cell key={i} fill={marginColor(d.marginRaw)} />)}
               </Bar>
