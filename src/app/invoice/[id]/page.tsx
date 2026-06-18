@@ -31,10 +31,28 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 }
 
+type InvoiceItem = {
+  product: string;
+  hsn: string;
+  qty: number;
+  saleValue: number;
+  gst: number;
+};
+
 type InvoiceData = {
-  id: string; date: string; qty: number; product: string; hsn: string;
-  saleValue: number; gst: number;
-  client: { name: string; gstin: string | null; address: string | null; city: string | null; email: string | null; phone: string | null };
+  id: string;
+  date: string;
+  items: InvoiceItem[];
+  totalSaleValue: number;
+  totalGst: number;
+  client: {
+    name: string;
+    gstin: string | null;
+    address: string | null;
+    city: string | null;
+    email: string | null;
+    phone: string | null;
+  };
 };
 
 export default function InvoicePage() {
@@ -62,17 +80,15 @@ export default function InvoicePage() {
     </div>
   );
 
-  const { saleValue, gst, qty, product, hsn, client } = data;
-  const rate = qty > 0 ? saleValue / qty : 0;
-  const gstPct = saleValue > 0 ? Math.round((gst / saleValue) * 100) : 5;
-  const halfGstPct = gstPct / 2;
-  const cgst = gst / 2;
-  const sgst = gst / 2;
-  const exactTotal = saleValue + gst;
+  const { items, totalSaleValue, totalGst, client } = data;
+  const firstGstPct = items[0].saleValue > 0 ? Math.round((items[0].gst / items[0].saleValue) * 100) : 5;
+  const halfGstPct = firstGstPct / 2;
+  const cgst = totalGst / 2;
+  const sgst = totalGst / 2;
+  const exactTotal = totalSaleValue + totalGst;
   const amountDue = Math.round(exactTotal);
   const roundOff = amountDue - exactTotal;
   const amountInWords = toWords(amountDue);
-
   const fmtAmt = (n: number) => "₹ " + Math.abs(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
@@ -80,25 +96,21 @@ export default function InvoicePage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=La+Belle+Aurore&display=swap');
         :root {
-          --Neutral-Neutral-500: #737982;
           --White-100: #fff;
+          --Neutral-Neutral-500: #737982;
+          --Neutral-Neutral-800: #363c45;
+          --Neutral-Neutral-50: #f5f7fa;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #f0f0f0; font-family: Inter, sans-serif; line-height: normal; }
-        @page {
-          size: A4 portrait;
-          margin: 0;
-        }
+        body { margin: 0; line-height: normal; background: #f0f0f0; font-family: Inter, sans-serif; }
+        @page { size: A4 portrait; margin: 0; }
         @media print {
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
-          }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
-          body { background: #fff !important; margin: 0; padding: 0; }
-          .screen-wrap { background: #fff !important; box-shadow: none !important; border-radius: 0 !important; max-width: 100% !important; margin: 0 !important; }
-          html { zoom: 0.82; }
+          body { background: #fff !important; }
+          .screen-outer { padding: 0 !important; background: #fff !important; }
+          .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
+          html { zoom: 0.75; }
         }
       `}</style>
 
@@ -115,273 +127,308 @@ export default function InvoicePage() {
         <span style={{ fontSize: 11, color: "#888", marginLeft: 4 }}>Choose "Save as PDF" in the print dialog</span>
       </div>
 
-      {/* Screen: card wrapper. Print: full-width, no shadow. */}
-      <div style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)" }}>
-        <div className="screen-wrap" style={{
-          background: "#fff",
-          maxWidth: 980,
+      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)" }}>
+        {/*
+          Exact Locofy CSS:
+          .gstInvoicePrintribe {
+            width: 1062px; background-color: #fff; overflow: hidden;
+            display: flex; flex-direction: column; align-items: flex-start;
+            padding: 40px 40px 169px;   ← 169px bottom for absolute footer
+            position: relative; isolation: isolate;
+            gap: 28px; line-height: normal; letter-spacing: normal;
+          }
+        */}
+        <div className="screen-card" style={{
+          width: 1062,
+          maxWidth: "100%",
+          backgroundColor: "#fff",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          padding: "40px 40px 169px",
+          boxSizing: "border-box",
+          position: "relative",
+          isolation: "isolate",
+          gap: 28,
+          lineHeight: "normal",
+          letterSpacing: "normal",
           margin: "0 auto",
           boxShadow: "0 2px 24px rgba(0,0,0,0.1)",
           borderRadius: 8,
-          overflow: "hidden",
           fontFamily: "Inter, sans-serif",
-          fontSize: 16,
-          color: "#000",
         }}>
 
-          {/* ── Page content with padding ── */}
-          <div style={{ padding: "40px 48px 0" }}>
-
-            {/* ── HEADER: frame-component11 ── */}
-            {/* gap:0, row-gap:20px, justify-content:space-between, flex-wrap:wrap */}
-            <div style={{
-              display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-              flexWrap: "wrap", gap: 0, rowGap: 20, marginBottom: 32,
-            }}>
-              {/* Left: GST Invoice + Invoice No/Date */}
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 230, maxWidth: "100%" }}>
-                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
-                  <h1 style={{ fontSize: 32, letterSpacing: "-0.5px", lineHeight: "40px", fontWeight: 700, fontFamily: "inherit", margin: 0, color: "#000" }}>
-                    GST Invoice
-                  </h1>
+          {/* ── HEADER: FrameComponent11 ── */}
+          {/*
+            .frameParent (header section):
+            align-self:stretch; display:flex; align-items:flex-start;
+            justify-content:space-between; flex-wrap:wrap; gap:0; row-gap:20px;
+            z-index:2; flex-shrink:0; text-align:left; font-size:32px; color:#000;
+          */}
+          <section style={{
+            alignSelf: "stretch",
+            display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+            flexWrap: "wrap", gap: 0, rowGap: 20,
+            zIndex: 2, flexShrink: 0,
+            textAlign: "left", fontSize: 32, color: "#000", fontFamily: "Inter",
+          }}>
+            {/* Left: GST Invoice + Invoice No/Date */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 230, maxWidth: "100%" }}>
+              <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
+                <h1 style={{ margin: 0, fontSize: "inherit", letterSpacing: "-0.5px", lineHeight: "40px", fontWeight: 700, fontFamily: "inherit" }}>
+                  GST Invoice
+                </h1>
+              </div>
+              {/* width:303.5px, gap:12px, font-size:16px, color:Neutral-500 */}
+              <div style={{ width: 303.5, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, fontSize: 16, color: "#737982" }}>
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ width: 116, flexShrink: 0, lineHeight: "24px", display: "inline-block" }}>Invoice No.</div>
+                  <div style={{ flex: 1, fontWeight: 500, color: "#000", lineHeight: "24px", minWidth: 98 }}>{data.id}</div>
                 </div>
-                {/* width: 303.5px, gap: 12px, font-size: 16px, color: Neutral-500 */}
-                <div style={{ width: 303.5, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, fontSize: 16, color: "#737982" }}>
-                  <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                    <div style={{ width: 116, flexShrink: 0, lineHeight: "24px", display: "inline-block" }}>Invoice No.</div>
-                    <div style={{ flex: 1, fontWeight: 500, color: "#000", lineHeight: "24px", minWidth: 98 }}>{data.id}</div>
-                  </div>
-                  <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                    <div style={{ width: 116, flexShrink: 0, lineHeight: "24px", display: "inline-block" }}>Invoice Date</div>
-                    <div style={{ flex: 1, fontWeight: 500, color: "#000", lineHeight: "24px", minWidth: 83 }}>{formatDate(data.date)}</div>
-                  </div>
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ width: 116, flexShrink: 0, lineHeight: "24px", display: "inline-block" }}>Invoice Date</div>
+                  <div style={{ flex: 1, fontWeight: 500, color: "#000", lineHeight: "24px", minWidth: 83 }}>{formatDate(data.date)}</div>
                 </div>
               </div>
-              {/* Logo: width:402px, object-fit:cover, min-width:310px, max-width:402px */}
-              <Image
-                src="/Printribe-Logo-TM-without-bg-1@2x.png"
-                alt="Printribe"
-                width={402}
-                height={76}
-                style={{ width: 402, maxHeight: "100%", objectFit: "cover", minWidth: 310, maxWidth: 402 }}
-              />
+            </div>
+            {/* Logo: width:402px, object-fit:cover, min-width:310px, max-width:402px */}
+            <Image
+              src="/Printribe-Logo-TM-without-bg-1@2x.png"
+              alt="Printribe"
+              width={402}
+              height={76}
+              style={{ width: 402, maxHeight: "100%", objectFit: "cover", minWidth: 310, maxWidth: 402 }}
+            />
+          </section>
+
+          {/* ── BILLED BY / TO: .frameParent ── */}
+          {/*
+            padding: 2px 0 0; gap: 10px 20px; flex-wrap:wrap; align-content:flex-start;
+          */}
+          <section style={{
+            alignSelf: "stretch",
+            display: "flex", alignItems: "flex-start",
+            flexWrap: "wrap", alignContent: "flex-start",
+            padding: "2px 0 0", boxSizing: "border-box",
+            gap: "10px 20px",
+            maxWidth: "100%", zIndex: 3, flexShrink: 0,
+          }}>
+            {/* Billed By */}
+            <div style={{
+              flex: 1, borderRadius: 16, backgroundColor: "#eff2f5", border: "1px solid #eff2f5",
+              boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "flex-start",
+              padding: 24, gap: 12, minWidth: 361, maxWidth: "100%",
+              textAlign: "left", fontSize: 18, color: "#2266a1", fontFamily: "Inter",
+            }}>
+              <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Billed By</div>
+              <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 20, color: "#000" }}>
+                <h3 style={{ alignSelf: "stretch", margin: 0, fontSize: "inherit", letterSpacing: "-0.25px", lineHeight: "32px", fontWeight: 700, fontFamily: "inherit" }}>PRINTRIBE</h3>
+                <div style={{ width: "100%", fontSize: 18, lineHeight: "28px", fontWeight: 500, display: "inline-block", maxWidth: 431 }}>
+                  1, Mallayya Industrial Area, Kereguddadahalli, Chikkabanavara, Bengaluru, Karnataka, 560090
+                </div>
+              </div>
+              <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 16 }}>
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ lineHeight: "24px" }}>GSTIN</div>
+                  <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>29ABAFP5040J1Z6</div>
+                </div>
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ width: 50, flexShrink: 0, display: "inline-block", lineHeight: "24px" }}>Email</div>
+                  <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>info@theprintribe.com</div>
+                </div>
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ display: "inline-block", minWidth: 50, lineHeight: "24px" }}>Phone</div>
+                  <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>+91 88848 63036</div>
+                </div>
+              </div>
             </div>
 
-            {/* ── BILLED BY / BILLED TO: frame-component ── */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexWrap: "wrap", marginBottom: 32 }}>
-
-              {/* Billed By */}
-              <div style={{
-                flex: 1, borderRadius: 16, backgroundColor: "#eff2f5", border: "1px solid #eff2f5",
-                boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "flex-start",
-                padding: 24, gap: 12, minWidth: 361, maxWidth: "100%",
-                textAlign: "left", fontSize: 18, color: "#2266a1", fontFamily: "Inter",
-              }}>
-                <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Billed By</div>
-                <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 20, color: "#000" }}>
-                  <h3 style={{ alignSelf: "stretch", fontSize: "inherit", letterSpacing: "-0.25px", lineHeight: "32px", fontWeight: 700, fontFamily: "inherit", margin: 0 }}>PRINTRIBE</h3>
+            {/* Billed To */}
+            <div style={{
+              flex: 1, borderRadius: 16, backgroundColor: "#eff2f5", border: "1px solid #eff2f5",
+              boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "flex-start",
+              padding: 24, gap: 12, minWidth: 361, maxWidth: "100%",
+              textAlign: "left", fontSize: 18, color: "#2266a1", fontFamily: "Inter",
+            }}>
+              <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Billed To</div>
+              <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 20, color: "#000" }}>
+                <h3 style={{ alignSelf: "stretch", margin: 0, fontSize: "inherit", letterSpacing: "-0.25px", lineHeight: "32px", fontWeight: 700, fontFamily: "inherit" }}>{client.name.toUpperCase()}</h3>
+                {(client.address || client.city) && (
                   <div style={{ width: "100%", fontSize: 18, lineHeight: "28px", fontWeight: 500, display: "inline-block", maxWidth: 431 }}>
-                    1, Mallayya Industrial Area, Kereguddadahalli,<br />Chikkabanavara, Bengaluru, Karnataka, 560090
+                    {client.address || client.city}
                   </div>
-                </div>
-                <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 16 }}>
+                )}
+              </div>
+              <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 16 }}>
+                {client.gstin && (
                   <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
                     <div style={{ lineHeight: "24px" }}>GSTIN</div>
-                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>29ABAFP5040J1Z6</div>
+                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.gstin}</div>
                   </div>
+                )}
+                {client.email && (
                   <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                    <div style={{ width: 50, display: "inline-block", flexShrink: 0, lineHeight: "24px" }}>Email</div>
-                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>info@theprintribe.com</div>
+                    <div style={{ width: 50, flexShrink: 0, display: "inline-block", lineHeight: "24px" }}>Email</div>
+                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.email}</div>
                   </div>
+                )}
+                {client.phone && (
                   <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
                     <div style={{ display: "inline-block", minWidth: 50, lineHeight: "24px" }}>Phone</div>
-                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>+91 88848 63036</div>
+                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.phone}</div>
                   </div>
-                </div>
+                )}
               </div>
+            </div>
+          </section>
 
-              {/* Billed To */}
-              <div style={{
-                flex: 1, borderRadius: 16, backgroundColor: "#eff2f5", border: "1px solid #eff2f5",
-                boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "flex-start",
-                padding: 24, gap: 12, minWidth: 361, maxWidth: "100%",
-                textAlign: "left", fontSize: 18, color: "#2266a1", fontFamily: "Inter",
-              }}>
-                <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Billed To</div>
-                <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 20, color: "#000" }}>
-                  <h3 style={{ alignSelf: "stretch", fontSize: "inherit", letterSpacing: "-0.25px", lineHeight: "32px", fontWeight: 700, fontFamily: "inherit", margin: 0 }}>{client.name.toUpperCase()}</h3>
-                  {(client.address || client.city) && (
-                    <div style={{ width: "100%", fontSize: 18, lineHeight: "28px", fontWeight: 500, display: "inline-block", maxWidth: 431 }}>
-                      {client.address || client.city}
-                    </div>
-                  )}
-                </div>
-                <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 16 }}>
-                  {client.gstin && (
-                    <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                      <div style={{ lineHeight: "24px" }}>GSTIN</div>
-                      <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.gstin}</div>
-                    </div>
-                  )}
-                  {client.email && (
-                    <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                      <div style={{ width: 50, display: "inline-block", flexShrink: 0, lineHeight: "24px" }}>Email</div>
-                      <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.email}</div>
-                    </div>
-                  )}
-                  {client.phone && (
-                    <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                      <div style={{ display: "inline-block", minWidth: 50, lineHeight: "24px" }}>Phone</div>
-                      <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.phone}</div>
-                    </div>
-                  )}
-                </div>
+          {/* ── TABLE: FrameComponent111 ── */}
+          <section style={{
+            alignSelf: "stretch", borderRadius: "12px 12px 0 0", overflow: "hidden",
+            display: "flex", flexDirection: "column", alignItems: "flex-start",
+            isolation: "isolate", zIndex: 4, flexShrink: 0,
+            textAlign: "left", fontSize: 16, color: "#000", fontFamily: "Inter",
+          }}>
+            {/* Header row */}
+            <div style={{
+              alignSelf: "stretch", backgroundColor: "#fde28d", padding: "12px 20px",
+              boxSizing: "border-box", display: "flex", alignItems: "flex-start", maxWidth: "100%", gap: 8,
+            }}>
+              <div style={{ flex: 1, minWidth: 155, maxWidth: 432, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>Product Description</div>
+              </div>
+              <div style={{ flex: 1, display: "flex", alignItems: "flex-start", gap: 24, minWidth: 270, maxWidth: "100%", textAlign: "center" }}>
+                <div style={{ lineHeight: "24px", fontWeight: 600 }}>HSN/SAC</div>
+                <div style={{ flex: 1, lineHeight: "24px", fontWeight: 600, display: "inline-block", minWidth: 27 }}>UoM</div>
+                <div style={{ flex: 1, lineHeight: "24px", fontWeight: 600, display: "inline-block", minWidth: 27 }}>Qty</div>
+                <div style={{ flex: 1, lineHeight: "24px", fontWeight: 600, display: "inline-block", minWidth: 27 }}>Rate</div>
+                <div style={{ width: 129, lineHeight: "24px", fontWeight: 600, display: "inline-block" }}>Total</div>
               </div>
             </div>
 
-            {/* ── TABLE: frame-component111 + default-template-table ── */}
-            <div style={{
-              alignSelf: "stretch", borderRadius: "12px 12px 0 0", overflow: "hidden",
-              display: "flex", flexDirection: "column", alignItems: "flex-start",
-              isolation: "isolate", zIndex: 4, flexShrink: 0,
-              textAlign: "left", fontSize: 16, color: "#000", fontFamily: "Inter",
-              marginBottom: 32,
-            }}>
-              {/* Header row */}
-              <div style={{
-                alignSelf: "stretch", backgroundColor: "#fde28d", padding: "12px 20px",
-                boxSizing: "border-box", display: "flex", alignItems: "flex-start",
-                maxWidth: "100%", gap: 8,
-              }}>
-                {/* Product Description col */}
-                <div style={{ flex: 1, minWidth: 155, maxWidth: 432, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                  <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>Product Description</div>
-                </div>
-                {/* Right cols: HSN/SAC UoM Qty Rate Total */}
-                <div style={{ flex: 1, display: "flex", alignItems: "flex-start", gap: 24, minWidth: 270, maxWidth: "100%", textAlign: "center" }}>
-                  <div style={{ position: "relative", lineHeight: "24px", fontWeight: 600 }}>HSN/SAC</div>
-                  <div style={{ flex: 1, lineHeight: "24px", fontWeight: 600, display: "inline-block", minWidth: 27 }}>UoM</div>
-                  <div style={{ flex: 1, lineHeight: "24px", fontWeight: 600, display: "inline-block", minWidth: 27 }}>Qty</div>
-                  <div style={{ flex: 1, lineHeight: "24px", fontWeight: 600, display: "inline-block", minWidth: 27 }}>Rate</div>
-                  <div style={{ width: 129, lineHeight: "24px", fontWeight: 600, display: "inline-block" }}>Total</div>
-                </div>
-              </div>
-
-              {/* Item row — border: 1px solid #fff (White-100), padding: 20px */}
-              <div style={{
+            {/* Item rows */}
+            {items.map((item, idx) => (
+              <div key={idx} style={{
                 alignSelf: "stretch",
-                borderRight: "1px solid #fff", borderBottom: "1px solid #fff", borderLeft: "1px solid #fff",
+                borderRight: "1px solid var(--White-100)", borderBottom: "1px solid var(--White-100)", borderLeft: "1px solid var(--White-100)",
                 boxSizing: "border-box", padding: 20,
                 display: "flex", alignItems: "flex-start", maxWidth: "100%", gap: 8,
                 fontSize: 16, color: "#000", fontFamily: "Inter",
               }}>
-                {/* Product name */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", minWidth: 163, maxWidth: 432 }}>
-                  <div style={{ alignSelf: "stretch", lineHeight: "28px", fontWeight: 600 }}>{product}</div>
+                  <div style={{ alignSelf: "stretch", lineHeight: "28px", fontWeight: 600 }}>{item.product}</div>
                 </div>
-                {/* Values — min-width: 310px, gap: 24px, text-align: center */}
                 <div style={{ flex: 1, display: "flex", alignItems: "flex-start", gap: 24, minWidth: 310, maxWidth: "100%", textAlign: "center" }}>
-                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{hsn}</div>
+                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{item.hsn}</div>
                   <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>Nos.</div>
-                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{qty}</div>
-                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{rate.toFixed(2)}</div>
+                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{item.qty}</div>
+                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{(item.qty > 0 ? item.saleValue / item.qty : 0).toFixed(2)}</div>
                   <div style={{ width: 129, display: "flex", alignItems: "flex-start", textAlign: "right" }}>
-                    <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600 }}>{fmtAmt(saleValue)}</div>
+                    <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600 }}>{fmtAmt(item.saleValue)}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
+
+          {/* ── BOTTOM: .spanhdremovebefore ── */}
+          {/*
+            padding: 0 20px 0 0; gap: 32px; flex-wrap:wrap; align-content:flex-start;
+          */}
+          <main style={{
+            alignSelf: "stretch",
+            display: "flex", alignItems: "flex-start",
+            flexWrap: "wrap", alignContent: "flex-start",
+            padding: "0 20px 0 0", boxSizing: "border-box",
+            gap: 32, maxWidth: "100%", zIndex: 5, flexShrink: 0,
+          }}>
+            {/* ── LEFT: FrameComponent1 ── */}
+            <div style={{
+              flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start",
+              gap: 10, minWidth: 335, maxWidth: 574,
+              textAlign: "left", fontSize: 18, color: "#2266a1", fontFamily: "Inter",
+            }}>
+              {/* Amount in words */}
+              <div style={{
+                alignSelf: "stretch", borderRadius: 16, backgroundColor: "#2266a1",
+                border: "1px solid #eff2f5", padding: 20,
+                display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, color: "#fff",
+              }}>
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
+                  <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Amount Chargeable incl. tax (in words)</div>
+                </div>
+                <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                  <b style={{ width: "100%", position: "relative", lineHeight: "24px", display: "inline-block", maxWidth: 532 }}>{amountInWords}</b>
+                </div>
+              </div>
+
+              {/* Bank details */}
+              <div style={{
+                alignSelf: "stretch", borderRadius: 16, backgroundColor: "#eff2f5",
+                border: "1px solid #eff2f5", boxSizing: "border-box",
+                display: "flex", flexDirection: "column", padding: 20, alignItems: "flex-start", maxWidth: "100%",
+              }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, maxWidth: "100%" }}>
+                  <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                    <div style={{ width: 184, height: 28, display: "flex", alignItems: "center" }}>
+                      <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Bank Account Details</div>
+                    </div>
+                  </div>
+                  <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 20, maxWidth: "100%", fontSize: 16 }}>
+                    <div style={{ height: 152, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                      <div style={{ lineHeight: "24px" }}>Bank Name</div>
+                      <div style={{ lineHeight: "24px" }}>Account Holder Name</div>
+                      <div style={{ lineHeight: "24px" }}>Account Number</div>
+                      <div style={{ lineHeight: "24px" }}>IFSC</div>
+                      <div style={{ display: "inline-block", minWidth: 106, lineHeight: "24px" }}>Account Type</div>
+                    </div>
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, minWidth: 224, maxWidth: "100%", color: "#000" }}>
+                      <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>HDFC Bank, Amruthalli Branch</div>
+                      <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>PRINTRIBE</div>
+                      <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>59209967439181</div>
+                      <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>HDFC0004829</div>
+                      <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Current</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms */}
+              <div style={{
+                alignSelf: "stretch", borderRadius: 16, backgroundColor: "#eff2f5",
+                border: "1px solid #eff2f5", display: "flex", flexDirection: "column",
+                alignItems: "flex-start", padding: 20, gap: 10,
+              }}>
+                <div style={{ width: 189, height: 28, display: "flex", alignItems: "center" }}>
+                  <div style={{ lineHeight: "28px", fontWeight: 500, flexShrink: 0 }}>Terms and Conditions</div>
+                </div>
+                <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, fontSize: 16, color: "#000" }}>
+                  <div style={{ width: "100%", position: "relative", lineHeight: "24px", display: "inline-block" }}>
+                    Our responsibility ceases once the goods leave our premises/factory. Goods once sold cannot be exchanged/returned. All disputes subject to Bangalore Jurisdiction Only.<br />
+                    By signing this copy/accepting delivery, you agree to the above terms of sales.
+                  </div>
+                  <div style={{ alignSelf: "stretch", position: "relative", lineHeight: "24px" }}>
+                    Thank you for your valuable order.
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* ── BOTTOM: Left (frame-component1) + Right (p) ── */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 24, flexWrap: "wrap", paddingBottom: 40 }}>
-
-              {/* ── LEFT COLUMN: frame-component1 ── */}
-              {/* flex:1, gap:10px, min-width:335px, max-width:574px, font-size:18px, color:#2266a1 */}
+            {/* ── RIGHT: P (.pWrapper) ── */}
+            {/* flex:1; flex-direction:column; min-width:142px; max-width:356px */}
+            <section style={{
+              flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start",
+              minWidth: 142, maxWidth: 356,
+            }}>
+              {/* .p: align-self:stretch, display:flex, flex-direction:column, gap:24px, font-size:16px */}
               <div style={{
-                flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start",
-                gap: 10, minWidth: 335, maxWidth: 574,
-                textAlign: "left", fontSize: 18, color: "#2266a1", fontFamily: "Inter",
+                alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start",
+                gap: 24, textAlign: "left", fontSize: 16, color: "#000", fontFamily: "Inter",
               }}>
-                {/* Amount in words — background:#2266a1, border:1px solid #eff2f5, border-radius:16px, padding:20px, gap:12px, color:White */}
-                <div style={{
-                  alignSelf: "stretch", borderRadius: 16, backgroundColor: "#2266a1",
-                  border: "1px solid #eff2f5", padding: 20, display: "flex", flexDirection: "column",
-                  alignItems: "flex-start", gap: 12, color: "#fff",
-                }}>
-                  <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
-                    <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Amount Chargeable incl. tax (in words)</div>
-                  </div>
-                  <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                    <b style={{ width: "100%", position: "relative", lineHeight: "24px", display: "inline-block", maxWidth: 532 }}>{amountInWords}</b>
-                  </div>
-                </div>
-
-                {/* Bank details — background:#eff2f5, border:1px solid #eff2f5, border-radius:16px, padding:20px */}
-                <div style={{
-                  alignSelf: "stretch", borderRadius: 16, backgroundColor: "#eff2f5",
-                  border: "1px solid #eff2f5", boxSizing: "border-box",
-                  display: "flex", flexDirection: "column", padding: 20, alignItems: "flex-start", maxWidth: "100%",
-                }}>
-                  <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, maxWidth: "100%" }}>
-                    {/* Heading */}
-                    <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                      <div style={{ width: 184, height: 28, display: "flex", alignItems: "center" }}>
-                        <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Bank Account Details</div>
-                      </div>
-                    </div>
-                    {/* Labels + Values row — gap:20px, font-size:16px */}
-                    <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 20, maxWidth: "100%", fontSize: 16 }}>
-                      {/* Labels — height:152px, gap:8px, color inherits #2266a1 */}
-                      <div style={{ height: 152, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                        <div style={{ lineHeight: "24px" }}>Bank Name</div>
-                        <div style={{ lineHeight: "24px" }}>Account Holder Name</div>
-                        <div style={{ lineHeight: "24px" }}>Account Number</div>
-                        <div style={{ lineHeight: "24px" }}>IFSC</div>
-                        <div style={{ display: "inline-block", minWidth: 106, lineHeight: "24px" }}>Account Type</div>
-                      </div>
-                      {/* Values — flex:1, gap:8px, min-width:224px, color:#000 */}
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, minWidth: 224, maxWidth: "100%", color: "#000" }}>
-                        <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>HDFC Bank, Amruthalli Branch</div>
-                        <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>PRINTRIBE</div>
-                        <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>59209967439181</div>
-                        <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>HDFC0004829</div>
-                        <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Current</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Terms — background:#eff2f5, border:1px solid #eff2f5, border-radius:16px, padding:20px, gap:10px */}
-                <div style={{
-                  alignSelf: "stretch", borderRadius: 16, backgroundColor: "#eff2f5",
-                  border: "1px solid #eff2f5", display: "flex", flexDirection: "column",
-                  alignItems: "flex-start", padding: 20, gap: 10,
-                }}>
-                  <div style={{ width: 189, height: 28, display: "flex", alignItems: "center" }}>
-                    <div style={{ lineHeight: "28px", fontWeight: 500, flexShrink: 0 }}>Terms and Conditions</div>
-                  </div>
-                  <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, fontSize: 16, color: "#000" }}>
-                    <div style={{ width: "100%", position: "relative", lineHeight: "24px", display: "inline-block" }}>
-                      Our responsibility ceases once the goods leave our premises/factory. Goods once sold cannot be exchanged/returned. All disputes subject to Bangalore Jurisdiction Only.<br />
-                      By signing this copy/accepting delivery, you agree to the above terms of sales.
-                    </div>
-                    <div style={{ alignSelf: "stretch", position: "relative", lineHeight: "24px" }}>
-                      Thank you for your valuable order.
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── RIGHT COLUMN: p.tsx ── */}
-              {/* align-self:stretch, display:flex, flex-direction:column, gap:24px, font-size:16px */}
-              <div style={{
-                flex: 1, alignSelf: "stretch", display: "flex", flexDirection: "column",
-                alignItems: "flex-start", gap: 24,
-                textAlign: "left", fontSize: 16, color: "#000", fontFamily: "Inter",
-              }}>
-                {/* Totals rows — color: Neutral-500, gap:24px between labels/values */}
+                {/* Totals rows: .prvaKolaPlivanjaZaDojena — gap:24px, color:Neutral-500 */}
                 <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 24, overflow: "hidden", color: "#737982" }}>
-                  {/* Labels */}
+                  {/* Labels: .subTotalParent — gap:16px */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 108 }}>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Sub Total</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Output CGST({halfGstPct}%)</div>
@@ -389,19 +436,17 @@ export default function InvoicePage() {
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Total Tax(GST)</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Round Off</div>
                   </div>
-                  {/* Values — text-align:right, color:#000 */}
+                  {/* Values: .parent — gap:16px, text-align:right, color:#000 */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 16, minWidth: 108, textAlign: "right", color: "#000" }}>
-                    <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(saleValue)}</div>
+                    <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalSaleValue)}</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(cgst)}</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(sgst)}</div>
-                    <div style={{ lineHeight: "24px", fontWeight: 600, display: "none", whiteSpace: "nowrap" }}>{fmtAmt(cgst)}</div>
-                    <div style={{ lineHeight: "24px", fontWeight: 600, display: "none", whiteSpace: "nowrap" }}>{fmtAmt(sgst)}</div>
-                    <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(gst)}</div>
+                    <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalGst)}</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(roundOff)}</div>
                   </div>
                 </div>
 
-                {/* Amount Due — height:62px, border-top/bottom:1px solid #000, overflow:hidden, font-size:24px, letter-spacing:-0.5px */}
+                {/* Amount Due: height:62px, border-top/bottom:1px solid #000, font-size:24px, letter-spacing:-0.5px */}
                 <div style={{
                   alignSelf: "stretch", height: 62,
                   borderTop: "1px solid #000", borderBottom: "1px solid #000",
@@ -413,7 +458,7 @@ export default function InvoicePage() {
                   <h3 style={{ margin: 0, fontSize: "inherit", letterSpacing: "-0.5px", lineHeight: "36px", fontWeight: 600, fontFamily: "inherit" }}>{fmtAmt(amountDue)}</h3>
                 </div>
 
-                {/* Signature — justify-content:center, padding:12px 0, text-align:right */}
+                {/* Signature: justify-content:center, padding:12px 0, text-align:right */}
                 <div style={{ alignSelf: "stretch", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 0", boxSizing: "border-box", maxWidth: "100%", textAlign: "right" }}>
                   {/* width:336px, letter-spacing:-0.5px, line-height:36px */}
                   <div style={{ width: 336, position: "relative", letterSpacing: "-0.5px", lineHeight: "36px", display: "inline-block", flexShrink: 0, maxWidth: "100%" }}>
@@ -423,13 +468,24 @@ export default function InvoicePage() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </section>
+          </main>
 
-          {/* ── Red footer ── */}
-          <div style={{ background: "#EE3C30", padding: "12px 48px", textAlign: "center", color: "#fff", fontSize: 14, fontFamily: "Inter, sans-serif" }}>
-            This is computer generated document and requires no signature
-          </div>
+          {/* ── FOOTER: position:absolute, bottom:0, height:49px ── */}
+          <footer style={{
+            width: "100%", height: 49,
+            margin: 0,
+            position: "absolute", right: 0, bottom: 0, left: 0,
+            backgroundColor: "#ee3c30",
+            overflow: "hidden", flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            minHeight: 49, maxWidth: "100%",
+            zIndex: 1, textAlign: "center", fontSize: 16, color: "#fff", fontFamily: "Inter",
+          }}>
+            <div style={{ flex: 1, position: "relative", lineHeight: "24px", display: "inline-block", maxWidth: "100%" }}>
+              This is computer generated document and requires no signature
+            </div>
+          </footer>
 
         </div>
       </div>
