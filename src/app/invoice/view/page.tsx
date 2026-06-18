@@ -91,6 +91,8 @@ function InvoiceContent() {
   const roundOff = amountDue - exactTotal;
   const amountInWords = toWords(amountDue);
   const fmtAmt = (n: number) => "₹ " + Math.abs(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pdfTitle = `GST Invoice_${data.id.replace(/\//g, "_")}`;
+  if (typeof document !== "undefined") document.title = pdfTitle;
 
   return (
     <>
