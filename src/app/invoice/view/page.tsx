@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 
 // ── number to words (Indian system) ─────────────────────────
 const ONES = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
@@ -196,12 +195,11 @@ function InvoiceContent() {
               </div>
             </div>
             {/* Logo: width:402px, object-fit:cover, min-width:310px, max-width:402px */}
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/Printribe-Logo-TM-without-bg-1@2x.png"
               alt="Printribe"
-              width={402}
-              height={76}
-              style={{ width: 402, maxHeight: "100%", objectFit: "cover", minWidth: 310, maxWidth: 402 }}
+              style={{ width: 402, height: "auto", objectFit: "contain", minWidth: 310, maxWidth: 402 }}
             />
           </section>
 
