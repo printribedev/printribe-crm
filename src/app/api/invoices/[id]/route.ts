@@ -21,20 +21,25 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Look up HSN from products table by matching product name
   const product = await prisma.product.findFirst({
     where: { name: { contains: order.product.split(" ")[0], mode: "insensitive" } },
-    select: { hsn: true, gstRate: true },
+    select: { hsn: true },
   });
 
   return NextResponse.json({
     id: order.id,
     date: order.date,
-    qty: order.qty,
-    product: order.product,
-    hsn: product?.hsn ?? "6109",
-    saleValue: Number(order.saleValue),
-    gst: Number(order.gst),
+    items: [
+      {
+        product: order.product,
+        hsn: product?.hsn ?? "6109",
+        qty: order.qty,
+        saleValue: Number(order.saleValue),
+        gst: Number(order.gst),
+      },
+    ],
+    totalSaleValue: Number(order.saleValue),
+    totalGst: Number(order.gst),
     client: order.client ? {
       name: order.client.name,
       gstin: order.client.gstin,
