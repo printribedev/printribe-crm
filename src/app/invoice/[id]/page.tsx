@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 
 // ── number to words (Indian system) ─────────────────────────
@@ -56,14 +56,13 @@ type InvoiceData = {
 };
 
 function InvoiceContent() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") ?? "";
+  const params = useParams();
+  const id = decodeURIComponent(params.id as string);
   const [data, setData] = useState<InvoiceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!id) { setError("No invoice ID provided."); setLoading(false); return; }
     fetch(`/api/invoices/${encodeURIComponent(id)}`)
       .then(r => r.json())
       .then(d => { if (d.error) setError(d.error); else setData(d); setLoading(false); })
@@ -496,9 +495,5 @@ function InvoiceContent() {
 }
 
 export default function InvoicePage() {
-  return (
-    <Suspense fallback={<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "Inter, sans-serif", color: "#737982" }}>Loading invoice…</div>}>
-      <InvoiceContent />
-    </Suspense>
-  );
+  return <InvoiceContent />;
 }
