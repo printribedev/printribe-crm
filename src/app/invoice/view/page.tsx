@@ -110,8 +110,8 @@ function InvoiceContent() {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
           body { background: #fff !important; }
-          .screen-outer { padding: 0 !important; background: #fff !important; }
-          .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
+          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; }
+          .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
           html { zoom: 0.75; }
         }
       `}</style>
