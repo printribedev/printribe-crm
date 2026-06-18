@@ -73,7 +73,7 @@ function InvoiceContent() {
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
     pdf.addImage(imgData, "PNG", 0, 0, pageW, pageH);
-    pdf.save(`Invoice-${data.id.replace(/\//g, "-")}.pdf`);
+    pdf.save(`Invoice_${data.id.replace(/\//g, "_")}.pdf`);
   }
 
   useEffect(() => {
