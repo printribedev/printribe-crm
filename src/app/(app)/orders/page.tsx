@@ -63,11 +63,11 @@ const pct = (n: number) => (n * 100).toFixed(1) + "%";
 
 // Cost helpers per line
 function lineFabric(l: ProductLine): number {
-  if (l.fabricMode === "weight") return l.qty * l.fabricWeightPerPc * l.fabricPricePerKg;
+  if (l.fabricMode === "weight") return l.fabricWeightPerPc * l.fabricPricePerKg;
   return l.fabricPerPc ? l.fabricManual * l.qty : l.fabricManual;
 }
 function lineRib(l: ProductLine): number {
-  if (l.ribMode === "weight") return l.qty * l.ribWeightPerPc * l.ribPricePerKg;
+  if (l.ribMode === "weight") return l.ribWeightPerPc * l.ribPricePerKg;
   return l.ribPerPc ? l.ribManual * l.qty : l.ribManual;
 }
 function lineVal(val: number, perPc: boolean, qty: number): number {
@@ -302,7 +302,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
           {line.fabricMode === "weight" ? (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <div>
-                <div style={LBL}>Weight per pc (kg)</div>
+                <div style={LBL}>Total weight (kg)</div>
                 <input type="number" value={line.fabricWeightPerPc || ""} placeholder="0.000"
                   onChange={e => onChange("fabricWeightPerPc", parseFloat(e.target.value) || 0)} style={SINP} />
               </div>
@@ -315,8 +315,8 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
                 <div style={LBL}>Computed Total</div>
                 <div style={{ ...SINP, background: WHITE, display: "flex", alignItems: "center", fontWeight: 700, color: BLACK, border: `1px solid ${BORDER}` }}>
                   {fmt(fabricTotal)}
-                  {line.qty > 0 && line.fabricWeightPerPc > 0 && line.fabricPricePerKg > 0 && (
-                    <span style={{ fontSize: 10, color: MID, marginLeft: 6 }}>{line.fabricWeightPerPc} kg × ₹{line.fabricPricePerKg} × {line.qty}</span>
+                  {line.fabricWeightPerPc > 0 && line.fabricPricePerKg > 0 && (
+                    <span style={{ fontSize: 10, color: MID, marginLeft: 6 }}>{line.fabricWeightPerPc} kg × ₹{line.fabricPricePerKg}</span>
                   )}
                 </div>
               </div>
@@ -348,7 +348,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
           {line.ribMode === "weight" ? (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <div>
-                <div style={LBL}>Rib weight per pc (kg)</div>
+                <div style={LBL}>Total rib weight (kg)</div>
                 <input type="number" value={line.ribWeightPerPc || ""} placeholder="0.000"
                   onChange={e => onChange("ribWeightPerPc", parseFloat(e.target.value) || 0)} style={SINP} />
               </div>
@@ -361,8 +361,8 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
                 <div style={LBL}>Computed Total</div>
                 <div style={{ ...SINP, background: WHITE, display: "flex", alignItems: "center", fontWeight: 700, color: BLACK, border: `1px solid ${BORDER}` }}>
                   {fmt(ribTotal)}
-                  {line.qty > 0 && line.ribWeightPerPc > 0 && line.ribPricePerKg > 0 && (
-                    <span style={{ fontSize: 10, color: MID, marginLeft: 6 }}>{line.ribWeightPerPc} kg × ₹{line.ribPricePerKg} × {line.qty}</span>
+                  {line.ribWeightPerPc > 0 && line.ribPricePerKg > 0 && (
+                    <span style={{ fontSize: 10, color: MID, marginLeft: 6 }}>{line.ribWeightPerPc} kg × ₹{line.ribPricePerKg}</span>
                   )}
                 </div>
               </div>
