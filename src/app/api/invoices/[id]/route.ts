@@ -21,23 +21,38 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const product = await prisma.product.findFirst({
-    where: { name: { contains: order.product.split(" ")[0], mode: "insensitive" } },
-    select: { hsn: true },
-  });
+  // Parse product lines — new orders store JSON array, legacy orders store plain string
+  let items: { product: string; hsn: string; qty: number; saleValue: number; gst: number }[];
+  try {
+    const parsed = JSON.parse(order.product);
+    if (Array.isArray(parsed)) {
+      items = parsed.map((line: { name: string; hsn: string; qty: number; unitPrice: number; gstPct: number }) => ({
+        product: line.name,
+        hsn: line.hsn || "6109",
+        qty: line.qty,
+        saleValue: line.qty * line.unitPrice,
+        gst: line.qty * line.unitPrice * line.gstPct / 100,
+      }));
+    } else throw new Error("not array");
+  } catch {
+    // Legacy: single product string
+    const product = await prisma.product.findFirst({
+      where: { name: { contains: order.product.split(" ")[0], mode: "insensitive" } },
+      select: { hsn: true },
+    });
+    items = [{
+      product: order.product,
+      hsn: product?.hsn ?? "6109",
+      qty: order.qty,
+      saleValue: Number(order.saleValue),
+      gst: Number(order.gst),
+    }];
+  }
 
   return NextResponse.json({
     id: order.id,
     date: order.date,
-    items: [
-      {
-        product: order.product,
-        hsn: product?.hsn ?? "6109",
-        qty: order.qty,
-        saleValue: Number(order.saleValue),
-        gst: Number(order.gst),
-      },
-    ],
+    items,
     totalSaleValue: Number(order.saleValue),
     totalGst: Number(order.gst),
     client: order.client ? {

@@ -1,0 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=La+Belle+Aurore:ital,wght@0,400&display=swap");
+
+body {
+  margin: 0;
+  line-height: normal;
+}
+:root {
+  /* Common Style Variables */
+
+  /* Color */
+  --Neutral-Neutral-50: #f5f7fa;
+  --Neutral-Neutral-500: #737982;
+  --Neutral-Neutral-800: #363c45;
+  --White-100: #fff;
+}

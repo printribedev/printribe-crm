@@ -11,6 +11,21 @@ async function requireAuth() {
 
 const STAGES: Stage[] = ["enquiry", "design", "sampling", "production", "qc", "dispatch", "delivered"];
 
+function serializeOrder(o: Record<string, unknown>) {
+  return {
+    ...o,
+    saleValue: Number(o.saleValue), gst: Number(o.gst),
+    fabric: Number(o.fabric), printing: Number(o.printing),
+    transport: Number(o.transport), misc: Number(o.misc),
+    jobWork: Number(o.jobWork), packaging: Number(o.packaging),
+    design: Number(o.design), ribCost: Number(o.ribCost ?? 0),
+    fabricWeightPerPc: o.fabricWeightPerPc != null ? Number(o.fabricWeightPerPc) : null,
+    fabricPricePerKg: o.fabricPricePerKg != null ? Number(o.fabricPricePerKg) : null,
+    ribWeightPerPc: o.ribWeightPerPc != null ? Number(o.ribWeightPerPc) : null,
+    ribPricePerKg: o.ribPricePerKg != null ? Number(o.ribPricePerKg) : null,
+  };
+}
+
 export async function GET() {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -20,14 +35,7 @@ export async function GET() {
     include: { notes: { orderBy: { ts: "asc" } }, timeline: { orderBy: { id: "asc" } } },
   });
 
-  return NextResponse.json(orders.map(o => ({
-    ...o,
-    saleValue: Number(o.saleValue), gst: Number(o.gst),
-    fabric: Number(o.fabric), printing: Number(o.printing),
-    transport: Number(o.transport), misc: Number(o.misc),
-    jobWork: Number(o.jobWork), packaging: Number(o.packaging),
-    design: Number(o.design),
-  })));
+  return NextResponse.json(orders.map(o => serializeOrder(o as unknown as Record<string, unknown>)));
 }
 
 export async function POST(req: Request) {
@@ -55,6 +63,11 @@ export async function POST(req: Request) {
       jobWork: Number(body.jobWork) || 0,
       packaging: Number(body.packaging) || 0,
       design: Number(body.design) || 0,
+      ribCost: Number(body.ribCost) || 0,
+      fabricWeightPerPc: body.fabricWeightPerPc != null ? Number(body.fabricWeightPerPc) : null,
+      fabricPricePerKg: body.fabricPricePerKg != null ? Number(body.fabricPricePerKg) : null,
+      ribWeightPerPc: body.ribWeightPerPc != null ? Number(body.ribWeightPerPc) : null,
+      ribPricePerKg: body.ribPricePerKg != null ? Number(body.ribPricePerKg) : null,
       stage: body.stage ?? "enquiry",
       priority: body.priority ?? "Normal",
       timeline: {
@@ -64,5 +77,5 @@ export async function POST(req: Request) {
     include: { notes: true, timeline: true },
   });
 
-  return NextResponse.json({ ...order, saleValue: Number(order.saleValue), gst: Number(order.gst) }, { status: 201 });
+  return NextResponse.json(serializeOrder(order as unknown as Record<string, unknown>), { status: 201 });
 }

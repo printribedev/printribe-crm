@@ -1,0 +1,123 @@
+.defaultTemplateTable {
+  align-self: stretch;
+  border-right: 1px solid var(--White-100);
+  border-bottom: 1px solid var(--White-100);
+  border-left: 1px solid var(--White-100);
+  box-sizing: border-box;
+  padding: 20px;
+  max-width: 100%;
+  z-index: 3;
+  flex-shrink: 0;
+  text-align: left;
+  font-size: 16px;
+  color: #000;
+  font-family: Inter;
+}
+.bezHlora,
+.defaultTemplateTable,
+.h,
+.hmargin {
+  display: flex;
+  align-items: flex-start;
+}
+.hmargin {
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  max-width: 100%;
+}
+.bezHlora,
+.h {
+  flex-direction: column;
+}
+.h {
+  flex: 1;
+  min-width: 163px;
+  max-width: 432px;
+}
+.bezHlora {
+  align-self: stretch;
+  flex-shrink: 0;
+}
+.customPoloTShirts {
+  align-self: stretch;
+  position: relative;
+  line-height: 28px;
+  font-weight: 600;
+}
+.frameParent {
+  width: 292px;
+  height: 64px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: none;
+}
+.frameChild,
+.frameDiv,
+.frameInner,
+.frameItem {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background-color: #eee;
+  width: 64px;
+  overflow: hidden;
+}
+.frameDiv,
+.frameInner,
+.frameItem {
+  left: 76px;
+}
+.frameDiv,
+.frameInner {
+  left: 152px;
+}
+.frameDiv {
+  left: 228px;
+}
+.parent {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  min-width: 310px;
+  max-width: 100%;
+  text-align: center;
+}
+.div {
+  flex: 1;
+  position: relative;
+  line-height: 28px;
+  font-weight: 600;
+  display: inline-block;
+  min-width: 44px;
+}
+.div4 {
+  width: 129px;
+  display: flex;
+  align-items: flex-start;
+  text-align: right;
+}
+.div5 {
+  flex: 1;
+  position: relative;
+  line-height: 28px;
+  font-weight: 600;
+}
+@media screen and (max-width: 675px) {
+  .h {
+    max-width: 100%;
+  }
+  .parent {
+    flex-wrap: wrap;
+  }
+}
+@media screen and (max-width: 450px) {
+  .h {
+    max-width: 100%;
+  }
+}

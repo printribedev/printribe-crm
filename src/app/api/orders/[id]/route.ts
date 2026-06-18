@@ -35,19 +35,29 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       jobWork: Number(body.jobWork) || 0,
       packaging: Number(body.packaging) || 0,
       design: Number(body.design) || 0,
+      ribCost: Number(body.ribCost) || 0,
+      fabricWeightPerPc: body.fabricWeightPerPc != null ? Number(body.fabricWeightPerPc) : null,
+      fabricPricePerKg: body.fabricPricePerKg != null ? Number(body.fabricPricePerKg) : null,
+      ribWeightPerPc: body.ribWeightPerPc != null ? Number(body.ribWeightPerPc) : null,
+      ribPricePerKg: body.ribPricePerKg != null ? Number(body.ribPricePerKg) : null,
       stage: body.stage as Stage,
       priority: body.priority,
     },
     include: { notes: true, timeline: true },
   });
 
+  const o = order as unknown as Record<string, unknown>;
   return NextResponse.json({
-    ...order,
-    saleValue: Number(order.saleValue), gst: Number(order.gst),
-    fabric: Number(order.fabric), printing: Number(order.printing),
-    transport: Number(order.transport), misc: Number(order.misc),
-    jobWork: Number(order.jobWork), packaging: Number(order.packaging),
-    design: Number(order.design),
+    ...o,
+    saleValue: Number(o.saleValue), gst: Number(o.gst),
+    fabric: Number(o.fabric), printing: Number(o.printing),
+    transport: Number(o.transport), misc: Number(o.misc),
+    jobWork: Number(o.jobWork), packaging: Number(o.packaging),
+    design: Number(o.design), ribCost: Number(o.ribCost ?? 0),
+    fabricWeightPerPc: o.fabricWeightPerPc != null ? Number(o.fabricWeightPerPc) : null,
+    fabricPricePerKg: o.fabricPricePerKg != null ? Number(o.fabricPricePerKg) : null,
+    ribWeightPerPc: o.ribWeightPerPc != null ? Number(o.ribWeightPerPc) : null,
+    ribPricePerKg: o.ribPricePerKg != null ? Number(o.ribPricePerKg) : null,
   });
 }
 

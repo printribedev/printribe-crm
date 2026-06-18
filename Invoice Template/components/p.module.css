@@ -1,0 +1,130 @@
+.p,
+.prvaKolaPlivanjaZaDojena {
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+.p {
+  flex-direction: column;
+  max-width: 100%;
+  text-align: left;
+  font-size: 16px;
+  color: #000;
+  font-family: Inter;
+}
+.prvaKolaPlivanjaZaDojena {
+  overflow: hidden;
+  color: var(--Neutral-Neutral-500);
+}
+.subTotalParent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 108px;
+}
+.outputCgst25,
+.subTotal {
+  position: relative;
+  line-height: 24px;
+  font-weight: 500;
+}
+.subTotal {
+  align-self: stretch;
+}
+.outputCgst25 {
+  display: none;
+}
+.parent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+  min-width: 108px;
+  text-align: right;
+  color: #000;
+}
+.div,
+.div4 {
+  position: relative;
+  line-height: 24px;
+  font-weight: 600;
+}
+.div {
+  align-self: stretch;
+}
+.div4 {
+  display: none;
+  white-space: nowrap;
+}
+.amountDueParent {
+  align-self: stretch;
+  height: 62px;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  box-sizing: border-box;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  gap: 0;
+  row-gap: 20px;
+  font-size: 24px;
+}
+.amountDue {
+  margin: 0;
+  position: relative;
+  font-size: inherit;
+  letter-spacing: -0.5px;
+  line-height: 36px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.h {
+  align-self: stretch;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  box-sizing: border-box;
+  max-width: 100%;
+  text-align: right;
+}
+.forPrintribeNehalContainer {
+  width: 336px;
+  position: relative;
+  letter-spacing: -0.5px;
+  line-height: 36px;
+  display: inline-block;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+.forPrintribe {
+  font-weight: 600;
+  line-height: 36px;
+}
+.nehalGanapathy {
+  font-size: 20px;
+  font-family: "La Belle Aurore";
+  color: #2266a1;
+  line-height: 36px;
+}
+@media screen and (max-width: 450px) {
+  .prvaKolaPlivanjaZaDojena {
+    flex-wrap: wrap;
+  }
+  .amountDueParent {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .amountDue {
+    font-size: 19px;
+    line-height: 29px;
+  }
+}

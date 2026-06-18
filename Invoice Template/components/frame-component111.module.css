@@ -1,0 +1,245 @@
+.defaultTemplateTableParent {
+  align-self: stretch;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  flex-direction: column;
+  isolation: isolate;
+  z-index: 4;
+  flex-shrink: 0;
+  text-align: left;
+  font-size: 16px;
+  color: #000;
+  font-family: Inter;
+}
+.defaultTemplateTable,
+.defaultTemplateTableParent,
+.frameParent {
+  display: flex;
+  align-items: flex-start;
+  max-width: 100%;
+}
+.defaultTemplateTable {
+  align-self: stretch;
+  background-color: #fde28d;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  z-index: 4;
+  flex-shrink: 0;
+}
+.frameParent {
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+}
+.frameGroup,
+.productDescriptionParent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.frameGroup {
+  flex: 1;
+  min-width: 155px;
+  max-width: 432px;
+}
+.productDescriptionParent {
+  align-self: stretch;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+.productDescription {
+  align-self: stretch;
+  position: relative;
+  line-height: 24px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.createAndSend,
+.frameContainer {
+  position: relative;
+  flex-shrink: 0;
+  display: none;
+}
+.createAndSend {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--Neutral-Neutral-800);
+  max-width: 100%;
+}
+.frameContainer {
+  width: 292px;
+  height: 64px;
+  overflow: hidden;
+}
+.frameChild,
+.frameDiv,
+.frameInner,
+.frameItem {
+  position: absolute;
+  height: 100%;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background-color: #eee;
+  width: 64px;
+  overflow: hidden;
+}
+.frameDiv,
+.frameInner,
+.frameItem {
+  left: 76px;
+}
+.frameDiv,
+.frameInner {
+  left: 152px;
+}
+.frameDiv {
+  left: 228px;
+}
+.hsnsacParent {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  min-width: 270px;
+  max-width: 100%;
+  text-align: center;
+}
+.hsnsac,
+.uom {
+  position: relative;
+  line-height: 24px;
+  font-weight: 600;
+}
+.uom {
+  flex: 1;
+  display: inline-block;
+  min-width: 27px;
+}
+.defaultTemplateTable2,
+.total {
+  position: relative;
+  flex-shrink: 0;
+}
+.total {
+  width: 129px;
+  line-height: 24px;
+  font-weight: 600;
+  display: inline-block;
+}
+.defaultTemplateTable2 {
+  align-self: stretch;
+  height: 68px;
+  border-right: 1px solid var(--White-100);
+  border-bottom: 1px solid var(--White-100);
+  border-left: 1px solid var(--White-100);
+  box-sizing: border-box;
+  display: none;
+  z-index: 2;
+}
+.frameParent2,
+.frameParent3 {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 942px;
+  height: 28px;
+}
+.frameParent3 {
+  top: 0;
+  left: 0;
+  width: 416px;
+}
+.customPantsSample,
+.customPantsSampleWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.customPantsSampleWrapper {
+  flex-shrink: 0;
+}
+.customPantsSample {
+  line-height: 28px;
+  font-weight: 600;
+  display: inline-block;
+}
+.frameParent4 {
+  position: absolute;
+  top: 84px;
+  left: 0;
+  width: 292px;
+  height: 64px;
+  overflow: hidden;
+  display: none;
+  flex-shrink: 0;
+}
+.parent {
+  position: absolute;
+  top: 0;
+  left: 440px;
+  width: 502px;
+  height: 28px;
+  text-align: center;
+}
+.div,
+.div2,
+.div3,
+.div4,
+.nos {
+  position: absolute;
+  top: 0;
+  left: 0;
+  line-height: 28px;
+  font-weight: 600;
+}
+.div2,
+.div3,
+.div4,
+.nos {
+  left: 93.3px;
+}
+.div2,
+.div3,
+.div4 {
+  left: 186.5px;
+}
+.div3,
+.div4 {
+  left: 279.8px;
+}
+.div4 {
+  left: 373px;
+  text-align: right;
+  display: inline-block;
+  width: 129px;
+  white-space: nowrap;
+}
+.defaultTemplateTable3 {
+  align-self: stretch;
+  height: 68px;
+  position: relative;
+  border-right: 1px solid var(--White-100);
+  border-bottom: 1px solid var(--White-100);
+  border-left: 1px solid var(--White-100);
+  box-sizing: border-box;
+  display: none;
+  z-index: 0;
+  flex-shrink: 0;
+}
+@media screen and (max-width: 675px) {
+  .frameGroup {
+    max-width: 100%;
+  }
+  .hsnsacParent {
+    flex-wrap: wrap;
+  }
+}
+@media screen and (max-width: 450px) {
+  .frameGroup {
+    max-width: 100%;
+  }
+}

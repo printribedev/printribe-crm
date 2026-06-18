@@ -1,0 +1,101 @@
+.billedByParent {
+  flex: 1;
+  border-radius: 16px;
+  background-color: #eff2f5;
+  border: 1px solid #eff2f5;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px;
+  gap: 12px;
+  min-width: 361px;
+  max-width: 100%;
+  text-align: left;
+  font-size: 18px;
+  color: #2266a1;
+  font-family: Inter;
+}
+.billedBy {
+  position: relative;
+  line-height: 28px;
+  font-weight: 500;
+}
+.frameParent,
+.printribeParent {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 16px;
+}
+.printribeParent {
+  font-size: 20px;
+  color: #000;
+}
+.printribe {
+  margin: 0;
+  align-self: stretch;
+  position: relative;
+  font-size: inherit;
+  letter-spacing: -0.25px;
+  line-height: 32px;
+  font-weight: 700;
+  font-family: inherit;
+}
+.mallayyaIndustrialArea {
+  width: 100%;
+  position: relative;
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 500;
+  display: inline-block;
+  max-width: 431px;
+}
+.gstinParent {
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.gstin {
+  position: relative;
+  line-height: 24px;
+}
+.email {
+  width: 50px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.email,
+.infotheprintribecom,
+.phone {
+  position: relative;
+  line-height: 24px;
+}
+.infotheprintribecom {
+  font-weight: 500;
+  color: #000;
+}
+.phone {
+  display: inline-block;
+  min-width: 50px;
+}
+@media screen and (max-width: 675px) {
+  .billedByParent {
+    min-width: 100%;
+  }
+}
+@media screen and (max-width: 450px) {
+  .printribe {
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .mallayyaIndustrialArea {
+    max-width: 100%;
+  }
+  .gstinParent {
+    flex-wrap: wrap;
+  }
+}
