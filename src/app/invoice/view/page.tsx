@@ -113,7 +113,7 @@ function InvoiceContent() {
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; }
           .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; }
           .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
-          .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; }
+          .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; box-shadow: 0 -4px 0 0 #ee3c30 !important; }
           html { zoom: 0.75; }
         }
       `}</style>
