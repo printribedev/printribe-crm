@@ -349,7 +349,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
                 else pickProduct(i, Number(e.target.value));
               }} style={{ ...INP_STYLE, padding: "7px 8px", fontSize: 12 }}>
                 <option value="">— Select —</option>
-                {catalogProducts.filter(p => p.active !== false).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {catalogProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <input value={line.hsn} onChange={e => setLine(i, "hsn", e.target.value)}
                 placeholder="HSN" style={{ ...INP_STYLE, padding: "7px 8px", fontSize: 12 }} />
