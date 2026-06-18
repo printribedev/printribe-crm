@@ -420,6 +420,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
   });
   const setF = (k: string, v: string | number | null) => setForm(p => ({ ...p, [k]: v }));
 
+  const [idError, setIdError] = useState("");
   const [clientInput, setClientInput] = useState(order.clientName ?? "");
   const [lines, setLines] = useState<ProductLine[]>(() =>
     parseLines(order.product ?? "", order.qty, order.saleValue, order.gst)
@@ -441,6 +442,10 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
   }
 
   function handleSave() {
+    if (isNew && allOrders.some(o => o.id === form.id.trim())) {
+      setIdError(`Invoice ID "${form.id.trim()}" already exists.`);
+      return;
+    }
     onSave({
       ...form,
       product: JSON.stringify(lines),
@@ -477,9 +482,12 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div style={{ gridColumn: "1/-1" }}>
             <div style={LBL}>Invoice ID</div>
-            <input value={form.id} onChange={e => setF("id", e.target.value)} disabled={!isNew}
-              style={{ ...INP, background: !isNew ? BG : WHITE }} />
-            {isNew && <div style={{ fontSize: 10, color: MID, marginTop: 3 }}>Auto-suggested from last order</div>}
+            <input value={form.id} onChange={e => { setF("id", e.target.value); setIdError(""); }} disabled={!isNew}
+              style={{ ...INP, background: !isNew ? BG : WHITE, borderColor: idError ? R : undefined }} />
+            {idError
+              ? <div style={{ fontSize: 10, color: R, marginTop: 3, fontWeight: 600 }}>⚠ {idError}</div>
+              : isNew && <div style={{ fontSize: 10, color: MID, marginTop: 3 }}>Auto-suggested from last order</div>
+            }
           </div>
           <div style={{ gridColumn: "1/-1" }}>
             <div style={LBL}>Client</div>
