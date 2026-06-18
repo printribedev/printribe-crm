@@ -86,15 +86,43 @@ export default function InvoicePage() {
           margin: 0;
         }
         @media print {
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
           .no-print { display: none !important; }
-          body { background: #fff; margin: 0; padding: 0; }
-          .invoice-page { padding: 0 !important; margin: 0 !important; min-height: unset !important; }
+          body { background: #fff !important; margin: 0; padding: 0; }
+          .invoice-page { padding: 0 !important; margin: 0 !important; min-height: unset !important; background: #fff !important; }
           .invoice-wrap {
             box-shadow: none !important;
             max-width: 100% !important;
             width: 100% !important;
             margin: 0 !important;
             border-radius: 0 !important;
+          }
+          .inner-pad {
+            padding: 20px 36px 0 !important;
+          }
+          .billed-row {
+            margin-bottom: 20px !important;
+          }
+          .billed-box {
+            min-width: 250px !important;
+          }
+          .table-section {
+            margin-bottom: 20px !important;
+          }
+          .bottom-section {
+            padding-bottom: 20px !important;
+          }
+          .logo-img {
+            height: 60px !important;
+            width: auto !important;
+            max-width: 280px !important;
+          }
+          .header-row {
+            margin-bottom: 20px !important;
           }
         }
       `}</style>
@@ -123,39 +151,38 @@ export default function InvoicePage() {
           fontFamily: "Inter, sans-serif",
         }}>
 
-          {/* Inner padding */}
-          <div style={{ padding: "40px 48px 0" }}>
+          <div className="inner-pad" style={{ padding: "40px 48px 0" }}>
 
             {/* ── Header ── */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 20, marginBottom: 32 }}>
+            <div className="header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 20, marginBottom: 32 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 16, flex: 1, minWidth: 230 }}>
                 <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.5px", lineHeight: "40px", color: "#000" }}>
                   GST Invoice
                 </h1>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 16, color: "#737982" }}>
                   <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                    <span style={{ color: "#737982", width: 116, flexShrink: 0 }}>Invoice No.</span>
+                    <span style={{ width: 116, flexShrink: 0 }}>Invoice No.</span>
                     <span style={{ fontWeight: 500, color: "#000" }}>{data.id}</span>
                   </div>
                   <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                    <span style={{ color: "#737982", width: 116, flexShrink: 0 }}>Invoice Date</span>
+                    <span style={{ width: 116, flexShrink: 0 }}>Invoice Date</span>
                     <span style={{ fontWeight: 500, color: "#000" }}>{formatDate(data.date)}</span>
                   </div>
                 </div>
               </div>
               <Image
+                className="logo-img"
                 src="/Printribe-Logo-TM-without-bg-1@2x.png"
                 alt="Printribe"
                 width={402}
                 height={76}
-                style={{ width: 402, height: 76, objectFit: "cover", minWidth: 310, maxWidth: 402 }}
+                style={{ height: 76, width: "auto", objectFit: "contain", maxWidth: 402, minWidth: 310 }}
               />
             </div>
 
             {/* ── Billed By / Billed To ── */}
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 32 }}>
-              {/* Billed By */}
-              <div style={{
+            <div className="billed-row" style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 32 }}>
+              <div className="billed-box" style={{
                 flex: 1, minWidth: 300,
                 background: "#eff2f5", border: "1px solid #eff2f5", borderRadius: 16,
                 padding: 24, display: "flex", flexDirection: "column", gap: 12,
@@ -177,8 +204,7 @@ export default function InvoicePage() {
                 </div>
               </div>
 
-              {/* Billed To */}
-              <div style={{
+              <div className="billed-box" style={{
                 flex: 1, minWidth: 300,
                 background: "#eff2f5", border: "1px solid #eff2f5", borderRadius: 16,
                 padding: 24, display: "flex", flexDirection: "column", gap: 12,
@@ -204,8 +230,7 @@ export default function InvoicePage() {
             </div>
 
             {/* ── Line Items Table ── */}
-            <div style={{ borderRadius: "12px 12px 0 0", overflow: "hidden", marginBottom: 32 }}>
-              {/* Header row */}
+            <div className="table-section" style={{ borderRadius: "12px 12px 0 0", overflow: "hidden", marginBottom: 32 }}>
               <div style={{ background: "#fde28d", padding: "12px 20px", display: "flex", alignItems: "flex-start", gap: 8, fontSize: 16, fontWeight: 600 }}>
                 <div style={{ flex: 1, minWidth: 155, lineHeight: "24px" }}>Product Description</div>
                 <div style={{ display: "flex", gap: 24, minWidth: 270 }}>
@@ -216,12 +241,11 @@ export default function InvoicePage() {
                   <div style={{ width: 129, textAlign: "right", lineHeight: "24px" }}>Total</div>
                 </div>
               </div>
-              {/* Item row */}
-              <div style={{ borderRight: "1px solid #fff", borderBottom: "1px solid #fff", borderLeft: "1px solid #fff", padding: 20, display: "flex", gap: 8, fontSize: 16 }}>
+              <div style={{ border: "1px solid #eff2f5", borderTop: "none", padding: 20, display: "flex", gap: 8, fontSize: 16 }}>
                 <div style={{ flex: 1, minWidth: 155 }}>
                   <div style={{ fontWeight: 600, lineHeight: "28px" }}>{product}</div>
                 </div>
-                <div style={{ display: "flex", gap: 24, minWidth: 310, flex: "0 0 auto" }}>
+                <div style={{ display: "flex", gap: 24, minWidth: 270, flex: "0 0 auto" }}>
                   <div style={{ flex: 1, textAlign: "center", fontWeight: 600, lineHeight: "28px" }}>{hsn}</div>
                   <div style={{ flex: 1, textAlign: "center", fontWeight: 600, lineHeight: "28px" }}>Nos.</div>
                   <div style={{ flex: 1, textAlign: "center", fontWeight: 600, lineHeight: "28px" }}>{qty}</div>
@@ -232,23 +256,23 @@ export default function InvoicePage() {
             </div>
 
             {/* ── Bottom: Left column + Right column ── */}
-            <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start", paddingBottom: 40 }}>
+            <div className="bottom-section" style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start", paddingBottom: 40 }}>
 
               {/* Left column */}
               <div style={{ flex: 1, minWidth: 335, maxWidth: 574, display: "flex", flexDirection: "column", gap: 10, fontSize: 18, color: "#2266a1", fontFamily: "Inter, sans-serif" }}>
                 {/* Amount in words */}
-                <div style={{ background: "#2266a1", border: "1px solid #eff2f5", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 12, color: "#fff" }}>
+                <div style={{ background: "#2266a1", border: "1px solid #2266a1", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 12, color: "#fff" }}>
                   <div style={{ lineHeight: "28px", fontWeight: 500 }}>Amount Chargeable incl. tax (in words)</div>
-                  <div style={{ fontWeight: 700, fontSize: 18, lineHeight: "24px" }}>{amountInWords}</div>
+                  <b style={{ fontWeight: 700, fontSize: 18, lineHeight: "24px" }}>{amountInWords}</b>
                 </div>
 
                 {/* Bank details */}
                 <div style={{ background: "#eff2f5", border: "1px solid #eff2f5", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
                   <div style={{ lineHeight: "28px", fontWeight: 500, color: "#2266a1" }}>Bank Account Details</div>
                   <div style={{ display: "flex", gap: 20, fontSize: 16 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8, color: "#2266a1" }}>
                       {["Bank Name", "Account Holder Name", "Account Number", "IFSC", "Account Type"].map(k => (
-                        <div key={k} style={{ lineHeight: "24px", color: "#737982" }}>{k}</div>
+                        <div key={k} style={{ lineHeight: "24px" }}>{k}</div>
                       ))}
                     </div>
                     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -275,7 +299,7 @@ export default function InvoicePage() {
               {/* Right column — totals + signature */}
               <div style={{ flex: 1, minWidth: 260, display: "flex", flexDirection: "column", fontSize: 16, fontFamily: "Inter, sans-serif" }}>
                 {/* Totals rows */}
-                <div style={{ display: "flex", gap: 24, overflow: "hidden", color: "#737982", marginBottom: 0 }}>
+                <div style={{ display: "flex", gap: 24, color: "#737982" }}>
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16, minWidth: 108 }}>
                     {["Sub Total", `Output CGST(${halfGstPct}%)`, `Output SGST(${halfGstPct}%)`, "Total Tax(GST)", "Round Off"].map(label => (
                       <div key={label} style={{ lineHeight: "24px", fontWeight: 500 }}>{label}</div>
