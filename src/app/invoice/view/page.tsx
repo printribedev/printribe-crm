@@ -110,9 +110,10 @@ function InvoiceContent() {
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
-          body { background: #fff !important; }
-          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; }
-          .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; min-height: 100vh !important; }
+          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; }
+          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; }
+          .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+          .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; }
           html { zoom: 0.75; }
         }
       `}</style>
@@ -474,7 +475,7 @@ function InvoiceContent() {
           </main>
 
           {/* ── FOOTER: position:absolute, bottom:0, height:49px ── */}
-          <footer style={{
+          <footer className="invoice-footer" style={{
             width: "100%", height: 49,
             margin: 0,
             position: "absolute", right: 0, bottom: 0, left: 0,
