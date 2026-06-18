@@ -21,6 +21,7 @@ const STAGES = [
 
 type ProductLine = {
   productId: number | null; name: string; hsn: string; qty: number; unitPrice: number; gstPct: number;
+  selectedVariants: Record<string, string>;
   // Fabric
   fabricMode: "manual" | "weight"; fabricWeightPerPc: number; fabricPricePerKg: number; fabricManual: number; fabricPerPc: boolean;
   // Rib
@@ -36,6 +37,7 @@ type ProductLine = {
 
 const BLANK_LINE: ProductLine = {
   productId: null, name: "", hsn: "", qty: 0, unitPrice: 0, gstPct: 5,
+  selectedVariants: {},
   fabricMode: "manual", fabricWeightPerPc: 0, fabricPricePerKg: 0, fabricManual: 0, fabricPerPc: false,
   ribMode: "manual", ribWeightPerPc: 0, ribPricePerKg: 0, ribManual: 0, ribPerPc: false,
   printing: 0, printingPerPc: false, jobWork: 0, jobWorkPerPc: false,
@@ -43,7 +45,8 @@ const BLANK_LINE: ProductLine = {
   design: 0, designPerPc: false, misc: 0, miscPerPc: false,
 };
 
-type CatalogProduct = { id: number; name: string; hsn: string; gstRate: string; basePrice: number };
+type VariantDef = { name: string; values: string[] };
+type CatalogProduct = { id: number; name: string; hsn: string; gstRate: string; basePrice: number; variants: VariantDef[] | null };
 type Client = { id: number; name: string; segment: string };
 type OrderNote = { id: number; author: string; ts: string; text: string };
 type OrderTimeline = { id: number; stage: string; done: boolean; date: string | null };
@@ -215,6 +218,9 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
   const lineTotal = (line.qty || 0) * (line.unitPrice || 0);
   const totalCostLine = lineTotalCost(line);
 
+  const catalogProduct = catalogProducts.find(p => p.id === line.productId) ?? null;
+  const variantDefs: VariantDef[] = catalogProduct?.variants ?? [];
+
   function pickProduct(productId: number) {
     const cp = catalogProducts.find(p => p.id === productId);
     if (!cp) return;
@@ -223,6 +229,11 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
     onChange("hsn", cp.hsn);
     onChange("gstPct", parseFloat(cp.gstRate) || 5);
     onChange("unitPrice", Number(cp.basePrice) || line.unitPrice);
+    onChange("selectedVariants", {});
+  }
+
+  function setVariant(varName: string, val: string) {
+    onChange("selectedVariants", { ...line.selectedVariants, [varName]: val });
   }
 
   const renderCostField = (field: keyof ProductLine, perPcField: keyof ProductLine, label: string) => {
@@ -282,6 +293,25 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
           <button type="button" onClick={onRemove} style={{ border: "none", background: "none", color: MID, cursor: "pointer", fontSize: 16, padding: "0 4px", alignSelf: "flex-end", marginBottom: 2 }}>✕</button>
         )}
       </div>
+
+      {/* Variant selection */}
+      {variantDefs.length > 0 && (
+        <div style={{ padding: "8px 14px 0", display: "flex", flexWrap: "wrap", gap: 10, background: WHITE, borderBottom: `1px solid ${BORDER}` }}>
+          {variantDefs.map(vd => (
+            <div key={vd.name} style={{ marginBottom: 8 }}>
+              <div style={LBL}>{vd.name}</div>
+              <select
+                value={line.selectedVariants?.[vd.name] ?? ""}
+                onChange={e => setVariant(vd.name, e.target.value)}
+                style={{ ...SINP, minWidth: 120 }}
+              >
+                <option value="">— Select —</option>
+                {vd.values.filter(Boolean).map(val => <option key={val} value={val}>{val}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Cost section */}
       <div style={{ padding: "12px 14px" }}>

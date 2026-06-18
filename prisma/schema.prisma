@@ -117,17 +117,19 @@ model Client {
 }
 
 model Product {
-  id         Int             @id @default(autoincrement())
-  name       String
-  hsn        String
-  gstRate    String          @map("gst_rate")
-  category   ProductCategory @default(Apparel)
-  moq        Int             @default(20)
-  basePrice  Decimal         @map("base_price") @db.Decimal(10, 2)
-  gsm        String?
-  decoration String?
-  active     Boolean         @default(true)
-  createdAt  DateTime        @default(now()) @map("created_at")
+  id          Int             @id @default(autoincrement())
+  name        String
+  hsn         String
+  gstRate     String          @map("gst_rate")
+  category    ProductCategory @default(Apparel)
+  moq         Int             @default(20)
+  basePrice   Decimal         @map("base_price") @db.Decimal(10, 2)
+  gsm         String?
+  decoration  String?
+  description String?
+  variants    String?         // JSON: [{ name: string, values: string[] }]
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @map("created_at")
 
   @@map("products")
 }

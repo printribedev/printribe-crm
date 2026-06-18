@@ -26,6 +26,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       basePrice: Number(body.basePrice) || 0,
       gsm: body.gsm || null,
       decoration: body.decoration || null,
+      description: body.description || null,
+      variants: body.variants ? JSON.stringify(body.variants) : null,
       active: body.active !== false && body.active !== "false",
     },
   });

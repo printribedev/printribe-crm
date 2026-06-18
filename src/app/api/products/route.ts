@@ -13,7 +13,10 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const products = await prisma.product.findMany({ orderBy: { createdAt: "asc" } });
-  return NextResponse.json(products);
+  return NextResponse.json(products.map(p => ({
+    ...p,
+    variants: p.variants ? (() => { try { return JSON.parse(p.variants!); } catch { return []; } })() : [],
+  })));
 }
 
 export async function POST(req: Request) {
@@ -31,6 +34,8 @@ export async function POST(req: Request) {
       basePrice: Number(body.basePrice) || 0,
       gsm: body.gsm || null,
       decoration: body.decoration || null,
+      description: body.description || null,
+      variants: body.variants ? JSON.stringify(body.variants) : null,
       active: body.active !== false && body.active !== "false",
     },
   });
