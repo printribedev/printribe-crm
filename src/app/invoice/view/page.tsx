@@ -257,31 +257,23 @@ function InvoiceContent() {
               <div style={{ position: "relative", lineHeight: "28px", fontWeight: 500 }}>Billed To</div>
               <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 20, color: "#000" }}>
                 <h3 style={{ alignSelf: "stretch", margin: 0, fontSize: "inherit", letterSpacing: "-0.25px", lineHeight: "32px", fontWeight: 700, fontFamily: "inherit" }}>{client.name.toUpperCase()}</h3>
-                {(client.address || client.city) && (
-                  <div style={{ width: "100%", fontSize: 18, lineHeight: "28px", fontWeight: 500, display: "inline-block", maxWidth: 431 }}>
-                    {client.address || client.city}
-                  </div>
-                )}
+                <div style={{ width: "100%", fontSize: 18, lineHeight: "28px", fontWeight: 500, display: "inline-block", maxWidth: 431 }}>
+                  {(client.address || client.city) ? (client.address || client.city) : "-"}
+                </div>
               </div>
               <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 16 }}>
-                {client.gstin && (
-                  <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                    <div style={{ lineHeight: "24px" }}>GSTIN</div>
-                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.gstin}</div>
-                  </div>
-                )}
-                {client.email && (
-                  <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                    <div style={{ width: 50, flexShrink: 0, display: "inline-block", lineHeight: "24px" }}>Email</div>
-                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.email}</div>
-                  </div>
-                )}
-                {client.phone && (
-                  <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
-                    <div style={{ display: "inline-block", minWidth: 50, lineHeight: "24px" }}>Phone</div>
-                    <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.phone}</div>
-                  </div>
-                )}
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ lineHeight: "24px" }}>GSTIN</div>
+                  <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.gstin || "-"}</div>
+                </div>
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ width: 50, flexShrink: 0, display: "inline-block", lineHeight: "24px" }}>Email</div>
+                  <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.email || "-"}</div>
+                </div>
+                <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ display: "inline-block", minWidth: 50, lineHeight: "24px" }}>Phone</div>
+                  <div style={{ fontWeight: 500, color: "#000", lineHeight: "24px" }}>{client.phone || "-"}</div>
+                </div>
               </div>
             </div>
           </section>
