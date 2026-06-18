@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 
@@ -61,6 +61,20 @@ function InvoiceContent() {
   const [data, setData] = useState<InvoiceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  async function downloadPDF() {
+    if (!cardRef.current || !data) return;
+    const { default: html2canvas } = await import("html2canvas");
+    const { default: jsPDF } = await import("jspdf");
+    const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, backgroundColor: "#fff" });
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    pdf.addImage(imgData, "PNG", 0, 0, pageW, pageH);
+    pdf.save(`Invoice-${data.id.replace(/\//g, "-")}.pdf`);
+  }
 
   useEffect(() => {
     if (!id) { setError("No invoice ID provided."); setLoading(false); return; }
@@ -123,11 +137,10 @@ function InvoiceContent() {
           style={{ fontSize: 12, padding: "6px 14px", borderRadius: 6, background: "#333", color: "#fff", border: "none", cursor: "pointer" }}>
           ← Back
         </button>
-        <button onClick={() => window.print()}
+        <button onClick={downloadPDF}
           style={{ fontSize: 12, fontWeight: 700, padding: "6px 18px", borderRadius: 6, background: "#EE3C30", color: "#fff", border: "none", cursor: "pointer" }}>
-          Print / Download PDF
+          Download PDF
         </button>
-        <span style={{ fontSize: 11, color: "#888", marginLeft: 4 }}>Choose "Save as PDF" in the print dialog</span>
       </div>
 
       <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)" }}>
@@ -141,7 +154,7 @@ function InvoiceContent() {
             gap: 28px; line-height: normal; letter-spacing: normal;
           }
         */}
-        <div className="screen-card" style={{
+        <div ref={cardRef} className="screen-card" style={{
           width: 1062,
           maxWidth: "100%",
           backgroundColor: "#fff",
