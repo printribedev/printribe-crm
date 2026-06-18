@@ -130,6 +130,9 @@ function getProductDisplay(product: string): string {
   return product || "—";
 }
 
+// Prevent mouse-wheel from changing number input values while scrolling the page
+const noWheel = (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur();
+
 function Badge({ text, color = R }: { text: string; color?: string }) {
   return <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color + "18", color }}>{text}</span>;
 }
@@ -228,7 +231,6 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
     onChange("name", cp.name);
     onChange("hsn", cp.hsn);
     onChange("gstPct", parseFloat(cp.gstRate) || 5);
-    onChange("unitPrice", Number(cp.basePrice) || line.unitPrice);
     onChange("selectedVariants", {});
   }
 
@@ -244,7 +246,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
       <div>
         <div style={LBL}>{label}</div>
         <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-          <input type="number" value={val || ""} placeholder="0"
+          <input type="number" value={val || ""} placeholder="0" onWheel={noWheel}
             onChange={e => onChange(field, parseFloat(e.target.value) || 0)} style={SINP} />
           <ToggleBtn active={isPerPc} onClick={() => onChange(perPcField, !isPerPc)}>
             {isPerPc ? "₹/pc" : "Total"}
@@ -275,15 +277,15 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
         </div>
         <div style={{ width: 65 }}>
           <div style={LBL}>Qty</div>
-          <input type="number" value={line.qty || ""} placeholder="0" onChange={e => onChange("qty", parseInt(e.target.value) || 0)} style={SINP} />
+          <input type="number" value={line.qty || ""} placeholder="0" onWheel={noWheel} onChange={e => onChange("qty", parseInt(e.target.value) || 0)} style={SINP} />
         </div>
         <div style={{ width: 95 }}>
           <div style={LBL}>Unit Price ₹</div>
-          <input type="number" value={line.unitPrice || ""} placeholder="0" onChange={e => onChange("unitPrice", parseFloat(e.target.value) || 0)} style={SINP} />
+          <input type="number" value={line.unitPrice || ""} placeholder="0" onWheel={noWheel} onChange={e => onChange("unitPrice", parseFloat(e.target.value) || 0)} style={SINP} />
         </div>
         <div style={{ width: 55 }}>
           <div style={LBL}>GST %</div>
-          <input type="number" value={line.gstPct || ""} placeholder="5" onChange={e => onChange("gstPct", parseFloat(e.target.value) || 0)} style={SINP} />
+          <input type="number" value={line.gstPct || ""} placeholder="5" onWheel={noWheel} onChange={e => onChange("gstPct", parseFloat(e.target.value) || 0)} style={SINP} />
         </div>
         <div style={{ textAlign: "right", minWidth: 80, flex: 1 }}>
           <div style={LBL}>Line Total</div>
@@ -333,12 +335,12 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <div>
                 <div style={LBL}>Total weight (kg)</div>
-                <input type="number" value={line.fabricWeightPerPc || ""} placeholder="0.000"
+                <input type="number" value={line.fabricWeightPerPc || ""} placeholder="0.000" onWheel={noWheel}
                   onChange={e => onChange("fabricWeightPerPc", parseFloat(e.target.value) || 0)} style={SINP} />
               </div>
               <div>
                 <div style={LBL}>Price per kg (₹)</div>
-                <input type="number" value={line.fabricPricePerKg || ""} placeholder="0"
+                <input type="number" value={line.fabricPricePerKg || ""} placeholder="0" onWheel={noWheel}
                   onChange={e => onChange("fabricPricePerKg", parseFloat(e.target.value) || 0)} style={SINP} />
               </div>
               <div>
@@ -355,7 +357,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
             <div style={{ display: "flex", gap: 6, alignItems: "flex-end" }}>
               <div style={{ flex: 1 }}>
                 <div style={LBL}>Amount</div>
-                <input type="number" value={line.fabricManual || ""} placeholder="0"
+                <input type="number" value={line.fabricManual || ""} placeholder="0" onWheel={noWheel}
                   onChange={e => onChange("fabricManual", parseFloat(e.target.value) || 0)} style={SINP} />
               </div>
               <ToggleBtn active={line.fabricPerPc} onClick={() => onChange("fabricPerPc", !line.fabricPerPc)}>
@@ -379,12 +381,12 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
               <div>
                 <div style={LBL}>Total rib weight (kg)</div>
-                <input type="number" value={line.ribWeightPerPc || ""} placeholder="0.000"
+                <input type="number" value={line.ribWeightPerPc || ""} placeholder="0.000" onWheel={noWheel}
                   onChange={e => onChange("ribWeightPerPc", parseFloat(e.target.value) || 0)} style={SINP} />
               </div>
               <div>
                 <div style={LBL}>Price per kg (₹)</div>
-                <input type="number" value={line.ribPricePerKg || ""} placeholder="0"
+                <input type="number" value={line.ribPricePerKg || ""} placeholder="0" onWheel={noWheel}
                   onChange={e => onChange("ribPricePerKg", parseFloat(e.target.value) || 0)} style={SINP} />
               </div>
               <div>
@@ -401,7 +403,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
             <div style={{ display: "flex", gap: 6, alignItems: "flex-end" }}>
               <div style={{ flex: 1 }}>
                 <div style={LBL}>Amount</div>
-                <input type="number" value={line.ribManual || ""} placeholder="0"
+                <input type="number" value={line.ribManual || ""} placeholder="0" onWheel={noWheel}
                   onChange={e => onChange("ribManual", parseFloat(e.target.value) || 0)} style={SINP} />
               </div>
               <ToggleBtn active={line.ribPerPc} onClick={() => onChange("ribPerPc", !line.ribPerPc)}>
