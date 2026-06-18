@@ -601,8 +601,8 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button type="button" onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button type="button" onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: isDirty ? "#d97706" : R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700, transition: "background 0.2s" }}>
-              {isNew ? "Create order" : isDirty ? "Save changes ●" : "Save changes"}
+            <button type="button" onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
+              {isNew ? "Create order" : "Save changes"}
             </button>
           </div>
         </div>
