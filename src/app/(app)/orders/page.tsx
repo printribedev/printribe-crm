@@ -624,7 +624,7 @@ export default function OrdersPage() {
 
   async function handleSave(form: Record<string, unknown>) {
     if (editModal?.id) {
-      await fetch(`/api/orders/${editModal.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      await fetch(`/api/orders/${encodeURIComponent(editModal.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     } else {
       await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     }
@@ -633,7 +633,7 @@ export default function OrdersPage() {
 
   async function handleDelete(id: string) {
     if (!confirm(`Delete order ${id}? This cannot be undone.`)) return;
-    await fetch(`/api/orders/${id}`, { method: "DELETE" });
+    await fetch(`/api/orders/${encodeURIComponent(id)}`, { method: "DELETE" });
     setEditModal(null);
     await load();
   }
