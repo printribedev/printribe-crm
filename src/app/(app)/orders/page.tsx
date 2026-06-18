@@ -447,15 +447,17 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
     dueDate: order.dueDate ? order.dueDate.slice(0, 10) : "",
     priority: order.priority ?? "Normal",
   });
-  const setF = (k: string, v: string | number | null) => setForm(p => ({ ...p, [k]: v }));
+  const setF = (k: string, v: string | number | null) => { setIsDirty(true); setForm(p => ({ ...p, [k]: v })); };
 
   const [idError, setIdError] = useState("");
+  const [isDirty, setIsDirty] = useState(false);
   const [clientInput, setClientInput] = useState(order.clientName ?? "");
   const [lines, setLines] = useState<ProductLine[]>(() =>
     parseLines(order.product ?? "", order.qty, order.saleValue, order.gst)
   );
 
   function updateLine(i: number, k: keyof ProductLine, v: unknown) {
+    setIsDirty(true);
     setLines(ls => ls.map((l, idx) => idx === i ? { ...l, [k]: v } : l));
   }
 
@@ -503,7 +505,15 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
       <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 740, maxHeight: "93vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "New Order" : `Edit — ${order.id}`}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "New Order" : `Edit — ${order.id}`}</div>
+            {isDirty && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "#b45309", background: "#fef3c7", border: "1px solid #fde68a", borderRadius: 20, padding: "2px 10px" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#d97706", display: "inline-block" }} />
+                Unsaved changes
+              </span>
+            )}
+          </div>
           <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
 
@@ -591,8 +601,8 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button type="button" onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button type="button" onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
-              {isNew ? "Create order" : "Save changes"}
+            <button type="button" onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: isDirty ? "#d97706" : R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700, transition: "background 0.2s" }}>
+              {isNew ? "Create order" : isDirty ? "Save changes ●" : "Save changes"}
             </button>
           </div>
         </div>
