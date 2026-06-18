@@ -81,11 +81,21 @@ export default function InvoicePage() {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=La+Belle+Aurore&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #f0f0f0; font-family: Inter, sans-serif; }
+        @page {
+          size: A4 portrait;
+          margin: 0;
+        }
         @media print {
           .no-print { display: none !important; }
-          body { background: #fff; }
-          .invoice-page { padding: 0 !important; }
-          .invoice-wrap { box-shadow: none !important; max-width: 100% !important; }
+          body { background: #fff; margin: 0; padding: 0; }
+          .invoice-page { padding: 0 !important; margin: 0 !important; min-height: unset !important; }
+          .invoice-wrap {
+            box-shadow: none !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+          }
         }
       `}</style>
 
@@ -138,7 +148,7 @@ export default function InvoicePage() {
                 alt="Printribe"
                 width={402}
                 height={76}
-                style={{ width: "auto", height: 60, objectFit: "contain", maxWidth: 320 }}
+                style={{ width: 402, height: 76, objectFit: "cover", minWidth: 310, maxWidth: 402 }}
               />
             </div>
 
