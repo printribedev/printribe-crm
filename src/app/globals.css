@@ -22,14 +22,12 @@ input, select, textarea, button {
   font-family: inherit;
 }
 
-/* Prevent mouse wheel from changing number input values while scrolling */
-input[type="number"] {
-  -moz-appearance: textfield;
-}
+/* Hide number input spinners; wheel-scroll is blocked per-input via onWheel blur */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
+  margin: 0;
 }
 input[type="number"] {
-  appearance: textfield;
+  -moz-appearance: textfield; /* Firefox */
 }
