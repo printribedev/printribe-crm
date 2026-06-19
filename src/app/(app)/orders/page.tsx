@@ -16,7 +16,8 @@ const STAGES = [
   { id: "production", label: "In Production", color: ORANGE },
   { id: "qc", label: "QC / Finishing", color: GOLD },
   { id: "dispatch", label: "Dispatched", color: BLUE },
-  { id: "delivered", label: "Delivered", color: GREEN },
+  { id: "delivered", label: "Delivered, Payment Clear", color: GREEN },
+  { id: "delivered_pending", label: "Delivered, Payment Pending", color: ORANGE },
 ];
 
 type ProductLine = {
@@ -58,6 +59,7 @@ type Order = {
   fabricWeightPerPc: number | null; fabricPricePerKg: number | null;
   ribWeightPerPc: number | null; ribPricePerKg: number | null;
   stage: string; priority: string;
+  deliveryDate: string | null; paymentDate: string | null;
   notes: OrderNote[]; timeline: OrderTimeline[];
 };
 
@@ -447,6 +449,8 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
     stage: order.stage ?? "enquiry",
     date: order.date ? order.date.slice(0, 10) : today,
     dueDate: order.dueDate ? order.dueDate.slice(0, 10) : "",
+    deliveryDate: order.deliveryDate ? order.deliveryDate.slice(0, 10) : "",
+    paymentDate: order.paymentDate ? order.paymentDate.slice(0, 10) : "",
     priority: order.priority ?? "Normal",
   });
   const setF = (k: string, v: string | number | null) => setForm(p => ({ ...p, [k]: v }));
@@ -550,6 +554,14 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
           <div>
             <div style={LBL}>Due Date</div>
             <input type="date" value={form.dueDate} onChange={e => setF("dueDate", e.target.value)} style={INP} />
+          </div>
+          <div>
+            <div style={LBL}>Delivery Date</div>
+            <input type="date" value={form.deliveryDate} onChange={e => setF("deliveryDate", e.target.value)} style={INP} />
+          </div>
+          <div>
+            <div style={LBL}>Payment Date</div>
+            <input type="date" value={form.paymentDate} onChange={e => setF("paymentDate", e.target.value)} style={INP} />
           </div>
           <div style={{ gridColumn: "1/-1" }}>
             <div style={LBL}>Priority</div>

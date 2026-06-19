@@ -9,7 +9,7 @@ async function requireAuth() {
   return user;
 }
 
-const STAGES: Stage[] = ["enquiry", "design", "sampling", "production", "qc", "dispatch", "delivered"];
+const STAGES: Stage[] = ["enquiry", "design", "sampling", "production", "qc", "dispatch", "delivered", "delivered_pending"];
 
 function serializeOrder(o: Record<string, unknown>) {
   return {
@@ -70,6 +70,8 @@ export async function POST(req: Request) {
       ribPricePerKg: body.ribPricePerKg != null ? Number(body.ribPricePerKg) : null,
       stage: body.stage ?? "enquiry",
       priority: body.priority ?? "Normal",
+      deliveryDate: body.deliveryDate ? new Date(body.deliveryDate) : null,
+      paymentDate: body.paymentDate ? new Date(body.paymentDate) : null,
       timeline: {
         create: STAGES.map(s => ({ stage: s, done: false, date: null })),
       },

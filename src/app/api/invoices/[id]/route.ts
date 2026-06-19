@@ -51,7 +51,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   return NextResponse.json({
     id: order.id,
-    date: order.date,
+    date: order.deliveryDate ?? order.date,
     items,
     totalSaleValue: Number(order.saleValue),
     totalGst: Number(order.gst),

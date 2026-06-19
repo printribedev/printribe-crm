@@ -45,6 +45,7 @@ enum Stage {
   qc
   dispatch
   delivered
+  delivered_pending
 }
 
 enum Priority {
@@ -158,9 +159,11 @@ model Order {
   fabricPricePerKg  Decimal?  @map("fabric_price_per_kg") @db.Decimal(10, 2)
   ribWeightPerPc    Decimal?  @map("rib_weight_per_pc") @db.Decimal(10, 3)
   ribPricePerKg     Decimal?  @map("rib_price_per_kg") @db.Decimal(10, 2)
-  stage      Stage     @default(enquiry)
-  priority   Priority  @default(Normal)
-  createdAt  DateTime  @default(now()) @map("created_at")
+  stage        Stage     @default(enquiry)
+  priority     Priority  @default(Normal)
+  deliveryDate DateTime? @map("delivery_date")
+  paymentDate  DateTime? @map("payment_date")
+  createdAt    DateTime  @default(now()) @map("created_at")
   notes      OrderNote[]
   timeline   OrderTimeline[]
 
