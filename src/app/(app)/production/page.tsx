@@ -7,14 +7,23 @@ const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK
 const GREEN = "#1A7A4A";
 
 const STAGES = [
-  { id: "enquiry",    label: "Enquiry",        color: MID },
-  { id: "design",     label: "Design",         color: PURPLE },
-  { id: "sampling",   label: "Sampling",       color: BLUE },
-  { id: "production", label: "In Production",  color: ORANGE },
-  { id: "qc",         label: "QC / Finishing", color: GOLD },
-  { id: "dispatch",   label: "Dispatched",     color: BLUE },
-  { id: "delivered",  label: "Delivered",      color: GREEN },
+  { id: "enquiry",           label: "Enquiry",                    color: MID },
+  { id: "design",            label: "Design",                     color: PURPLE },
+  { id: "sampling",          label: "Sampling",                   color: BLUE },
+  { id: "production",        label: "In Production",              color: ORANGE },
+  { id: "qc",                label: "QC / Finishing",             color: GOLD },
+  { id: "dispatch",          label: "Dispatched",                 color: BLUE },
+  { id: "delivered",         label: "Delivered, Payment Clear",   color: GREEN },
+  { id: "delivered_pending", label: "Delivered, Payment Pending", color: ORANGE },
 ];
+
+function getProductDisplay(product: string): string {
+  try {
+    const p = JSON.parse(product);
+    if (Array.isArray(p)) return p.map((l: { name?: string }) => l.name).filter(Boolean).join(", ") || "—";
+  } catch { /* legacy */ }
+  return product || "—";
+}
 
 const SEG_COLORS: Record<string, string> = {
   Reseller: R, Sports: BLUE, Education: GREEN, Corporate: GOLD, NGO_Govt: PURPLE, B2C: ORANGE,
@@ -80,7 +89,7 @@ function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
         )}
       </div>
       <div style={{ fontSize: 12, fontWeight: 700, color: BLACK, marginBottom: 2, lineHeight: 1.3 }}>{order.clientName}</div>
-      <div style={{ fontSize: 11, color: MID, marginBottom: 8 }}>{order.product}</div>
+      <div style={{ fontSize: 11, color: MID, marginBottom: 8 }}>{getProductDisplay(order.product)}</div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
         <span style={{ fontSize: 9, fontWeight: 700, background: segColor + "18", color: segColor, padding: "2px 7px", borderRadius: 10 }}>{order.segment}</span>
@@ -312,7 +321,7 @@ export default function ProductionPage() {
                 <tr key={o.id} style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG }}>
                   <td style={{ padding: "10px 13px", fontWeight: 600, color: R, fontSize: 11 }}>{o.id}</td>
                   <td style={{ padding: "10px 13px", fontWeight: 500 }}>{o.clientName}</td>
-                  <td style={{ padding: "10px 13px", color: MID }}>{o.product}</td>
+                  <td style={{ padding: "10px 13px", color: MID }}>{getProductDisplay(o.product)}</td>
                   <td style={{ padding: "10px 13px" }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 8px", borderRadius: 20 }}>{stage.label}</span>
                   </td>
