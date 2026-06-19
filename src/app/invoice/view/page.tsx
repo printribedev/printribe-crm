@@ -81,11 +81,21 @@ function InvoiceContent() {
   );
 
   const { items, totalSaleValue, totalGst, client } = data;
-  const firstItem = items[0] ?? { saleValue: 0, gst: 0 };
-  const firstGstPct = firstItem.saleValue > 0 ? Math.round((firstItem.gst / firstItem.saleValue) * 100) : 5;
-  const halfGstPct = firstGstPct / 2;
-  const cgst = totalGst / 2;
-  const sgst = totalGst / 2;
+
+  // Group items by GST rate so we render one CGST+SGST pair per rate
+  const gstGroups: { rate: number; cgst: number; sgst: number }[] = [];
+  items.forEach(item => {
+    const rate = item.saleValue > 0 ? Math.round((item.gst / item.saleValue) * 100) : 0;
+    const existing = gstGroups.find(g => g.rate === rate);
+    if (existing) {
+      existing.cgst += item.gst / 2;
+      existing.sgst += item.gst / 2;
+    } else {
+      gstGroups.push({ rate, cgst: item.gst / 2, sgst: item.gst / 2 });
+    }
+  });
+  gstGroups.sort((a, b) => a.rate - b.rate);
+
   const exactTotal = totalSaleValue + totalGst;
   const amountDue = Math.round(exactTotal);
   const roundOff = amountDue - exactTotal;
@@ -423,19 +433,27 @@ function InvoiceContent() {
               }}>
                 {/* Totals rows: .prvaKolaPlivanjaZaDojena — gap:24px, color:Neutral-500 */}
                 <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 24, overflow: "hidden", color: "#737982" }}>
-                  {/* Labels: .subTotalParent — gap:16px */}
+                  {/* Labels */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 108 }}>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Sub Total</div>
-                    <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Output CGST({halfGstPct}%)</div>
-                    <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Output SGST({halfGstPct}%)</div>
+                    {gstGroups.map(g => (
+                      <>
+                        <div key={`cgst-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Output CGST({g.rate / 2}%)</div>
+                        <div key={`sgst-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Output SGST({g.rate / 2}%)</div>
+                      </>
+                    ))}
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Total Tax(GST)</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Round Off</div>
                   </div>
-                  {/* Values: .parent — gap:16px, text-align:right, color:#000 */}
+                  {/* Values */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 16, minWidth: 108, textAlign: "right", color: "#000" }}>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalSaleValue)}</div>
-                    <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(cgst)}</div>
-                    <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(sgst)}</div>
+                    {gstGroups.map(g => (
+                      <>
+                        <div key={`cgst-val-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(g.cgst)}</div>
+                        <div key={`sgst-val-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(g.sgst)}</div>
+                      </>
+                    ))}
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalGst)}</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(roundOff)}</div>
                   </div>
