@@ -734,7 +734,7 @@ export default function OrdersPage() {
               const { marginPct } = calcMargin(o);
               const mc = marginColor(marginPct);
               const stage = STAGES.find(s => s.id === o.stage) || STAGES[0];
-              const TD: React.CSSProperties = { padding: "8px 12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+              const TD: React.CSSProperties = { padding: "8px 12px" };
               return (
                 <tr key={o.id} style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG }}>
                   <td style={{ ...TD, fontWeight: 600, color: R, fontSize: 11 }}>{o.id}</td>
@@ -747,7 +747,7 @@ export default function OrdersPage() {
                     <span style={{ fontWeight: 700, color: mc, background: mc + "18", padding: "2px 7px", borderRadius: 20, fontSize: 11 }}>{pct(marginPct)}</span>
                   </td>
                   <td style={TD}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" }}>{stage.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 7px", borderRadius: 20 }}>{stage.label}</span>
                   </td>
                   <td style={{ ...TD, overflow: "visible" }}>
                     <div style={{ display: "flex", gap: 4 }}>
