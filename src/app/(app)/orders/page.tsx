@@ -624,6 +624,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState<DateFilter>(() => loadFilter());
+  const [sort, setSort] = useState<{ col: string; dir: "asc" | "desc" }>({ col: "date", dir: "desc" });
   const [costModal, setCostModal] = useState<Order | null>(null);
   const [editModal, setEditModal] = useState<Partial<Order> | null>(null);
 
@@ -653,9 +654,27 @@ export default function OrdersPage() {
     await load();
   }
 
-  const filtered = applyDateFilter(orders, dateFilter).filter(o =>
-    [o.id, o.clientName, o.product].some(f => f?.toLowerCase().includes(search.toLowerCase()))
-  );
+  function toggleSort(col: string) {
+    setSort(s => s.col === col ? { col, dir: s.dir === "asc" ? "desc" : "asc" } : { col, dir: "asc" });
+  }
+
+  const filtered = applyDateFilter(orders, dateFilter)
+    .filter(o => [o.id, o.clientName, o.product].some(f => f?.toLowerCase().includes(search.toLowerCase())))
+    .sort((a, b) => {
+      const dir = sort.dir === "asc" ? 1 : -1;
+      switch (sort.col) {
+        case "id":       return dir * a.id.localeCompare(b.id);
+        case "client":   return dir * a.clientName.localeCompare(b.clientName);
+        case "product":  return dir * getProductDisplay(a.product).localeCompare(getProductDisplay(b.product));
+        case "segment":  return dir * a.segment.localeCompare(b.segment);
+        case "qty":      return dir * (a.qty - b.qty);
+        case "value":    return dir * (a.saleValue - b.saleValue);
+        case "margin":   return dir * (calcMargin(a).marginPct - calcMargin(b).marginPct);
+        case "stage":    return dir * (STAGES.findIndex(s => s.id === a.stage) - STAGES.findIndex(s => s.id === b.stage));
+        case "date":     return dir * (new Date(a.date).getTime() - new Date(b.date).getTime());
+        default:         return 0;
+      }
+    });
 
   if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading orders…</div>;
 
@@ -680,9 +699,28 @@ export default function OrdersPage() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
-              {["Invoice", "Client", "Product", "Segment", "Qty", "Sale Value", "Margin", "Stage", ""].map(h => (
-                <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>{h}</th>
-              ))}
+              {([
+                ["Invoice", "id"], ["Client", "client"], ["Product", "product"],
+                ["Segment", "segment"], ["Qty", "qty"], ["Sale Value", "value"],
+                ["Margin", "margin"], ["Stage", "stage"], ["", ""],
+              ] as [string, string][]).map(([label, col]) => {
+                const active = sort.col === col;
+                const icon = !col ? "" : active ? (sort.dir === "asc" ? " ▲" : " ▼") : " ⇅";
+                return (
+                  <th key={col || "_"}
+                    onClick={col ? () => toggleSort(col) : undefined}
+                    style={{
+                      padding: "12px 14px", textAlign: "left", fontSize: 10, fontWeight: 600,
+                      letterSpacing: "0.08em", textTransform: "uppercase",
+                      cursor: col ? "pointer" : "default",
+                      userSelect: "none",
+                      whiteSpace: "nowrap",
+                      color: active ? "#fff" : "rgba(255,255,255,0.65)",
+                    }}>
+                    {label}<span style={{ opacity: active ? 1 : 0.45, fontSize: 9 }}>{icon}</span>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
