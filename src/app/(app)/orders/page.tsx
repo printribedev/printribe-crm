@@ -625,6 +625,19 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState<DateFilter>(() => loadFilter());
   const [sort, setSort] = useState<{ col: string; dir: "asc" | "desc" }>({ col: "date", dir: "desc" });
+  const [flags, setFlags] = useState<Record<string, "red" | "green" | null>>(() => {
+    try { return JSON.parse(localStorage.getItem("printribe_flags") || "{}"); } catch { return {}; }
+  });
+  function cycleFlag(id: string) {
+    setFlags(prev => {
+      const cur = prev[id] ?? null;
+      const next: "red" | "green" | null = cur === null ? "red" : cur === "red" ? "green" : null;
+      const updated = { ...prev, [id]: next };
+      if (next === null) delete updated[id];
+      localStorage.setItem("printribe_flags", JSON.stringify(updated));
+      return updated;
+    });
+  }
   const [costModal, setCostModal] = useState<Order | null>(null);
   const [editModal, setEditModal] = useState<Partial<Order> | null>(null);
 
@@ -706,6 +719,7 @@ export default function OrdersPage() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
+              <th style={{ padding: "10px 8px", width: 32 }} />
               {([
                 ["Invoice", "id"], ["Client", "client"], ["Product", "product"],
                 ["Segment", "segment"], ["Qty", "qty"], ["Sale Value", "value"],
@@ -737,6 +751,15 @@ export default function OrdersPage() {
               const TD: React.CSSProperties = { padding: "8px 12px" };
               return (
                 <tr key={o.id} style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG }}>
+                  <td style={{ padding: "8px 4px 8px 10px", width: 32 }}>
+                    <button
+                      title={flags[o.id] === "red" ? "Needs validation" : flags[o.id] === "green" ? "Validated" : "Click to flag"}
+                      onClick={() => cycleFlag(o.id)}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 14, lineHeight: 1, opacity: flags[o.id] ? 1 : 0.18 }}
+                    >
+                      <span style={{ color: flags[o.id] === "red" ? R : flags[o.id] === "green" ? GREEN : MID }}>⚑</span>
+                    </button>
+                  </td>
                   <td style={{ ...TD, fontWeight: 600, color: R, fontSize: 11 }}>{o.id}</td>
                   <td style={{ ...TD, fontWeight: 500 }}>{o.clientName}</td>
                   <td style={{ ...TD, color: MID }}>{getProductDisplay(o.product)}</td>
@@ -760,7 +783,7 @@ export default function OrdersPage() {
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={9} style={{ padding: "32px", textAlign: "center", color: MID, fontSize: 13 }}>
+              <tr><td colSpan={10} style={{ padding: "32px", textAlign: "center", color: MID, fontSize: 13 }}>
                 {search ? "No orders match your search." : "No orders yet. Click '+ New order' to create one."}
               </td></tr>
             )}
