@@ -77,20 +77,22 @@ function InvoiceContent() {
     function beforePrint() {
       const card = document.querySelector(".screen-card") as HTMLElement | null;
       if (!card) return;
-      // Temporarily make card visible to get true scrollHeight
       const prev = card.style.overflow;
       card.style.overflow = "visible";
       const naturalHeight = card.scrollHeight;
       card.style.overflow = prev;
 
       const availableHeight = A4_PX / BASE_ZOOM;
-      const zoom = naturalHeight > availableHeight
-        ? Math.floor((A4_PX / naturalHeight) * 100) / 100
-        : BASE_ZOOM;
-      document.documentElement.style.zoom = String(zoom);
+      if (naturalHeight > availableHeight) {
+        const zoom = Math.floor((A4_PX / naturalHeight) * 100) / 100;
+        let tag = document.getElementById("pt-print-zoom") as HTMLStyleElement | null;
+        if (!tag) { tag = document.createElement("style"); tag.id = "pt-print-zoom"; document.head.appendChild(tag); }
+        tag.textContent = `@media print { html { zoom: ${zoom} !important; } }`;
+      }
     }
     function afterPrint() {
-      document.documentElement.style.zoom = "";
+      const tag = document.getElementById("pt-print-zoom");
+      if (tag) tag.remove();
     }
 
     window.addEventListener("beforeprint", beforePrint);
@@ -156,6 +158,8 @@ function InvoiceContent() {
           .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; }
           .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
           .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; box-shadow: 0 -4px 0 0 #ee3c30 !important; }
+          .invoice-bottom { break-before: avoid !important; break-inside: avoid !important; }
+          .screen-card > * { break-inside: avoid !important; }
           html { zoom: 0.75; }
         }
       `}</style>
