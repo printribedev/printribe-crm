@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, PieChart, Pie, Cell,
+  CartesianGrid, PieChart, Pie, Cell, LineChart, Line,
 } from "recharts";
 
 const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
@@ -20,22 +20,53 @@ const SEG_LABELS: Record<string, string> = {
 
 type Order = {
   id: string; clientName: string; segment: string; stage: string; priority: string;
-  saleValue: number; fabric: number; printing: number; transport: number;
-  misc: number; jobWork: number; packaging: number; design: number; date: string;
+  saleValue: number; gst: number; fabric: number; printing: number; transport: number;
+  misc: number; jobWork: number; packaging: number; design: number; ribCost: number;
+  date: string; dueDate: string | null; deliveryDate: string | null;
 };
 type ClientStat = { id: number; name: string; segment: string; totalValue: number };
-type MonthlySale = { id: number; month: string; sales: number; orderCount: number; fyYear: string };
 
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 const pct = (n: number) => (n * 100).toFixed(1) + "%";
 
 function calcMargin(o: Order) {
-  const cost = o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design;
+  const cost = o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design + (o.ribCost || 0);
   return o.saleValue > 0 ? (o.saleValue - cost) / o.saleValue : 0;
 }
 function marginColor(m: number) { return m > 0.35 ? GREEN : m > 0.2 ? "#8a7300" : R; }
 
-const PERIODS = ["Last 3 months", "Last 6 months", "FY 25-26", "FY 26-27 YTD", "All time"];
+const PERIODS = ["This month", "Last 3 months", "Last 6 months", "FY 26-27", "All time"];
+
+function filterOrders(orders: Order[], period: string): Order[] {
+  const now = new Date();
+  const msAgo = (months: number) => { const d = new Date(now); d.setMonth(d.getMonth() - months); return d; };
+  switch (period) {
+    case "This month":
+      return orders.filter(o => { const d = new Date(o.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+    case "Last 3 months":
+      return orders.filter(o => new Date(o.date) >= msAgo(3));
+    case "Last 6 months":
+      return orders.filter(o => new Date(o.date) >= msAgo(6));
+    case "FY 26-27":
+      return orders.filter(o => { const d = new Date(o.date); const fy = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1; return fy === 2026; });
+    default:
+      return orders;
+  }
+}
+
+function toMonthlyData(orders: Order[]) {
+  const map: Record<string, { sales: number; count: number; ts: number }> = {};
+  orders.forEach(o => {
+    const d = new Date(o.date);
+    const key = d.toLocaleDateString("en-IN", { month: "short" }) + " " + String(d.getFullYear()).slice(2);
+    const ts = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+    if (!map[key]) map[key] = { sales: 0, count: 0, ts };
+    map[key].sales += o.saleValue;
+    map[key].count += 1;
+  });
+  return Object.entries(map).map(([month, v]) => ({ month, sales: v.sales, count: v.count, ts: v.ts }))
+    .sort((a, b) => a.ts - b.ts);
+}
 
 function KpiCard({ label, value, sub, color = R, badge, badgeColor = GREEN }: {
   label: string; value: string | number; sub?: string;
@@ -51,73 +82,89 @@ function KpiCard({ label, value, sub, color = R, badge, badgeColor = GREEN }: {
   );
 }
 
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
+function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string }[]; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", fontSize: 12 }}>
       <div style={{ fontWeight: 700, marginBottom: 4 }}>{label}</div>
-      <div style={{ color: R }}>{fmt(payload[0].value)}</div>
+      {payload.map((p, i) => (
+        <div key={i} style={{ color: R }}>{fmt(p.value)}</div>
+      ))}
     </div>
   );
 }
 
-function filterSales(sales: MonthlySale[], period: string) {
-  if (period === "Last 3 months") return sales.slice(-3);
-  if (period === "Last 6 months") return sales.slice(-6);
-  if (period === "FY 25-26") return sales.filter(s => s.fyYear === "2025-26");
-  if (period === "FY 26-27 YTD") return sales.filter(s => s.fyYear === "2026-27");
-  return sales;
-}
-
 export default function DashboardPage() {
-  const [period, setPeriod] = useState("FY 26-27 YTD");
+  const [period, setPeriod] = useState("FY 26-27");
   const [orders, setOrders] = useState<Order[]>([]);
   const [clients, setClients] = useState<ClientStat[]>([]);
-  const [monthlySales, setMonthlySales] = useState<MonthlySale[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/dashboard").then(r => r.json()).then(d => {
       setOrders(d.orders);
       setClients(d.clients);
-      setMonthlySales(d.monthlySales);
       setLoading(false);
     });
   }, []);
 
   if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading dashboard…</div>;
 
-  const data = filterSales(monthlySales, period);
-  const totalSales = data.reduce((s, d) => s + d.sales, 0);
-  const totalInvoices = data.reduce((s, d) => s + d.orderCount, 0);
-  const avgOrder = totalInvoices ? totalSales / totalInvoices : 0;
-  const allMargins = orders.map(calcMargin);
-  const avgMargin = allMargins.length ? allMargins.reduce((a, b) => a + b, 0) / allMargins.length : 0;
-  const activeJobs = orders.filter(o => o.stage !== "delivered").length;
+  const filtered = filterOrders(orders, period);
+  const monthlyData = toMonthlyData(filtered);
 
-  // Segment pie — group clients by segment
+  // KPIs from filtered orders
+  const totalRevenue = filtered.reduce((s, o) => s + o.saleValue, 0);
+  const totalGst = filtered.reduce((s, o) => s + o.gst, 0);
+  const avgMargin = filtered.length ? filtered.reduce((s, o) => s + calcMargin(o), 0) / filtered.length : 0;
+  const activeJobs = orders.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending").length;
+  const pendingPayment = orders.filter(o => o.stage === "delivered_pending").length;
+  const avgOrderValue = filtered.length ? totalRevenue / filtered.length : 0;
+  const overdue = orders.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending" && o.dueDate && new Date(o.dueDate) < new Date()).length;
+
+  // Segment breakdown from filtered orders
   const segMap: Record<string, number> = {};
-  clients.forEach(c => { segMap[c.segment] = (segMap[c.segment] || 0) + c.totalValue; });
+  filtered.forEach(o => { segMap[o.segment] = (segMap[o.segment] || 0) + o.saleValue; });
   const segData = Object.entries(segMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
-  // Top clients
-  const sortedClients = [...clients].sort((a, b) => b.totalValue - a.totalValue);
-  const topMax = sortedClients[0]?.totalValue || 1;
+  // Stage breakdown from ALL orders
+  const stageLabels: Record<string, string> = {
+    enquiry: "Enquiry", design: "Design", sampling: "Sampling",
+    production: "In Production", qc: "QC", dispatch: "Dispatched",
+    delivered: "Delivered", delivered_pending: "Pmt Pending",
+  };
+  const stageMap: Record<string, number> = {};
+  orders.forEach(o => { stageMap[o.stage] = (stageMap[o.stage] || 0) + 1; });
+  const stageData = Object.entries(stageMap).map(([id, count]) => ({ name: stageLabels[id] || id, count }));
 
-  // Margin by order (last 8 orders by date)
-  const recentOrders = [...orders].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 8);
-  const marginChartData = recentOrders.map(o => ({
+  // Top clients from filtered orders
+  const clientOrderValue: Record<number, number> = {};
+  filtered.forEach(o => {
+    const c = clients.find(c => c.name === o.clientName);
+    if (c) clientOrderValue[c.id] = (clientOrderValue[c.id] || 0) + o.saleValue;
+  });
+  const topClients = clients
+    .filter(c => clientOrderValue[c.id] > 0)
+    .map(c => ({ ...c, periodValue: clientOrderValue[c.id] || 0 }))
+    .sort((a, b) => b.periodValue - a.periodValue)
+    .slice(0, 6);
+  const topMax = topClients[0]?.periodValue || 1;
+
+  // Recent order margins
+  const recentOrders = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
+  const marginData = recentOrders.map(o => ({
     name: o.clientName.split(" ")[0],
     margin: parseFloat((calcMargin(o) * 100).toFixed(1)),
-    marginRaw: calcMargin(o),
-  }));
+    raw: calcMargin(o),
+  })).reverse();
 
   return (
     <div style={{ padding: "26px 28px" }}>
+      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Dashboard</div>
-          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>Printribe CRM · FY overview</div>
+          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>Printribe CRM · FY 26-27 · {orders.length} orders total</div>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
           {PERIODS.map(p => (
@@ -131,29 +178,39 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
-        <KpiCard label="Total Revenue" value={fmt(totalSales)} sub={`${data.length} months`} color={R} badge="↑ Growing" />
-        <KpiCard label="Invoices Raised" value={totalInvoices} sub={`Avg ${fmt(avgOrder)}`} color={BLUE} badge="All FYs" badgeColor={BLUE} />
-        <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="Tracked orders" color={GOLD}
+      {/* KPI row 1 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 14 }}>
+        <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} color={R} />
+        <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" color={BLUE} badge="Tax" badgeColor={BLUE} />
+        <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" color={GOLD} />
+        <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period" color={GREEN}
           badge={avgMargin > 0.3 ? "Healthy" : "Watch"} badgeColor={avgMargin > 0.3 ? GREEN : ORANGE} />
-        <KpiCard label="Active Jobs" value={activeJobs} sub="In production" color={ORANGE} badge="Live" badgeColor={ORANGE} />
+      </div>
+
+      {/* KPI row 2 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
+        <KpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" color={ORANGE} badge="Live" badgeColor={ORANGE} />
+        <KpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay" color={PURPLE}
+          badge={pendingPayment > 0 ? "Follow up" : "All clear"} badgeColor={pendingPayment > 0 ? R : GREEN} />
+        <KpiCard label="Overdue Orders" value={overdue} sub="Past due date" color={R}
+          badge={overdue > 0 ? "Action needed" : "On track"} badgeColor={overdue > 0 ? R : GREEN} />
+        <KpiCard label="Total Clients" value={clients.length} sub={`${clients.filter(c => (clientOrderValue[c.id] || 0) > 0).length} active this period`} color={BLUE} />
       </div>
 
       {/* Revenue trend + Segment mix */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Revenue trend</div>
-          <div style={{ fontSize: 11, color: MID, marginBottom: 18 }}>Monthly gross sales (taxable value)</div>
-          {data.length === 0 ? (
+          <div style={{ fontSize: 11, color: MID, marginBottom: 18 }}>Monthly sale value (excl. GST) · {period}</div>
+          {monthlyData.length === 0 ? (
             <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>
-              No data for this period — seed monthly_sales table
+              No orders in this period yet.
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={data.map(d => ({ m: d.month, sales: d.sales }))} barSize={20}>
+              <BarChart data={monthlyData} barSize={22}>
                 <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
-                <XAxis dataKey="m" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false}
                   tickFormatter={v => v >= 100000 ? (v / 100000).toFixed(1) + "L" : (v / 1000).toFixed(0) + "K"} />
                 <Tooltip content={<ChartTooltip />} />
@@ -165,66 +222,102 @@ export default function DashboardPage() {
 
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Segment mix</div>
-          <div style={{ fontSize: 11, color: MID, marginBottom: 14 }}>Revenue by client type</div>
-          <ResponsiveContainer width="100%" height={140}>
-            <PieChart>
-              <Pie data={segData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={3}>
-                {segData.map(e => <Cell key={e.name} fill={SEG_COLORS[e.name] || MID} />)}
-              </Pie>
-              <Tooltip formatter={(v) => fmt(Number(v))} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 12px", marginTop: 8 }}>
-            {segData.map(s => (
-              <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: SEG_COLORS[s.name] || MID }} />
-                <span style={{ color: MID }}>{SEG_LABELS[s.name] || s.name}</span>
+          <div style={{ fontSize: 11, color: MID, marginBottom: 14 }}>Revenue by client type · {period}</div>
+          {segData.length === 0 ? (
+            <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>No data</div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie data={segData} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" paddingAngle={3}>
+                    {segData.map(e => <Cell key={e.name} fill={SEG_COLORS[e.name] || MID} />)}
+                  </Pie>
+                  <Tooltip formatter={(v) => fmt(Number(v))} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 12px", marginTop: 8 }}>
+                {segData.map(s => (
+                  <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: SEG_COLORS[s.name] || MID }} />
+                    <span style={{ color: MID }}>{SEG_LABELS[s.name] || s.name}</span>
+                    <span style={{ fontWeight: 700, color: BLACK }}>{pct(s.value / (totalRevenue || 1))}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Top clients + Margin by order */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      {/* Stage pipeline + Margin trend */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>Top clients</div>
-          {sortedClients.slice(0, 6).map((c, i) => (
-            <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: MID, width: 18 }}>#{i + 1}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 600 }}>{c.name}</div>
-                <div style={{ height: 4, background: BG, borderRadius: 2, marginTop: 4 }}>
-                  <div style={{ width: `${(c.totalValue / topMax) * 100}%`, height: "100%", background: R, borderRadius: 2 }} />
-                </div>
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{fmt(c.totalValue)}</div>
-            </div>
-          ))}
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Pipeline by stage</div>
+          <div style={{ fontSize: 11, color: MID, marginBottom: 18 }}>All active orders</div>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={stageData} layout="vertical" barSize={14}>
+              <CartesianGrid strokeDasharray="3 3" stroke={BORDER} horizontal={false} />
+              <XAxis type="number" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} width={80} />
+              <Tooltip formatter={(v) => [v + " orders", ""]} />
+              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Margin by order</div>
-          <div style={{ fontSize: 11, color: MID, marginBottom: 14 }}>Last 8 orders</div>
-          <ResponsiveContainer width="100%" height={170}>
-            <BarChart data={marginChartData} barSize={16}>
-              <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 9, fill: MID }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} unit="%" />
-              <Tooltip formatter={(v) => Number(v).toFixed(1) + "%"} />
-              <Bar dataKey="margin" radius={[3, 3, 0, 0]}>
-                {marginChartData.map((d, i) => <Cell key={i} fill={marginColor(d.marginRaw)} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-            {[[GREEN, "> 35%"], ["#8a7300", "20–35%"], [R, "< 20%"]].map(([c, l]) => (
-              <div key={l} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />{l}
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Margin per order</div>
+          <div style={{ fontSize: 11, color: MID, marginBottom: 14 }}>Last 10 orders · {period}</div>
+          {marginData.length === 0 ? (
+            <div style={{ height: 170, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>No data</div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={170}>
+                <BarChart data={marginData} barSize={16}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: MID }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} unit="%" />
+                  <Tooltip formatter={(v) => Number(v).toFixed(1) + "%"} />
+                  <Bar dataKey="margin" radius={[3, 3, 0, 0]}>
+                    {marginData.map((d, i) => <Cell key={i} fill={marginColor(d.raw)} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
+                {[[GREEN, "> 35%"], ["#8a7300", "20–35%"], [R, "< 20%"]].map(([c, l]) => (
+                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />{l}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Top clients */}
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>Top clients · {period}</div>
+        {topClients.length === 0 ? (
+          <div style={{ color: MID, fontSize: 12 }}>No client data for this period.</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 40px" }}>
+            {topClients.map((c, i) => (
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: MID, width: 18, flexShrink: 0 }}>#{i + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600 }}>{c.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700 }}>{fmt(c.periodValue)}</span>
+                  </div>
+                  <div style={{ height: 4, background: BG, borderRadius: 2 }}>
+                    <div style={{ width: `${(c.periodValue / topMax) * 100}%`, height: "100%", background: SEG_COLORS[c.segment] || R, borderRadius: 2 }} />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -12,25 +12,25 @@ export async function GET() {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [orders, clients, monthlySales] = await Promise.all([
+  const [orders, clients] = await Promise.all([
     prisma.order.findMany({
       select: {
         id: true, clientId: true, clientName: true, segment: true, stage: true, priority: true,
-        saleValue: true, fabric: true, printing: true, transport: true,
-        misc: true, jobWork: true, packaging: true, design: true, date: true,
+        saleValue: true, gst: true, fabric: true, printing: true, transport: true,
+        misc: true, jobWork: true, packaging: true, design: true, ribCost: true, date: true,
+        dueDate: true, deliveryDate: true,
       },
+      orderBy: { date: "asc" },
     }),
     prisma.client.findMany({
       select: {
         id: true, name: true, segment: true,
-        totalValueOverride: true, ordersOverride: true,
+        totalValueOverride: true,
         orders: { select: { saleValue: true } },
       },
     }),
-    prisma.monthlySales.findMany({ orderBy: [{ fyYear: "asc" }, { id: "asc" }] }),
   ]);
 
-  // Compute client total values
   const clientStats = clients.map(c => ({
     id: c.id,
     name: c.name,
@@ -44,15 +44,12 @@ export async function GET() {
     orders: orders.map(o => ({
       ...o,
       saleValue: Number(o.saleValue),
+      gst: Number(o.gst),
       fabric: Number(o.fabric), printing: Number(o.printing),
       transport: Number(o.transport), misc: Number(o.misc),
       jobWork: Number(o.jobWork), packaging: Number(o.packaging),
-      design: Number(o.design),
+      design: Number(o.design), ribCost: Number(o.ribCost ?? 0),
     })),
     clients: clientStats,
-    monthlySales: monthlySales.map(m => ({
-      id: m.id, month: m.month, sales: Number(m.sales),
-      orderCount: m.orderCount, fyYear: m.fyYear,
-    })),
   });
 }
