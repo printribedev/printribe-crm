@@ -750,10 +750,10 @@ export default function OrdersPage() {
                     <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" }}>{stage.label}</span>
                   </td>
                   <td style={{ ...TD, overflow: "visible" }}>
-                    <div style={{ display: "flex", gap: 5 }}>
-                      <button onClick={() => setCostModal(o)} style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>Cost</button>
-                      <button onClick={() => setEditModal(o)} style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>Edit</button>
-                      <button onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, fontWeight: 600 }}>Invoice</button>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>
+                      <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>
+                      <button title="View invoice" onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 12, width: 28, height: 26, borderRadius: 6, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
                     </div>
                   </td>
                 </tr>
