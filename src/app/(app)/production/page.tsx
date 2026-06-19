@@ -61,7 +61,7 @@ function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
   const due = order.dueDate ? daysUntil(order.dueDate) : null;
   const dueColor = due === null ? MID : due < 0 ? R : due <= 3 ? ORANGE : GREEN;
   const segColor = SEG_COLORS[order.segment] || MID;
-  const canAdvance = order.stage !== "delivered";
+  const canAdvance = order.stage !== "delivered_pending";
 
   return (
     <div
@@ -231,8 +231,8 @@ export default function ProductionPage() {
 
   if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading production board…</div>;
 
-  const activeOrders = orders.filter(o => o.stage !== "delivered");
-  const delivered = orders.filter(o => o.stage === "delivered");
+  const activeOrders = orders.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending");
+  const delivered = orders.filter(o => o.stage === "delivered" || o.stage === "delivered_pending");
 
   if (view === "kanban") {
     return (
@@ -249,7 +249,7 @@ export default function ProductionPage() {
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(185px, 1fr))", gap: 8, overflowX: "auto", paddingBottom: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${STAGES.length}, minmax(185px, 1fr))`, gap: 8, overflowX: "auto", paddingBottom: 16 }}>
           {STAGES.map(stage => {
             const stageOrders = orders
               .filter(o => o.stage === stage.id)
