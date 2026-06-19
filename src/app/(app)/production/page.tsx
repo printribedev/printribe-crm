@@ -37,6 +37,7 @@ type Order = {
   fabric: number; printing: number; transport: number; misc: number;
   jobWork: number; packaging: number; design: number;
   stage: string; priority: string;
+  deliveryDate: string | null; paymentDate: string | null;
 };
 
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
@@ -51,6 +52,49 @@ function daysUntil(dateStr: string) {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
 }
 
+function daysBetween(a: string, b: string) {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+}
+
+// Returns { text, color } for the status badge based on stage
+function statusBadge(o: Order): { text: string; color: string } | null {
+  if (o.stage === "delivered") {
+    // Delivery performance: deliveryDate vs dueDate
+    if (o.deliveryDate && o.dueDate) {
+      const diff = daysBetween(o.dueDate, o.deliveryDate); // positive = late
+      if (diff === 0) return { text: "On time", color: GREEN };
+      if (diff < 0)   return { text: `${Math.abs(diff)}d early`, color: GREEN };
+      return { text: `${diff}d late`, color: R };
+    }
+    // Payment delay: paymentDate vs deliveryDate
+    if (o.paymentDate && o.deliveryDate) {
+      const diff = daysBetween(o.deliveryDate, o.paymentDate);
+      return { text: diff === 0 ? "Paid same day" : `Payment ${diff}d after delivery`, color: GOLD };
+    }
+    return null;
+  }
+
+  if (o.stage === "delivered_pending") {
+    // Days awaiting payment since delivery
+    if (o.deliveryDate) {
+      const diff = daysBetween(o.deliveryDate, new Date().toISOString().slice(0, 10));
+      return { text: diff === 0 ? "Delivered today" : `${diff}d since delivery`, color: ORANGE };
+    }
+    return null;
+  }
+
+  // Active orders: show due date countdown
+  if (o.dueDate) {
+    const due = daysUntil(o.dueDate);
+    if (due < 0)  return { text: `${Math.abs(due)}d overdue`, color: R };
+    if (due === 0) return { text: "Due today", color: ORANGE };
+    if (due <= 3)  return { text: `${due}d left`, color: ORANGE };
+    return { text: `${due}d left`, color: GREEN };
+  }
+
+  return null;
+}
+
 function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
   order: Order;
   dragging: boolean;
@@ -60,8 +104,7 @@ function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
 }) {
   const margin = calcMargin(order);
   const mc = marginColor(margin);
-  const due = order.dueDate ? daysUntil(order.dueDate) : null;
-  const dueColor = due === null ? MID : due < 0 ? R : due <= 3 ? ORANGE : GREEN;
+  const badge = statusBadge(order);
   const segColor = SEG_COLORS[order.segment] || MID;
   const canAdvance = order.stage !== "delivered_pending";
 
@@ -100,11 +143,7 @@ function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
 
       <div style={{ fontSize: 11, color: MID, display: "flex", justifyContent: "space-between", marginBottom: canAdvance ? 8 : 0 }}>
         <span>{order.qty.toLocaleString()} pcs · {fmt(order.saleValue)}</span>
-        {due !== null && (
-          <span style={{ color: dueColor, fontWeight: 600 }}>
-            {due < 0 ? `${Math.abs(due)}d overdue` : due === 0 ? "Due today" : `${due}d left`}
-          </span>
-        )}
+        {badge && <span style={{ color: badge.color, fontWeight: 600 }}>{badge.text}</span>}
       </div>
 
       {canAdvance && (
@@ -323,8 +362,7 @@ export default function ProductionPage() {
               const stage = STAGES.find(s => s.id === o.stage) || STAGES[0];
               const margin = calcMargin(o);
               const mc = marginColor(margin);
-              const due = o.dueDate ? daysUntil(o.dueDate) : null;
-              const dueColor = due === null ? MID : due < 0 ? R : due <= 3 ? ORANGE : GREEN;
+              const badge = statusBadge(o);
               return (
                 <tr key={o.id} style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG }}>
                   <td style={{ padding: "10px 13px", fontWeight: 600, color: R, fontSize: 11 }}>{o.id}</td>
@@ -339,8 +377,8 @@ export default function ProductionPage() {
                   <td style={{ padding: "10px 13px" }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: mc }}>{(margin * 100).toFixed(0)}%</span>
                   </td>
-                  <td style={{ padding: "10px 13px", color: dueColor, fontWeight: 600, fontSize: 11 }}>
-                    {due === null ? "—" : due < 0 ? `${Math.abs(due)}d overdue` : due === 0 ? "Today" : `${due}d`}
+                  <td style={{ padding: "10px 13px", fontWeight: 600, fontSize: 11, color: badge?.color ?? MID }}>
+                    {badge ? badge.text : "—"}
                   </td>
                   <td style={{ padding: "10px 13px" }}>
                     {o.stage !== "delivered" && (
