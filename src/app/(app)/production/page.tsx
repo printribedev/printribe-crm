@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import DateFilterBar from "@/components/DateFilterBar";
+import { DateFilter, applyDateFilter, loadFilter } from "@/lib/dateFilter";
 
 const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
 const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
@@ -186,6 +188,7 @@ export default function ProductionPage() {
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverStage, setDragOverStage] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState<DateFilter>(() => loadFilter());
   const dragLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function load() {
@@ -231,8 +234,9 @@ export default function ProductionPage() {
 
   if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading production board…</div>;
 
-  const activeOrders = orders.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending");
-  const delivered = orders.filter(o => o.stage === "delivered" || o.stage === "delivered_pending");
+  const visibleOrders = applyDateFilter(orders, dateFilter);
+  const activeOrders = visibleOrders.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending");
+  const delivered = visibleOrders.filter(o => o.stage === "delivered" || o.stage === "delivered_pending");
 
   if (view === "kanban") {
     return (
@@ -249,9 +253,11 @@ export default function ProductionPage() {
           </button>
         </div>
 
+        <DateFilterBar filter={dateFilter} onChange={setDateFilter} />
+
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${STAGES.length}, minmax(185px, 1fr))`, gap: 8, overflowX: "auto", paddingBottom: 16 }}>
           {STAGES.map(stage => {
-            const stageOrders = orders
+            const stageOrders = visibleOrders
               .filter(o => o.stage === stage.id)
               .sort((a, b) => {
                 if (a.priority === "High" && b.priority !== "High") return -1;
@@ -281,7 +287,7 @@ export default function ProductionPage() {
   }
 
   // List view
-  const sorted = [...orders].sort((a, b) => {
+  const sorted = [...visibleOrders].sort((a, b) => {
     const si = (o: Order) => STAGES.findIndex(s => s.id === o.stage);
     if (si(a) !== si(b)) return si(a) - si(b);
     if (a.priority === "High" && b.priority !== "High") return -1;
@@ -300,6 +306,8 @@ export default function ProductionPage() {
           Kanban view
         </button>
       </div>
+
+      <DateFilterBar filter={dateFilter} onChange={setDateFilter} />
 
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>

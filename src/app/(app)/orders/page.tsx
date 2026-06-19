@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DateFilterBar from "@/components/DateFilterBar";
+import { DateFilter, applyDateFilter, loadFilter } from "@/lib/dateFilter";
 
 const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
 const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
@@ -621,6 +623,7 @@ export default function OrdersPage() {
   const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState<DateFilter>(() => loadFilter());
   const [costModal, setCostModal] = useState<Order | null>(null);
   const [editModal, setEditModal] = useState<Partial<Order> | null>(null);
 
@@ -650,7 +653,7 @@ export default function OrdersPage() {
     await load();
   }
 
-  const filtered = orders.filter(o =>
+  const filtered = applyDateFilter(orders, dateFilter).filter(o =>
     [o.id, o.clientName, o.product].some(f => f?.toLowerCase().includes(search.toLowerCase()))
   );
 
@@ -667,6 +670,8 @@ export default function OrdersPage() {
           + New order
         </button>
       </div>
+
+      <DateFilterBar filter={dateFilter} onChange={setDateFilter} />
 
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by invoice, client or product…"
         style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16 }} />
