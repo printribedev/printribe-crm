@@ -37,18 +37,22 @@ function marginColor(m: number) { return m > 0.35 ? GREEN : m > 0.2 ? "#8a7300" 
 
 const PERIODS = ["This month", "Last 3 months", "Last 6 months", "FY 26-27", "All time"];
 
+function analyticsDate(o: Order): Date {
+  return new Date(o.deliveryDate ?? o.date);
+}
+
 function filterOrders(orders: Order[], period: string): Order[] {
   const now = new Date();
   const msAgo = (months: number) => { const d = new Date(now); d.setMonth(d.getMonth() - months); return d; };
   switch (period) {
     case "This month":
-      return orders.filter(o => { const d = new Date(o.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+      return orders.filter(o => { const d = analyticsDate(o); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
     case "Last 3 months":
-      return orders.filter(o => new Date(o.date) >= msAgo(3));
+      return orders.filter(o => analyticsDate(o) >= msAgo(3));
     case "Last 6 months":
-      return orders.filter(o => new Date(o.date) >= msAgo(6));
+      return orders.filter(o => analyticsDate(o) >= msAgo(6));
     case "FY 26-27":
-      return orders.filter(o => { const d = new Date(o.date); const fy = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1; return fy === 2026; });
+      return orders.filter(o => { const d = analyticsDate(o); const fy = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1; return fy === 2026; });
     default:
       return orders;
   }
@@ -57,7 +61,7 @@ function filterOrders(orders: Order[], period: string): Order[] {
 function toMonthlyData(orders: Order[]) {
   const map: Record<string, { sales: number; count: number; ts: number }> = {};
   orders.forEach(o => {
-    const d = new Date(o.date);
+    const d = analyticsDate(o);
     const key = d.toLocaleDateString("en-IN", { month: "short" }) + " " + String(d.getFullYear()).slice(2);
     const ts = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
     if (!map[key]) map[key] = { sales: 0, count: 0, ts };
