@@ -703,18 +703,7 @@ export default function OrdersPage() {
         style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16 }} />
 
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, tableLayout: "fixed" }}>
-          <colgroup>
-            <col style={{ width: 130 }} />
-            <col style={{ width: 150 }} />
-            <col />
-            <col style={{ width: 90 }} />
-            <col style={{ width: 60 }} />
-            <col style={{ width: 90 }} />
-            <col style={{ width: 72 }} />
-            <col style={{ width: 130 }} />
-            <col style={{ width: 150 }} />
-          </colgroup>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
               {([
