@@ -62,6 +62,7 @@ type Order = {
   ribWeightPerPc: number | null; ribPricePerKg: number | null;
   stage: string; priority: string;
   deliveryDate: string | null; paymentDate: string | null;
+  flagged: string | null;
   notes: OrderNote[]; timeline: OrderTimeline[];
 };
 
@@ -625,17 +626,14 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState<DateFilter>(() => loadFilter());
   const [sort, setSort] = useState<{ col: string; dir: "asc" | "desc" }>({ col: "date", dir: "desc" });
-  const [flags, setFlags] = useState<Record<string, "red" | "green" | null>>(() => {
-    try { return JSON.parse(localStorage.getItem("printribe_flags") || "{}"); } catch { return {}; }
-  });
-  function cycleFlag(id: string) {
-    setFlags(prev => {
-      const cur = prev[id] ?? null;
-      const next: "red" | "green" | null = cur === null ? "red" : cur === "red" ? "green" : null;
-      const updated = { ...prev, [id]: next };
-      if (next === null) delete updated[id];
-      localStorage.setItem("printribe_flags", JSON.stringify(updated));
-      return updated;
+  function cycleFlag(o: Order) {
+    const cur = o.flagged ?? null;
+    const next: string | null = cur === null ? "red" : cur === "red" ? "green" : null;
+    setOrders(prev => prev.map(x => x.id === o.id ? { ...x, flagged: next } : x));
+    fetch(`/api/orders/${encodeURIComponent(o.id)}/flag`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flagged: next }),
     });
   }
   const [costModal, setCostModal] = useState<Order | null>(null);
@@ -753,11 +751,11 @@ export default function OrdersPage() {
                 <tr key={o.id} style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG }}>
                   <td style={{ padding: "8px 4px 8px 10px", width: 32 }}>
                     <button
-                      title={flags[o.id] === "red" ? "Needs validation" : flags[o.id] === "green" ? "Validated" : "Click to flag"}
-                      onClick={() => cycleFlag(o.id)}
-                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 14, lineHeight: 1, opacity: flags[o.id] ? 1 : 0.18 }}
+                      title={o.flagged === "red" ? "Needs validation" : o.flagged === "green" ? "Validated" : "Click to flag"}
+                      onClick={() => cycleFlag(o)}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 14, lineHeight: 1, opacity: o.flagged ? 1 : 0.18 }}
                     >
-                      <span style={{ color: flags[o.id] === "red" ? R : flags[o.id] === "green" ? GREEN : MID }}>⚑</span>
+                      <span style={{ color: o.flagged === "red" ? R : o.flagged === "green" ? GREEN : MID }}>⚑</span>
                     </button>
                   </td>
                   <td style={{ ...TD, fontWeight: 600, color: R, fontSize: 11 }}>{o.id}</td>

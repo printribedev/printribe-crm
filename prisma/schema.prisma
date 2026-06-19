@@ -164,6 +164,7 @@ model Order {
   priority     Priority  @default(Normal)
   deliveryDate DateTime? @map("delivery_date")
   paymentDate  DateTime? @map("payment_date")
+  flagged      String?
   createdAt    DateTime  @default(now()) @map("created_at")
   notes      OrderNote[]
   timeline   OrderTimeline[]
