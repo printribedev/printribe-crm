@@ -36,6 +36,7 @@ export async function POST(req: Request) {
       decoration: body.decoration || null,
       description: body.description || null,
       variants: body.variants ? JSON.stringify(body.variants) : null,
+      imagePath: body.imagePath || null,
       active: body.active !== false && body.active !== "false",
     },
   });

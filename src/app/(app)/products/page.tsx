@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
 const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
+const GREEN = "#1A7A4A";
 
 const CAT_COLORS: Record<string, string> = {
   Apparel: R, Sportswear: BLUE, Accessories: PURPLE, Service: GOLD, Promotional: ORANGE,
@@ -18,7 +20,7 @@ type Product = {
   category: string; moq: number; basePrice: number;
   gsm: string | null; decoration: string | null;
   description: string | null; variants: VariantDef[] | null;
-  active: boolean;
+  imagePath: string | null; active: boolean;
 };
 
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
@@ -33,35 +35,23 @@ function parseVariants(raw: unknown): VariantDef[] {
 
 const BLANK: Omit<Product, "id"> = {
   name: "", hsn: "6109", gstRate: "5%", category: "Apparel",
-  moq: 20, basePrice: 0, gsm: "", decoration: "", description: "", variants: [], active: true,
+  moq: 20, basePrice: 0, gsm: "", decoration: "", description: "", variants: [], imagePath: null, active: true,
 };
 
 const INP = { width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", background: WHITE, boxSizing: "border-box" as const };
-const LBL = { fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 as const };
+const LBL = { fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 as const, textTransform: "uppercase" as const, letterSpacing: "0.05em" };
 
 function Badge({ text, color = R }: { text: string; color?: string }) {
   return <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color + "18", color }}>{text}</span>;
 }
 
 function VariantBuilder({ variants, onChange }: { variants: VariantDef[]; onChange: (v: VariantDef[]) => void }) {
-  function addVariant() {
-    onChange([...variants, { name: "", values: [""] }]);
-  }
-  function removeVariant(i: number) {
-    onChange(variants.filter((_, idx) => idx !== i));
-  }
-  function setName(i: number, name: string) {
-    onChange(variants.map((v, idx) => idx === i ? { ...v, name } : v));
-  }
-  function addValue(i: number) {
-    onChange(variants.map((v, idx) => idx === i ? { ...v, values: [...v.values, ""] } : v));
-  }
-  function setValue(i: number, j: number, val: string) {
-    onChange(variants.map((v, idx) => idx === i ? { ...v, values: v.values.map((vv, jj) => jj === j ? val : vv) } : v));
-  }
-  function removeValue(i: number, j: number) {
-    onChange(variants.map((v, idx) => idx === i ? { ...v, values: v.values.filter((_, jj) => jj !== j) } : v));
-  }
+  function addVariant() { onChange([...variants, { name: "", values: [""] }]); }
+  function removeVariant(i: number) { onChange(variants.filter((_, idx) => idx !== i)); }
+  function setName(i: number, name: string) { onChange(variants.map((v, idx) => idx === i ? { ...v, name } : v)); }
+  function addValue(i: number) { onChange(variants.map((v, idx) => idx === i ? { ...v, values: [...v.values, ""] } : v)); }
+  function setValue(i: number, j: number, val: string) { onChange(variants.map((v, idx) => idx === i ? { ...v, values: v.values.map((vv, jj) => jj === j ? val : vv) } : v)); }
+  function removeValue(i: number, j: number) { onChange(variants.map((v, idx) => idx === i ? { ...v, values: v.values.filter((_, jj) => jj !== j) } : v)); }
 
   return (
     <div>
@@ -69,9 +59,8 @@ function VariantBuilder({ variants, onChange }: { variants: VariantDef[]; onChan
         <div key={i} style={{ background: BG, borderRadius: 8, padding: "12px 14px", marginBottom: 10 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
             <div style={{ flex: 1 }}>
-              <div style={LBL}>Variant Name (e.g. Neck Type, Fabric)</div>
-              <input value={v.name} onChange={e => setName(i, e.target.value)}
-                placeholder="e.g. Neck Type" style={INP} />
+              <div style={LBL}>Variant Name</div>
+              <input value={v.name} onChange={e => setName(i, e.target.value)} placeholder="e.g. Neck Type" style={INP} />
             </div>
             <button type="button" onClick={() => removeVariant(i)}
               style={{ marginTop: 18, border: "none", background: "none", color: MID, cursor: "pointer", fontSize: 18, padding: "0 4px", flexShrink: 0 }}>✕</button>
@@ -80,8 +69,7 @@ function VariantBuilder({ variants, onChange }: { variants: VariantDef[]; onChan
           <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 6, marginBottom: 6 }}>
             {v.values.map((val, j) => (
               <div key={j} style={{ display: "flex", alignItems: "center", gap: 4, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "3px 6px 3px 8px" }}>
-                <input value={val} onChange={e => setValue(i, j, e.target.value)}
-                  placeholder="e.g. V Neck"
+                <input value={val} onChange={e => setValue(i, j, e.target.value)} placeholder="e.g. V Neck"
                   style={{ border: "none", outline: "none", fontSize: 12, background: "transparent", width: Math.max(70, val.length * 8) }} />
                 {v.values.length > 1 && (
                   <button type="button" onClick={() => removeValue(i, j)}
@@ -102,29 +90,106 @@ function VariantBuilder({ variants, onChange }: { variants: VariantDef[]; onChan
   );
 }
 
-function Modal({ product, onSave, onClose, onDelete }: {
+function ImageUploader({ currentPath, onUploaded }: { currentPath: string | null; onUploaded: (path: string) => void }) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!currentPath) { setPreview(null); return; }
+    let cancelled = false;
+    (async () => {
+      const res = await fetch(`/api/products/image-url?path=${encodeURIComponent(currentPath)}`);
+      if (!cancelled && res.ok) {
+        const { url } = await res.json();
+        setPreview(url);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentPath]);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true); setError("");
+    try {
+      const supabase = createClient();
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("assets").upload(path, file);
+      if (uploadError) throw new Error(uploadError.message);
+      // Generate preview
+      const reader = new FileReader();
+      reader.onload = ev => setPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+      onUploaded(path);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div>
+      <div style={LBL}>Product Image</div>
+      <div
+        onClick={() => fileRef.current?.click()}
+        style={{
+          border: `2px dashed ${preview ? GREEN : BORDER}`, borderRadius: 10,
+          padding: preview ? 0 : "20px",
+          textAlign: "center", cursor: "pointer", overflow: "hidden",
+          background: preview ? "transparent" : BG, transition: "all 0.15s",
+          minHeight: 80, display: "flex", alignItems: "center", justifyContent: "center",
+        }}
+      >
+        <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp" style={{ display: "none" }} onChange={handleFile} />
+        {preview ? (
+          <img src={preview} alt="Product" style={{ width: "100%", maxHeight: 200, objectFit: "cover", display: "block" }} />
+        ) : (
+          <div>
+            <div style={{ fontSize: 20, marginBottom: 4 }}>🖼️</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: BLACK }}>{uploading ? "Uploading…" : "Click to upload image"}</div>
+            <div style={{ fontSize: 11, color: MID, marginTop: 2 }}>JPG, PNG, WebP</div>
+          </div>
+        )}
+      </div>
+      {preview && (
+        <button type="button" onClick={() => fileRef.current?.click()}
+          style={{ marginTop: 6, fontSize: 11, padding: "4px 10px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
+          Change image
+        </button>
+      )}
+      {error && <div style={{ fontSize: 11, color: R, marginTop: 4 }}>{error}</div>}
+    </div>
+  );
+}
+
+function EditModal({ product, onSave, onClose, onDelete }: {
   product: Partial<Product> & { id?: number };
   onSave: (v: Partial<Product>) => void;
   onClose: () => void;
   onDelete?: () => void;
 }) {
   const [form, setForm] = useState<Omit<Product, "id"> & { id?: number }>({
-    ...BLANK,
-    ...product,
-    variants: parseVariants(product.variants),
+    ...BLANK, ...product, variants: parseVariants(product.variants),
   });
   const set = (k: string, v: unknown) => setForm(p => ({ ...p, [k]: v }));
   const isNew = !product.id;
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 580, maxHeight: "93vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 600, maxHeight: "93vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "Add New Product" : `Edit — ${product.name}`}</div>
           <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
 
-        {/* Core fields */}
+        <div style={{ marginBottom: 18 }}>
+          <ImageUploader currentPath={form.imagePath} onUploaded={path => set("imagePath", path)} />
+        </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div style={{ gridColumn: "1/-1" }}>
             <div style={LBL}>Product Name</div>
@@ -133,8 +198,7 @@ function Modal({ product, onSave, onClose, onDelete }: {
           <div style={{ gridColumn: "1/-1" }}>
             <div style={LBL}>Description</div>
             <textarea value={form.description ?? ""} onChange={e => set("description", e.target.value)}
-              placeholder="Brief description of this product…"
-              rows={2}
+              placeholder="Brief description of this product…" rows={2}
               style={{ ...INP, resize: "vertical", fontFamily: "inherit" }} />
           </div>
           <div>
@@ -178,10 +242,9 @@ function Modal({ product, onSave, onClose, onDelete }: {
           </div>
         </div>
 
-        {/* Variants */}
         <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 16, marginTop: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>Product Variants</div>
-          <div style={{ fontSize: 11, color: MID, marginBottom: 12 }}>Define variant dimensions (e.g. Neck Type, Fabric). These let you track which variant sells more in analytics.</div>
+          <div style={{ fontSize: 11, color: MID, marginBottom: 12 }}>Define variant dimensions tracked in analytics (not shown on invoice).</div>
           <VariantBuilder variants={form.variants ?? []} onChange={v => set("variants", v)} />
         </div>
 
@@ -203,18 +266,147 @@ function Modal({ product, onSave, onClose, onDelete }: {
   );
 }
 
+function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: () => void; onClose: () => void }) {
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const catColor = CAT_COLORS[product.category] || MID;
+
+  useEffect(() => {
+    if (!product.imagePath) return;
+    fetch(`/api/products/image-url?path=${encodeURIComponent(product.imagePath)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.url && setImgUrl(d.url));
+  }, [product.imagePath]);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 560, maxHeight: "93vh", overflowY: "auto" }}>
+        {/* Image header */}
+        {imgUrl ? (
+          <div style={{ width: "100%", height: 220, overflow: "hidden", borderRadius: "14px 14px 0 0", position: "relative" }}>
+            <img src={imgUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.5))" }} />
+          </div>
+        ) : (
+          <div style={{ height: 10, background: catColor, borderRadius: "14px 14px 0 0" }} />
+        )}
+
+        <div style={{ padding: 26 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.2, marginBottom: 6 }}>{product.name}</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <Badge text={product.category} color={catColor} />
+                {!product.active && <Badge text="Inactive" color={MID} />}
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 12 }}>
+              <button onClick={onEdit} style={{ fontSize: 12, fontWeight: 600, padding: "7px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>Edit</button>
+              <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "7px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕</button>
+            </div>
+          </div>
+
+          {product.description && (
+            <div style={{ fontSize: 13, color: MID, lineHeight: 1.6, marginBottom: 18, paddingBottom: 18, borderBottom: `1px solid ${BORDER}` }}>
+              {product.description}
+            </div>
+          )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 18 }}>
+            {[
+              ["Base Price", fmt(product.basePrice)],
+              ["GST Rate", product.gstRate],
+              ["MOQ", product.moq + " pcs"],
+              ["HSN Code", product.hsn],
+              ["Material", product.gsm || "—"],
+              ["Decoration", product.decoration || "—"],
+            ].map(([l, v]) => (
+              <div key={l} style={{ background: BG, borderRadius: 8, padding: "10px 12px" }}>
+                <div style={{ fontSize: 10, color: MID, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 3 }}>{l}</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+
+          {product.variants && product.variants.length > 0 && (
+            <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 12 }}>Variants</div>
+              {product.variants.map((v, i) => (
+                <div key={i} style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: BLACK, marginBottom: 6 }}>{v.name}</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {v.values.filter(Boolean).map((val, j) => (
+                      <span key={j} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: BLUE + "12", color: BLUE, fontWeight: 600 }}>{val}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductCard({ product, onClick }: { product: Product; onClick: () => void }) {
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const catColor = CAT_COLORS[product.category] || MID;
+
+  useEffect(() => {
+    if (!product.imagePath) return;
+    fetch(`/api/products/image-url?path=${encodeURIComponent(product.imagePath)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.url && setImgUrl(d.url));
+  }, [product.imagePath]);
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10,
+        overflow: "hidden", cursor: "pointer", opacity: product.active ? 1 : 0.6,
+        transition: "box-shadow 0.15s, transform 0.15s",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.1)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 3px rgba(0,0,0,0.06)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}
+    >
+      {/* Image or color bar */}
+      {imgUrl ? (
+        <div style={{ width: "100%", height: 130, overflow: "hidden" }}>
+          <img src={imgUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+      ) : (
+        <div style={{ height: 4, background: catColor }} />
+      )}
+
+      <div style={{ padding: "12px 14px" }}>
+        <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 6 }}>{product.name}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Badge text={product.category} color={catColor} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: BLACK }}>{fmt(product.basePrice)}</span>
+        </div>
+        {product.variants && product.variants.length > 0 && (
+          <div style={{ marginTop: 8, fontSize: 10, color: MID }}>
+            {product.variants.length} variant dimension{product.variants.length > 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState<Partial<Product> | null>(null);
+  const [detail, setDetail] = useState<Product | null>(null);
+  const [editModal, setEditModal] = useState<Partial<Product> | null>(null);
 
   async function load() {
     const res = await fetch("/api/products");
     const data = await res.json();
     setProducts(data.map((p: Product) => ({
-      ...p,
-      basePrice: Number(p.basePrice),
-      variants: parseVariants(p.variants),
+      ...p, basePrice: Number(p.basePrice), variants: parseVariants(p.variants),
     })));
     setLoading(false);
   }
@@ -228,12 +420,14 @@ export default function ProductsPage() {
       await fetch("/api/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
     }
     await load();
+    setDetail(null);
   }
 
   async function handleDelete(id: number) {
     if (!confirm("Delete this product? This cannot be undone.")) return;
     await fetch(`/api/products/${id}`, { method: "DELETE" });
-    setModal(null);
+    setEditModal(null);
+    setDetail(null);
     await load();
   }
 
@@ -244,57 +438,37 @@ export default function ProductsPage() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Products</div>
-          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{products.length} products in catalog</div>
+          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{products.length} products in catalog · click any card to view details</div>
         </div>
-        <button onClick={() => setModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>
+        <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>
           + Add product
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
         {products.map(p => (
-          <div key={p.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 18, opacity: p.active ? 1 : 0.55, borderTop: `3px solid ${CAT_COLORS[p.category] || MID}` }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>{p.name}</div>
-                <div style={{ marginTop: 5 }}><Badge text={p.category} color={CAT_COLORS[p.category] || MID} /></div>
-              </div>
-              <button onClick={() => setModal(p)} style={{ fontSize: 11, padding: "4px 10px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, flexShrink: 0 }}>Edit</button>
-            </div>
-            {p.description && (
-              <div style={{ fontSize: 11, color: MID, marginBottom: 10, lineHeight: 1.5 }}>{p.description}</div>
-            )}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, fontSize: 12, marginTop: 8 }}>
-              {[["HSN", p.hsn], ["GST", p.gstRate], ["MOQ", p.moq + " pcs"], ["Base ₹", fmt(p.basePrice)], ["Material", p.gsm || "—"]].map(([l, v]) => (
-                <div key={l}><span style={{ color: MID, fontSize: 10 }}>{l}</span><div style={{ fontWeight: 600 }}>{v}</div></div>
-              ))}
-            </div>
-            {p.decoration && (
-              <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${BORDER}`, fontSize: 11, color: MID }}>
-                <span style={{ fontWeight: 600, color: BLACK }}>Decoration: </span>{p.decoration}
-              </div>
-            )}
-            {p.variants && p.variants.length > 0 && (
-              <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${BORDER}` }}>
-                {p.variants.map((v, i) => (
-                  <div key={i} style={{ fontSize: 11, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 600, color: BLACK }}>{v.name}: </span>
-                    <span style={{ color: MID }}>{v.values.filter(Boolean).join(", ")}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {!p.active && <div style={{ marginTop: 8 }}><Badge text="Inactive" color={MID} /></div>}
-          </div>
+          <ProductCard key={p.id} product={p} onClick={() => setDetail(p)} />
         ))}
         {products.length === 0 && (
           <div style={{ gridColumn: "1 / -1", padding: 32, textAlign: "center", color: MID, fontSize: 13 }}>No products yet.</div>
         )}
       </div>
 
-      {modal !== null && (
-        <Modal product={modal} onSave={handleSave} onClose={() => setModal(null)}
-          onDelete={modal.id ? () => handleDelete(modal.id!) : undefined} />
+      {detail && !editModal && (
+        <DetailPopup
+          product={detail}
+          onEdit={() => setEditModal(detail)}
+          onClose={() => setDetail(null)}
+        />
+      )}
+
+      {editModal !== null && (
+        <EditModal
+          product={editModal}
+          onSave={handleSave}
+          onClose={() => setEditModal(null)}
+          onDelete={editModal.id ? () => handleDelete(editModal.id!) : undefined}
+        />
       )}
     </div>
   );

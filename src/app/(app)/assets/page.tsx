@@ -209,20 +209,35 @@ function EditModal({ asset, onClose, onSaved }: { asset: Asset; onClose: () => v
   );
 }
 
+type ProductWithImage = { id: number; name: string; category: string; imagePath: string | null };
+
 export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [products, setProducts] = useState<ProductWithImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"assets" | "products">("assets");
   const [showUpload, setShowUpload] = useState(false);
   const [editAsset, setEditAsset] = useState<Asset | null>(null);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [filterAudience, setFilterAudience] = useState("All");
   const [downloading, setDownloading] = useState<number | null>(null);
+  const [productImgUrls, setProductImgUrls] = useState<Record<number, string>>({});
 
   async function load() {
-    const res = await fetch("/api/assets");
-    setAssets(await res.json());
+    const [aRes, pRes] = await Promise.all([fetch("/api/assets"), fetch("/api/products")]);
+    setAssets(await aRes.json());
+    const prods: ProductWithImage[] = await pRes.json();
+    setProducts(prods);
     setLoading(false);
+    // Fetch signed URLs for products with images
+    const withImages = prods.filter(p => p.imagePath);
+    const urls: Record<number, string> = {};
+    await Promise.all(withImages.map(async p => {
+      const res = await fetch(`/api/products/image-url?path=${encodeURIComponent(p.imagePath!)}`);
+      if (res.ok) { const { url } = await res.json(); urls[p.id] = url; }
+    }));
+    setProductImgUrls(urls);
   }
 
   useEffect(() => { load(); }, []);
@@ -255,18 +270,70 @@ export default function AssetsPage() {
 
   if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading assets…</div>;
 
+  const productsWithImages = products.filter(p => p.imagePath);
+
   return (
     <div style={{ padding: "26px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Asset Library</div>
-          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{assets.length} files · size charts, catalogs, brand files</div>
+          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{assets.length} files · {productsWithImages.length} product images</div>
         </div>
-        <button onClick={() => setShowUpload(true)} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>
-          + Add asset
-        </button>
+        {tab === "assets" && (
+          <button onClick={() => setShowUpload(true)} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>
+            + Add asset
+          </button>
+        )}
       </div>
 
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, borderBottom: `1px solid ${BORDER}`, paddingBottom: 0 }}>
+        {(["assets", "products"] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            fontSize: 13, fontWeight: 600, padding: "8px 18px", borderRadius: "8px 8px 0 0",
+            border: `1px solid ${tab === t ? BORDER : "transparent"}`, borderBottom: tab === t ? `1px solid ${WHITE}` : "none",
+            background: tab === t ? WHITE : "transparent", color: tab === t ? BLACK : MID,
+            cursor: "pointer", marginBottom: tab === t ? -1 : 0,
+          }}>
+            {t === "assets" ? "Assets" : "Products"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "products" && (
+        <div>
+          {productsWithImages.length === 0 ? (
+            <div style={{ padding: 40, textAlign: "center", color: MID, fontSize: 13 }}>
+              No product images yet — add images to products in the Products section.
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+              {productsWithImages.map(p => (
+                <div key={p.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
+                  {productImgUrls[p.id] ? (
+                    <div style={{ height: 160, overflow: "hidden" }}>
+                      <img src={productImgUrls[p.id]} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  ) : (
+                    <div style={{ height: 160, background: BG, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>Loading…</div>
+                  )}
+                  <div style={{ padding: "10px 12px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</div>
+                    <div style={{ fontSize: 10, color: MID, marginTop: 2 }}>{p.category}</div>
+                    <button
+                      onClick={() => productImgUrls[p.id] && window.open(productImgUrls[p.id], "_blank")}
+                      style={{ marginTop: 8, width: "100%", fontSize: 11, fontWeight: 600, padding: "6px 0", borderRadius: 6, background: BLACK, color: WHITE, border: "none", cursor: "pointer" }}>
+                      ↓ View full size
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "assets" && <>
       {/* Search + filters */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search assets…"
@@ -326,6 +393,8 @@ export default function AssetsPage() {
           </div>
         )}
       </div>
+
+      </>}
 
       {showUpload && <UploadModal onClose={() => setShowUpload(false)} onSaved={load} />}
       {editAsset && <EditModal asset={editAsset} onClose={() => setEditAsset(null)} onSaved={load} />}

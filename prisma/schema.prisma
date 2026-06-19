@@ -129,6 +129,7 @@ model Product {
   decoration  String?
   description String?
   variants    String?         // JSON: [{ name: string, values: string[] }]
+  imagePath   String?         @map("image_path")
   active      Boolean         @default(true)
   createdAt   DateTime        @default(now()) @map("created_at")
 
