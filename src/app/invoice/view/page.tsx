@@ -122,9 +122,16 @@ function InvoiceContent() {
           .no-print { display: none !important; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; }
           .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; }
-          .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+          .screen-card {
+            box-shadow: none !important; margin: 0 !important; border-radius: 0 !important;
+            width: 100% !important; max-width: 100% !important; overflow: visible !important;
+            gap: 16px !important;
+            padding: 28px 32px 120px !important;
+          }
           .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; box-shadow: 0 -4px 0 0 #ee3c30 !important; }
-          html { zoom: 0.75; }
+          .invoice-section { gap: 8px !important; }
+          .invoice-bottom { gap: 16px !important; }
+          html { zoom: 0.68; }
         }
       `}</style>
 
@@ -216,10 +223,7 @@ function InvoiceContent() {
           </section>
 
           {/* ── BILLED BY / TO: .frameParent ── */}
-          {/*
-            padding: 2px 0 0; gap: 10px 20px; flex-wrap:wrap; align-content:flex-start;
-          */}
-          <section style={{
+          <section className="invoice-section" style={{
             alignSelf: "stretch",
             display: "flex", alignItems: "flex-start",
             flexWrap: "wrap", alignContent: "flex-start",
@@ -341,7 +345,7 @@ function InvoiceContent() {
           {/*
             padding: 0 20px 0 0; gap: 32px; flex-wrap:wrap; align-content:flex-start;
           */}
-          <main style={{
+          <main className="invoice-bottom" style={{
             alignSelf: "stretch",
             display: "flex", alignItems: "flex-start",
             flexWrap: "wrap", alignContent: "flex-start",
