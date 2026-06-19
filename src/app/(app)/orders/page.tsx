@@ -663,7 +663,14 @@ export default function OrdersPage() {
     .sort((a, b) => {
       const dir = sort.dir === "asc" ? 1 : -1;
       switch (sort.col) {
-        case "id":       return dir * a.id.localeCompare(b.id);
+        case "id": {
+          // Sort by FY first (parts[3]), then serial (parts[2]) numerically
+          const [, , as, afy] = a.id.split("/");
+          const [, , bs, bfy] = b.id.split("/");
+          const fyDiff = (afy ?? "").localeCompare(bfy ?? "");
+          if (fyDiff !== 0) return dir * fyDiff;
+          return dir * ((parseInt(as) || 0) - (parseInt(bs) || 0));
+        }
         case "client":   return dir * a.clientName.localeCompare(b.clientName);
         case "product":  return dir * getProductDisplay(a.product).localeCompare(getProductDisplay(b.product));
         case "segment":  return dir * a.segment.localeCompare(b.segment);
@@ -696,7 +703,18 @@ export default function OrdersPage() {
         style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16 }} />
 
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, tableLayout: "fixed" }}>
+          <colgroup>
+            <col style={{ width: 130 }} />
+            <col style={{ width: 150 }} />
+            <col />
+            <col style={{ width: 90 }} />
+            <col style={{ width: 60 }} />
+            <col style={{ width: 90 }} />
+            <col style={{ width: 72 }} />
+            <col style={{ width: 130 }} />
+            <col style={{ width: 150 }} />
+          </colgroup>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
               {([
@@ -710,14 +728,13 @@ export default function OrdersPage() {
                   <th key={col || "_"}
                     onClick={col ? () => toggleSort(col) : undefined}
                     style={{
-                      padding: "12px 14px", textAlign: "left", fontSize: 10, fontWeight: 600,
-                      letterSpacing: "0.08em", textTransform: "uppercase",
+                      padding: "10px 12px", textAlign: "left", fontSize: 10, fontWeight: 600,
+                      letterSpacing: "0.07em", textTransform: "uppercase",
                       cursor: col ? "pointer" : "default",
-                      userSelect: "none",
-                      whiteSpace: "nowrap",
-                      color: active ? "#fff" : "rgba(255,255,255,0.65)",
+                      userSelect: "none", whiteSpace: "nowrap",
+                      color: active ? "#fff" : "rgba(255,255,255,0.6)",
                     }}>
-                    {label}<span style={{ opacity: active ? 1 : 0.45, fontSize: 9 }}>{icon}</span>
+                    {label}<span style={{ opacity: active ? 1 : 0.4, fontSize: 9 }}>{icon}</span>
                   </th>
                 );
               })}
@@ -728,25 +745,26 @@ export default function OrdersPage() {
               const { marginPct } = calcMargin(o);
               const mc = marginColor(marginPct);
               const stage = STAGES.find(s => s.id === o.stage) || STAGES[0];
+              const TD: React.CSSProperties = { padding: "8px 12px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
               return (
                 <tr key={o.id} style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG }}>
-                  <td style={{ padding: "11px 14px", fontWeight: 600, color: R, fontSize: 11 }}>{o.id}</td>
-                  <td style={{ padding: "11px 14px", fontWeight: 500 }}>{o.clientName}</td>
-                  <td style={{ padding: "11px 14px", color: MID, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{getProductDisplay(o.product)}</td>
-                  <td style={{ padding: "11px 14px" }}><Badge text={SEG_LABELS[o.segment] || o.segment} color={SEG_COLORS[o.segment] || MID} /></td>
-                  <td style={{ padding: "11px 14px", fontWeight: 600 }}>{o.qty.toLocaleString()}</td>
-                  <td style={{ padding: "11px 14px", fontWeight: 700 }}>{fmt(o.saleValue)}</td>
-                  <td style={{ padding: "11px 14px" }}>
-                    <span style={{ fontWeight: 700, color: mc, background: mc + "18", padding: "2px 8px", borderRadius: 20, fontSize: 11 }}>{pct(marginPct)}</span>
+                  <td style={{ ...TD, fontWeight: 600, color: R, fontSize: 11 }}>{o.id}</td>
+                  <td style={{ ...TD, fontWeight: 500 }}>{o.clientName}</td>
+                  <td style={{ ...TD, color: MID }}>{getProductDisplay(o.product)}</td>
+                  <td style={TD}><Badge text={SEG_LABELS[o.segment] || o.segment} color={SEG_COLORS[o.segment] || MID} /></td>
+                  <td style={{ ...TD, fontWeight: 600 }}>{o.qty.toLocaleString()}</td>
+                  <td style={{ ...TD, fontWeight: 700 }}>{fmt(o.saleValue)}</td>
+                  <td style={TD}>
+                    <span style={{ fontWeight: 700, color: mc, background: mc + "18", padding: "2px 7px", borderRadius: 20, fontSize: 11 }}>{pct(marginPct)}</span>
                   </td>
-                  <td style={{ padding: "11px 14px" }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 8px", borderRadius: 20 }}>{stage.label}</span>
+                  <td style={TD}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 7px", borderRadius: 20, whiteSpace: "nowrap" }}>{stage.label}</span>
                   </td>
-                  <td style={{ padding: "11px 14px" }}>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => setCostModal(o)} style={{ fontSize: 10, padding: "3px 8px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>Cost</button>
-                      <button onClick={() => setEditModal(o)} style={{ fontSize: 10, padding: "3px 8px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>Edit</button>
-                      <button onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 10, padding: "3px 8px", borderRadius: 6, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, fontWeight: 600 }}>Invoice</button>
+                  <td style={{ ...TD, overflow: "visible" }}>
+                    <div style={{ display: "flex", gap: 5 }}>
+                      <button onClick={() => setCostModal(o)} style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>Cost</button>
+                      <button onClick={() => setEditModal(o)} style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>Edit</button>
+                      <button onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 10, padding: "3px 7px", borderRadius: 6, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, fontWeight: 600 }}>Invoice</button>
                     </div>
                   </td>
                 </tr>
