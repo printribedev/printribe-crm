@@ -18,7 +18,7 @@ const STAGES = [
   { id: "production", label: "In Production", color: ORANGE },
   { id: "qc", label: "QC / Finishing", color: GOLD },
   { id: "dispatch", label: "Dispatched", color: BLUE },
-  { id: "delivered", label: "Delivered, Payment Clear", color: GREEN },
+  { id: "delivered", label: "Delivered", color: GREEN },
   { id: "delivered_pending", label: "Delivered, Payment Pending", color: ORANGE },
 ];
 
