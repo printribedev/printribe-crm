@@ -1,5 +1,5 @@
 export type FilterPreset =
-  | "7d" | "1m" | "3m" | "6m" | "cfy" | "lfy" | "ytd" | "custom";
+  | "all" | "7d" | "1m" | "3m" | "6m" | "cfy" | "lfy" | "ytd" | "custom";
 
 export type DateFilter = {
   preset: FilterPreset;
@@ -38,6 +38,7 @@ export function presetToRange(preset: FilterPreset, customFrom = "", customTo = 
   const fyStart = m >= 3 ? y : y - 1; // April = month 3
 
   switch (preset) {
+    case "all":    return { from: "", to: "" };
     case "7d":     return { from: daysAgo(7), to: today };
     case "1m":     return { from: monthsAgo(1), to: today };
     case "3m":     return { from: monthsAgo(3), to: today };
@@ -50,6 +51,7 @@ export function presetToRange(preset: FilterPreset, customFrom = "", customTo = 
 }
 
 export const PRESET_LABELS: Record<FilterPreset, string> = {
+  "all":    "All time",
   "7d":     "Last 7 days",
   "1m":     "Last month",
   "3m":     "Last 3 months",

@@ -8,7 +8,7 @@ import {
 const BORDER = "#E8E7E3", MID = "#888", WHITE = "#FFFFFF", BG = "#F7F6F2";
 const R = "#EE3C30", BLACK = "#111111";
 
-const PRESETS: FilterPreset[] = ["7d", "1m", "3m", "6m", "cfy", "lfy", "ytd", "custom"];
+const PRESETS: FilterPreset[] = ["all", "7d", "1m", "3m", "6m", "cfy", "lfy", "ytd", "custom"];
 
 export default function DateFilterBar({
   filter,
