@@ -19,7 +19,7 @@ const SEG_LABELS: Record<string, string> = {
 };
 
 type Order = {
-  id: string; clientName: string; segment: string; stage: string; priority: string;
+  id: string; clientId: number | null; clientName: string; segment: string; stage: string; priority: string;
   saleValue: number; gst: number; fabric: number; printing: number; transport: number;
   misc: number; jobWork: number; packaging: number; design: number; ribCost: number;
   date: string; dueDate: string | null; deliveryDate: string | null;
@@ -137,10 +137,12 @@ export default function DashboardPage() {
   orders.forEach(o => { stageMap[o.stage] = (stageMap[o.stage] || 0) + 1; });
   const stageData = Object.entries(stageMap).map(([id, count]) => ({ name: stageLabels[id] || id, count }));
 
-  // Top clients from filtered orders
+  // Top clients from filtered orders — match by clientId first, fall back to name
   const clientOrderValue: Record<number, number> = {};
   filtered.forEach(o => {
-    const c = clients.find(c => c.name === o.clientName);
+    const c = o.clientId
+      ? clients.find(c => c.id === o.clientId)
+      : clients.find(c => c.name.trim().toLowerCase() === o.clientName.trim().toLowerCase());
     if (c) clientOrderValue[c.id] = (clientOrderValue[c.id] || 0) + o.saleValue;
   });
   const topClients = clients
