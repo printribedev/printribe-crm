@@ -44,10 +44,23 @@ export async function POST(req: Request) {
 
   const body = await req.json();
 
+  // Auto-create client if a new name was typed with no existing clientId
+  let clientId: number | null = body.clientId ? Number(body.clientId) : null;
+  if (!clientId && body.clientName?.trim()) {
+    const existing = await prisma.client.findFirst({
+      where: { name: { equals: body.clientName.trim(), mode: "insensitive" } },
+    });
+    clientId = existing
+      ? existing.id
+      : (await prisma.client.create({
+          data: { name: body.clientName.trim(), segment: body.segment ?? "Corporate" },
+        })).id;
+  }
+
   const order = await prisma.order.create({
     data: {
       id: body.id,
-      clientId: body.clientId ? Number(body.clientId) : null,
+      clientId,
       clientName: body.clientName,
       product: body.product,
       segment: body.segment ?? "Corporate",
