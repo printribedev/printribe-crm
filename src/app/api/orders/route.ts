@@ -30,12 +30,16 @@ export async function GET() {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const orders = await prisma.order.findMany({
-    orderBy: { date: "desc" },
-    include: { notes: { orderBy: { ts: "asc" } }, timeline: { orderBy: { id: "asc" } } },
-  });
-
-  return NextResponse.json(orders.map(o => serializeOrder(o as unknown as Record<string, unknown>)));
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { date: "desc" },
+      include: { notes: { orderBy: { ts: "asc" } }, timeline: { orderBy: { id: "asc" } } },
+    });
+    return NextResponse.json(orders.map(o => serializeOrder(o as unknown as Record<string, unknown>)));
+  } catch (e) {
+    console.error("Orders GET error:", e);
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
