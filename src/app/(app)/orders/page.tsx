@@ -639,10 +639,15 @@ export default function OrdersPage() {
   const [editModal, setEditModal] = useState<Partial<Order> | null>(null);
 
   async function load() {
-    const [oRes, cRes, pRes] = await Promise.all([fetch("/api/orders"), fetch("/api/clients"), fetch("/api/products")]);
-    setOrders(await oRes.json());
-    setClients(await cRes.json());
-    setCatalogProducts(await pRes.json());
+    try {
+      const [oRes, cRes, pRes] = await Promise.all([fetch("/api/orders"), fetch("/api/clients"), fetch("/api/products")]);
+      const [orders, clients, products] = await Promise.all([oRes.json(), cRes.json(), pRes.json()]);
+      if (oRes.ok) setOrders(orders); else console.error("Orders API error:", orders);
+      if (cRes.ok) setClients(clients);
+      if (pRes.ok) setCatalogProducts(products);
+    } catch (e) {
+      console.error("Failed to load orders:", e);
+    }
     setLoading(false);
   }
 
