@@ -29,6 +29,20 @@ type ClientStat = { id: number; name: string; segment: string; totalValue: numbe
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 const pct = (n: number) => (n * 100).toFixed(1) + "%";
 
+function parseProductItems(product: string): { name: string; weight: number }[] {
+  try {
+    const parsed = JSON.parse(product);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const total = parsed.reduce((s: number, p: { qty: number; unitPrice: number }) => s + p.qty * p.unitPrice, 0);
+      return parsed.map((p: { name: string; qty: number; unitPrice: number }) => ({
+        name: p.name,
+        weight: total > 0 ? (p.qty * p.unitPrice) / total : 1 / parsed.length,
+      }));
+    }
+  } catch { /* plain string */ }
+  return [{ name: product, weight: 1 }];
+}
+
 function calcMargin(o: Order) {
   const cost = o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design + (o.ribCost || 0);
   return o.saleValue > 0 ? (o.saleValue - cost) / o.saleValue : 0;
@@ -134,7 +148,11 @@ export default function DashboardPage() {
   const segByClient = Object.entries(segMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
   const prodMap: Record<string, number> = {};
-  filtered.forEach(o => { prodMap[o.product] = (prodMap[o.product] || 0) + o.saleValue; });
+  filtered.forEach(o => {
+    parseProductItems(o.product).forEach(item => {
+      prodMap[item.name] = (prodMap[item.name] || 0) + o.saleValue * item.weight;
+    });
+  });
   const segByProduct = Object.entries(prodMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
   const segData = segView === "client" ? segByClient : segByProduct;
