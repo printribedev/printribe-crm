@@ -114,7 +114,38 @@ export default function QuotesPage() {
           </button>
           <button
             disabled={!selectedClient || totalSaleValue === 0}
-            onClick={() => {/* proforma generation coming next */}}
+            onClick={() => {
+              if (!selectedClient) return;
+              const proformaItems = lines
+                .filter(l => l.productId && l.qty > 0)
+                .map(l => {
+                  const p = products.find(x => x.id === l.productId);
+                  return {
+                    product: p?.name ?? "Product",
+                    hsn: p?.hsn ?? "",
+                    qty: l.qty,
+                    unitPrice: l.unitPrice,
+                    gstPct: p ? parseFloat(p.gstRate) : 5,
+                  };
+                });
+              const proformaRef = `PF/${new Date().getFullYear().toString().slice(-2)}-${(new Date().getFullYear() + 1).toString().slice(-2)}/${String(Math.floor(Math.random() * 900) + 100)}`;
+              sessionStorage.setItem("printribe_proforma", JSON.stringify({
+                ref: proformaRef,
+                date: quoteDate,
+                items: proformaItems,
+                totalSaleValue,
+                totalGst,
+                client: {
+                  name: selectedClient.name,
+                  gstin: selectedClient.gstin,
+                  address: selectedClient.address,
+                  city: selectedClient.city,
+                  email: selectedClient.email,
+                  phone: selectedClient.phone,
+                },
+              }));
+              window.open("/proforma/view", "_blank");
+            }}
             style={{ fontSize: 12, padding: "7px 16px", borderRadius: 7, border: "none", background: (!selectedClient || totalSaleValue === 0) ? BORDER : R, color: WHITE, cursor: (!selectedClient || totalSaleValue === 0) ? "default" : "pointer", fontWeight: 700 }}>
             Generate Proforma →
           </button>
