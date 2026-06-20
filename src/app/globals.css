@@ -12,6 +12,16 @@
   box-sizing: border-box;
 }
 
+/* Disable scroll-to-change on all number inputs */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 body {
   background: var(--bg);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
