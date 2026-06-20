@@ -161,7 +161,7 @@ export default function DashboardPage() {
     .filter(c => clientOrderValue[c.id] > 0)
     .map(c => ({ ...c, periodValue: clientOrderValue[c.id] || 0 }))
     .sort((a, b) => b.periodValue - a.periodValue)
-    .slice(0, 6);
+    .slice(0, 10);
   const topMax = topClients[0]?.periodValue || 1;
 
   // Avg margin per client for filtered period
