@@ -169,7 +169,7 @@ function ProformaContent() {
           }}>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 230, maxWidth: "100%" }}>
               <h1 style={{ margin: 0, fontSize: "inherit", letterSpacing: "-0.5px", lineHeight: "40px", fontWeight: 700, fontFamily: "inherit" }}>
-                Proforma Invoice
+                PROFORMA
               </h1>
               <div style={{ width: 303.5, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, fontSize: 16, color: "#737982" }}>
                 <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
@@ -442,7 +442,7 @@ function ProformaContent() {
             zIndex: 1, textAlign: "center", fontSize: 16, color: "#fff", fontFamily: "Inter",
           }}>
             <div style={{ flex: 1, lineHeight: "24px" }}>
-              This is a computer generated Proforma Invoice and requires no signature
+              This is a computer generated PROFORMA and requires no signature
             </div>
           </footer>
         </div>
