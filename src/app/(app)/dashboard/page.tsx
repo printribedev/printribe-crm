@@ -255,22 +255,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stage pipeline + Margin trend */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Pipeline by stage</div>
-          <div style={{ fontSize: 11, color: MID, marginBottom: 18 }}>All active orders</div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={stageData} layout="vertical" barSize={14}>
-              <CartesianGrid strokeDasharray="3 3" stroke={BORDER} horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} width={80} />
-              <Tooltip formatter={(v) => [v + " orders", ""]} />
-              <Bar dataKey="count" fill={BLUE} radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
+      {/* Margin per order */}
+      <div style={{ marginBottom: 16 }}>
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Margin per order</div>
           <div style={{ fontSize: 11, color: MID, marginBottom: 14 }}>Last 10 orders · {period}</div>
