@@ -150,7 +150,8 @@ export default function DashboardPage() {
   // KPIs from filtered orders
   const totalRevenue = filtered.reduce((s, o) => s + o.saleValue, 0);
   const totalGst = filtered.reduce((s, o) => s + o.gst, 0);
-  const avgMargin = filtered.length ? filtered.reduce((s, o) => s + calcMargin(o), 0) / filtered.length : 0;
+  const totalProfit = filtered.reduce((s, o) => s + (o.saleValue - orderCost(o)), 0);
+  const avgMargin = totalRevenue > 0 ? totalProfit / totalRevenue : 0;
   const activeJobs = filtered.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending").length;
   const pendingPayment = filtered.filter(o => o.stage === "delivered_pending").length;
   const avgOrderValue = filtered.length ? totalRevenue / filtered.length : 0;
