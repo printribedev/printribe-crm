@@ -104,6 +104,7 @@ export default function DashboardPage() {
   const [clients, setClients] = useState<ClientStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [marginSort, setMarginSort] = useState<"asc" | "desc">("desc");
+  const [segView, setSegView] = useState<"client" | "product">("client");
 
   useEffect(() => {
     fetch("/api/dashboard").then(r => r.json()).then(d => {
@@ -130,7 +131,13 @@ export default function DashboardPage() {
   // Segment breakdown from filtered orders
   const segMap: Record<string, number> = {};
   filtered.forEach(o => { segMap[o.segment] = (segMap[o.segment] || 0) + o.saleValue; });
-  const segData = Object.entries(segMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  const segByClient = Object.entries(segMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+
+  const prodMap: Record<string, number> = {};
+  filtered.forEach(o => { prodMap[o.product] = (prodMap[o.product] || 0) + o.saleValue; });
+  const segByProduct = Object.entries(prodMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+
+  const segData = segView === "client" ? segByClient : segByProduct;
 
   // Stage breakdown from ALL orders
   const stageLabels: Record<string, string> = {
@@ -237,8 +244,22 @@ export default function DashboardPage() {
         </div>
 
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Segment mix</div>
-          <div style={{ fontSize: 11, color: MID, marginBottom: 14 }}>Revenue by client type · {period}</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Segment mix</div>
+              <div style={{ fontSize: 11, color: MID }}>Revenue breakdown · {period}</div>
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["client", "product"] as const).map(v => (
+                <button key={v} onClick={() => setSegView(v)} style={{
+                  fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                  border: `1px solid ${segView === v ? BLUE : BORDER}`,
+                  background: segView === v ? BLUE : WHITE,
+                  color: segView === v ? WHITE : MID,
+                }}>{v === "client" ? "By Client" : "By Product"}</button>
+              ))}
+            </div>
+          </div>
           {segData.length === 0 ? (
             <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>No data</div>
           ) : (
@@ -246,19 +267,29 @@ export default function DashboardPage() {
               <ResponsiveContainer width="100%" height={140}>
                 <PieChart>
                   <Pie data={segData} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" paddingAngle={3}>
-                    {segData.map(e => <Cell key={e.name} fill={SEG_COLORS[e.name] || MID} />)}
+                    {segData.map((e, i) => {
+                      const fill = segView === "client"
+                        ? (SEG_COLORS[e.name] || MID)
+                        : [R, BLUE, GREEN, GOLD, PURPLE, ORANGE, MID][i % 7];
+                      return <Cell key={e.name} fill={fill} />;
+                    })}
                   </Pie>
                   <Tooltip formatter={(v) => fmt(Number(v))} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 12px", marginTop: 8 }}>
-                {segData.map(s => (
-                  <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: 2, background: SEG_COLORS[s.name] || MID }} />
-                    <span style={{ color: MID }}>{SEG_LABELS[s.name] || s.name}</span>
-                    <span style={{ fontWeight: 700, color: BLACK }}>{pct(s.value / (totalRevenue || 1))}</span>
-                  </div>
-                ))}
+                {segData.map((s, i) => {
+                  const color = segView === "client"
+                    ? (SEG_COLORS[s.name] || MID)
+                    : [R, BLUE, GREEN, GOLD, PURPLE, ORANGE, MID][i % 7];
+                  return (
+                    <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
+                      <span style={{ color: MID }}>{segView === "client" ? (SEG_LABELS[s.name] || s.name) : s.name}</span>
+                      <span style={{ fontWeight: 700, color: BLACK }}>{pct(s.value / (totalRevenue || 1))}</span>
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
