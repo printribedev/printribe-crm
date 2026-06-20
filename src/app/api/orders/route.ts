@@ -9,7 +9,7 @@ async function requireAuth() {
   return user;
 }
 
-const STAGES: Stage[] = ["enquiry", "design", "sampling", "production", "qc", "dispatch", "delivered", "delivered_pending"];
+const STAGES: Stage[] = ["design", "sampling", "production", "qc", "dispatch", "delivered", "delivered_pending"];
 
 function serializeOrder(o: Record<string, unknown>) {
   return {
