@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import LoadingScreen from "@/components/LoadingScreen";
 import { createClient } from "@/lib/supabase/client";
 
 const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
@@ -268,7 +269,7 @@ export default function AssetsPage() {
     return matchSearch && matchType && matchAudience;
   });
 
-  if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading assets…</div>;
+  if (loading) return <LoadingScreen />;
 
   const productsWithImages = products.filter(p => p.imagePath);
 

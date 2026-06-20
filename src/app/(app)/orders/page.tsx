@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LoadingScreen from "@/components/LoadingScreen";
 import DateFilterBar from "@/components/DateFilterBar";
 import { DateFilter, applyDateFilter, loadFilter } from "@/lib/dateFilter";
 
@@ -698,7 +699,7 @@ export default function OrdersPage() {
       }
     });
 
-  if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading orders…</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <div style={{ padding: "26px 28px" }}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LoadingScreen from "@/components/LoadingScreen";
 
 const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF";
 const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
@@ -175,7 +176,7 @@ export default function ClientsPage() {
   );
   const sorted = [...filtered].sort((a, b) => b.totalValue - a.totalValue);
 
-  if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading clients…</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <div style={{ padding: "26px 28px" }}>

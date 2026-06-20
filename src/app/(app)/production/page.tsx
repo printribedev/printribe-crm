@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import LoadingScreen from "@/components/LoadingScreen";
 import DateFilterBar from "@/components/DateFilterBar";
 import { DateFilter, applyDateFilter, loadFilter } from "@/lib/dateFilter";
 
@@ -270,7 +271,7 @@ export default function ProductionPage() {
     setDraggingId(null);
   }
 
-  if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading production board…</div>;
+  if (loading) return <LoadingScreen />;
 
   const visibleOrders = applyDateFilter(orders, dateFilter);
   const activeOrders = visibleOrders.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending");

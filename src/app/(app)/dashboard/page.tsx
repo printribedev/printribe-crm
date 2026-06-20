@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import LoadingScreen from "@/components/LoadingScreen";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, PieChart, Pie, Cell, LineChart, Line, LabelList,
@@ -142,7 +143,7 @@ export default function DashboardPage() {
     });
   }, []);
 
-  if (loading) return <div style={{ padding: "26px 28px", color: MID, fontSize: 13 }}>Loading dashboard…</div>;
+  if (loading) return <LoadingScreen />;
 
   const filtered = filterOrders(orders, period);
   const monthlyData = toMonthlyData(filtered);
