@@ -265,8 +265,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Avg margin per client */}
-      <div style={{ marginBottom: 16 }}>
+      {/* Avg margin per client + Top clients */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
             <div>
@@ -309,11 +309,10 @@ export default function DashboardPage() {
             </>
           )}
         </div>
-      </div>
 
-      {/* Top clients */}
-      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>Top clients · {period}</div>
+        {/* Top clients */}
+        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>Top clients · {period}</div>
         {topClients.length === 0 ? (
           <div style={{ color: MID, fontSize: 12 }}>No client data for this period.</div>
         ) : (
@@ -334,6 +333,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
