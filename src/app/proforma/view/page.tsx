@@ -56,7 +56,6 @@ function ProformaContent() {
   const [data, setData] = useState<ProformaData | null>(null);
   const [error, setError] = useState("");
   const [printZoom, setPrintZoom] = useState(0.75);
-  const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
@@ -121,36 +120,6 @@ function ProformaContent() {
   const pdfTitle = `Proforma_${data.ref.replace(/\//g, "_")}_${client.name.replace(/\s+/g, "_")}`;
   if (typeof document !== "undefined") document.title = pdfTitle;
 
-  async function downloadPDF() {
-    if (!cardRef.current || downloading) return;
-    setDownloading(true);
-    try {
-      const html2canvas = (await import("html2canvas")).default;
-      const jsPDF = (await import("jspdf")).jsPDF;
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = pageW;
-      const imgH = (canvas.height * pageW) / canvas.width;
-      const yOffset = imgH < pageH ? (pageH - imgH) / 2 : 0;
-      pdf.addImage(imgData, "PNG", 0, yOffset, imgW, Math.min(imgH, pageH));
-      pdf.save(`${pdfTitle}.pdf`);
-    } catch (e) {
-      console.error("PDF download failed:", e);
-      alert("PDF generation failed. Please try again.");
-    } finally {
-      setDownloading(false);
-    }
-  }
-
   // accent colour — blue for proforma (vs red for GST invoice)
   const ACCENT = "#2266A1";
   const ACCENT_LIGHT = "#eff2f5";
@@ -161,6 +130,15 @@ function ProformaContent() {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=La+Belle+Aurore&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { margin: 0; line-height: normal; background: #f0f0f0; font-family: Inter, sans-serif; }
+        @page { size: A4 portrait; margin: 0; }
+        @media print {
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+          .no-print { display: none !important; }
+          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; }
+          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; }
+          .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+          .pf-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; }
+        }
       `}</style>
 
       {/* Toolbar */}
@@ -169,9 +147,9 @@ function ProformaContent() {
           style={{ fontSize: 12, padding: "6px 14px", borderRadius: 6, background: "#333", color: "#fff", border: "none", cursor: "pointer" }}>
           ← Back
         </button>
-        <button onClick={downloadPDF} disabled={downloading}
-          style={{ fontSize: 12, fontWeight: 700, padding: "6px 18px", borderRadius: 6, background: ACCENT, color: "#fff", border: "none", cursor: downloading ? "default" : "pointer", opacity: downloading ? 0.7 : 1 }}>
-          {downloading ? "Generating PDF…" : "⬇ Download PDF"}
+        <button onClick={() => window.print()}
+          style={{ fontSize: 12, fontWeight: 700, padding: "6px 18px", borderRadius: 6, background: ACCENT, color: "#fff", border: "none", cursor: "pointer" }}>
+          Print / Download PDF
         </button>
       </div>
 
