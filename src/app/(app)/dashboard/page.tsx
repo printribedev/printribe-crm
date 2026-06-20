@@ -103,6 +103,7 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [clients, setClients] = useState<ClientStat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [marginSort, setMarginSort] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     fetch("/api/dashboard").then(r => r.json()).then(d => {
@@ -156,13 +157,22 @@ export default function DashboardPage() {
     .slice(0, 6);
   const topMax = topClients[0]?.periodValue || 1;
 
-  // Recent order margins
-  const recentOrders = [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
-  const marginData = recentOrders.map(o => ({
-    name: o.clientName.split(" ")[0],
-    margin: parseFloat((calcMargin(o) * 100).toFixed(1)),
-    raw: calcMargin(o),
-  })).reverse();
+  // Avg margin per client for filtered period
+  const clientMarginMap: Record<string, { total: number; count: number }> = {};
+  filtered.forEach(o => {
+    const key = o.clientName;
+    if (!clientMarginMap[key]) clientMarginMap[key] = { total: 0, count: 0 };
+    clientMarginMap[key].total += calcMargin(o);
+    clientMarginMap[key].count += 1;
+  });
+  const marginData = Object.entries(clientMarginMap)
+    .map(([name, { total, count }]) => ({
+      name: name.split(" ")[0],
+      fullName: name,
+      margin: parseFloat(((total / count) * 100).toFixed(1)),
+      raw: total / count,
+    }))
+    .sort((a, b) => marginSort === "desc" ? b.margin - a.margin : a.margin - b.margin);
 
   return (
     <div style={{ padding: "26px 28px" }}>
@@ -255,21 +265,35 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Margin per order */}
+      {/* Avg margin per client */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Margin per order</div>
-          <div style={{ fontSize: 11, color: MID, marginBottom: 14 }}>Last 10 orders · {period}</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Avg margin per client</div>
+              <div style={{ fontSize: 11, color: MID }}>{period}</div>
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["desc", "asc"] as const).map(s => (
+                <button key={s} onClick={() => setMarginSort(s)} style={{
+                  fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                  border: `1px solid ${marginSort === s ? BLUE : BORDER}`,
+                  background: marginSort === s ? BLUE : WHITE,
+                  color: marginSort === s ? WHITE : MID,
+                }}>{s === "desc" ? "High → Low" : "Low → High"}</button>
+              ))}
+            </div>
+          </div>
           {marginData.length === 0 ? (
             <div style={{ height: 170, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>No data</div>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={170}>
+              <ResponsiveContainer width="100%" height={Math.max(170, marginData.length * 32)}>
                 <BarChart data={marginData} barSize={16}>
                   <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: MID }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} unit="%" />
-                  <Tooltip formatter={(v) => Number(v).toFixed(1) + "%"} />
+                  <Tooltip formatter={(v, _, props) => [Number(v).toFixed(1) + "%", props.payload?.fullName || ""]} />
                   <Bar dataKey="margin" radius={[3, 3, 0, 0]}>
                     {marginData.map((d, i) => <Cell key={i} fill={marginColor(d.raw)} />)}
                   </Bar>
