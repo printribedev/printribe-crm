@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 // ── number to words (Indian system) ─────────────────────────
@@ -60,6 +60,19 @@ function InvoiceContent() {
   const [data, setData] = useState<InvoiceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [printZoom, setPrintZoom] = useState(0.75);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!data || !cardRef.current || data.items.length > 4) return;
+    const A4_PX = 1123;
+    const BASE_ZOOM = 0.75;
+    const naturalHeight = cardRef.current.scrollHeight;
+    const availableHeight = A4_PX / BASE_ZOOM;
+    setPrintZoom(naturalHeight > availableHeight
+      ? parseFloat((A4_PX / naturalHeight).toFixed(2))
+      : BASE_ZOOM);
+  }, [data]);
 
   useEffect(() => {
     if (!id) { setError("No invoice ID provided."); setLoading(false); return; }
@@ -119,7 +132,6 @@ function InvoiceContent() {
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
-          html { zoom: 0.75; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; }
           .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; }
           .screen-card {
@@ -151,8 +163,8 @@ function InvoiceContent() {
         <span style={{ fontSize: 11, color: "#888", marginLeft: 4 }}>Choose "Save as PDF" · tick "Background graphics"</span>
       </div>
 
-      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: 0.75 }}>
-        <div className="screen-card" style={{
+      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: printZoom }}>
+        <div ref={cardRef} className="screen-card" style={{
           width: 1062,
           maxWidth: "100%",
           backgroundColor: "#fff",
