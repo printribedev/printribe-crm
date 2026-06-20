@@ -19,7 +19,7 @@ const SEG_LABELS: Record<string, string> = {
 };
 
 type Order = {
-  id: string; clientId: number | null; clientName: string; segment: string; stage: string; priority: string;
+  id: string; clientId: number | null; clientName: string; product: string; segment: string; stage: string; priority: string;
   saleValue: number; gst: number; fabric: number; printing: number; transport: number;
   misc: number; jobWork: number; packaging: number; design: number; ribCost: number;
   date: string; dueDate: string | null; deliveryDate: string | null;
