@@ -33,7 +33,7 @@ function calcMargin(o: Order) {
   const cost = o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design + (o.ribCost || 0);
   return o.saleValue > 0 ? (o.saleValue - cost) / o.saleValue : 0;
 }
-function marginColor(m: number) { return m > 0.35 ? GREEN : m > 0.2 ? "#8a7300" : R; }
+function marginColor(m: number) { return m > 0.35 ? GREEN : m >= 0.15 ? "#8a7300" : R; }
 
 const PERIODS = ["This month", "Last 3 months", "Last 6 months", "FY 26-27", "All time"];
 
@@ -121,10 +121,10 @@ export default function DashboardPage() {
   const totalRevenue = filtered.reduce((s, o) => s + o.saleValue, 0);
   const totalGst = filtered.reduce((s, o) => s + o.gst, 0);
   const avgMargin = filtered.length ? filtered.reduce((s, o) => s + calcMargin(o), 0) / filtered.length : 0;
-  const activeJobs = orders.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending").length;
-  const pendingPayment = orders.filter(o => o.stage === "delivered_pending").length;
+  const activeJobs = filtered.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending").length;
+  const pendingPayment = filtered.filter(o => o.stage === "delivered_pending").length;
   const avgOrderValue = filtered.length ? totalRevenue / filtered.length : 0;
-  const overdue = orders.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending" && o.dueDate && new Date(o.dueDate) < new Date()).length;
+  const overdue = filtered.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending" && o.dueDate && new Date(o.dueDate) < new Date()).length;
 
   // Segment breakdown from filtered orders
   const segMap: Record<string, number> = {};
@@ -190,7 +190,7 @@ export default function DashboardPage() {
         <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" color={BLUE} badge="Tax" badgeColor={BLUE} />
         <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" color={GOLD} />
         <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period" color={GREEN}
-          badge={avgMargin > 0.3 ? "Healthy" : "Watch"} badgeColor={avgMargin > 0.3 ? GREEN : ORANGE} />
+          badge={avgMargin > 0.35 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"} badgeColor={avgMargin > 0.35 ? GREEN : avgMargin >= 0.15 ? ORANGE : R} />
       </div>
 
       {/* KPI row 2 */}
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-                {[[GREEN, "> 35%"], ["#8a7300", "20–35%"], [R, "< 20%"]].map(([c, l]) => (
+                {[[GREEN, "> 35%"], ["#8a7300", "15–35%"], [R, "< 15%"]].map(([c, l]) => (
                   <div key={l} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
                     <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />{l}
                   </div>
