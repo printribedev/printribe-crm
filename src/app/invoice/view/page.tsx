@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 // ── number to words (Indian system) ─────────────────────────
@@ -60,6 +60,8 @@ function InvoiceContent() {
   const [data, setData] = useState<InvoiceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [printZoom, setPrintZoom] = useState(0.75);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) { setError("No invoice ID provided."); setLoading(false); return; }
@@ -69,39 +71,20 @@ function InvoiceContent() {
       .catch(() => { setError("Failed to load invoice."); setLoading(false); });
   }, [id]);
 
+  // After data renders, measure card height and pre-calculate zoom so
+  // what you see on screen = what prints (no beforeprint timing issues).
   useEffect(() => {
-    // A4 at 96dpi = 1123px tall. Only scale down if content overflows at base zoom.
-    const BASE_ZOOM = 0.75;
+    if (!data || !cardRef.current) return;
     const A4_PX = 1123;
-
-    function beforePrint() {
-      const card = document.querySelector(".screen-card") as HTMLElement | null;
-      if (!card) return;
-      const prev = card.style.overflow;
-      card.style.overflow = "visible";
-      const naturalHeight = card.scrollHeight;
-      card.style.overflow = prev;
-
-      const availableHeight = A4_PX / BASE_ZOOM;
-      if (naturalHeight > availableHeight) {
-        const zoom = Math.floor((A4_PX / naturalHeight) * 100) / 100;
-        let tag = document.getElementById("pt-print-zoom") as HTMLStyleElement | null;
-        if (!tag) { tag = document.createElement("style"); tag.id = "pt-print-zoom"; document.head.appendChild(tag); }
-        tag.textContent = `@media print { html { zoom: ${zoom} !important; } }`;
-      }
+    const BASE_ZOOM = 0.75;
+    const naturalHeight = cardRef.current.scrollHeight;
+    const availableHeight = A4_PX / BASE_ZOOM;
+    if (naturalHeight > availableHeight) {
+      setPrintZoom(parseFloat((A4_PX / naturalHeight).toFixed(2)));
+    } else {
+      setPrintZoom(BASE_ZOOM);
     }
-    function afterPrint() {
-      const tag = document.getElementById("pt-print-zoom");
-      if (tag) tag.remove();
-    }
-
-    window.addEventListener("beforeprint", beforePrint);
-    window.addEventListener("afterprint", afterPrint);
-    return () => {
-      window.removeEventListener("beforeprint", beforePrint);
-      window.removeEventListener("afterprint", afterPrint);
-    };
-  }, []);
+  }, [data]);
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "Inter, sans-serif", color: "#737982" }}>
@@ -158,9 +141,6 @@ function InvoiceContent() {
           .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; }
           .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
           .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; box-shadow: 0 -4px 0 0 #ee3c30 !important; }
-          .invoice-bottom { break-before: avoid !important; break-inside: avoid !important; }
-          .screen-card > * { break-inside: avoid !important; }
-          html { zoom: 0.75; }
         }
       `}</style>
 
@@ -177,7 +157,7 @@ function InvoiceContent() {
         <span style={{ fontSize: 11, color: "#888", marginLeft: 4 }}>Choose "Save as PDF" · tick "Background graphics"</span>
       </div>
 
-      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)" }}>
+      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: printZoom }}>
         {/*
           Exact Locofy CSS:
           .gstInvoicePrintribe {
@@ -188,7 +168,7 @@ function InvoiceContent() {
             gap: 28px; line-height: normal; letter-spacing: normal;
           }
         */}
-        <div className="screen-card" style={{
+        <div ref={cardRef} className="screen-card" style={{
           width: 1062,
           maxWidth: "100%",
           backgroundColor: "#fff",
