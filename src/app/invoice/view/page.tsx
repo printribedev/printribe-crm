@@ -330,7 +330,7 @@ function InvoiceContent() {
               <div key={idx} style={{
                 alignSelf: "stretch",
                 borderRight: "1px solid var(--White-100)", borderBottom: "1px solid var(--White-100)", borderLeft: "1px solid var(--White-100)",
-                boxSizing: "border-box", padding: 20,
+                boxSizing: "border-box", padding: "10px 20px",
                 display: "flex", alignItems: "flex-start", maxWidth: "100%", gap: 8,
                 fontSize: 16, color: "#000", fontFamily: "Inter",
               }}>
