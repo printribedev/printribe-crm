@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 // ── number to words (Indian system) ─────────────────────────
@@ -60,8 +60,6 @@ function InvoiceContent() {
   const [data, setData] = useState<InvoiceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [printZoom, setPrintZoom] = useState(0.75);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) { setError("No invoice ID provided."); setLoading(false); return; }
@@ -70,21 +68,6 @@ function InvoiceContent() {
       .then(d => { if (d.error) setError(d.error); else setData(d); setLoading(false); })
       .catch(() => { setError("Failed to load invoice."); setLoading(false); });
   }, [id]);
-
-  // After data renders, measure card height and pre-calculate zoom so
-  // what you see on screen = what prints (no beforeprint timing issues).
-  useEffect(() => {
-    if (!data || !cardRef.current) return;
-    const A4_PX = 1123;
-    const BASE_ZOOM = 0.75;
-    const naturalHeight = cardRef.current.scrollHeight;
-    const availableHeight = A4_PX / BASE_ZOOM;
-    if (naturalHeight > availableHeight) {
-      setPrintZoom(parseFloat((A4_PX / naturalHeight).toFixed(2)));
-    } else {
-      setPrintZoom(BASE_ZOOM);
-    }
-  }, [data]);
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "Inter, sans-serif", color: "#737982" }}>
@@ -99,7 +82,6 @@ function InvoiceContent() {
 
   const { items, totalSaleValue, totalGst, client } = data;
 
-  // Group items by GST rate so we render one CGST+SGST pair per rate
   const gstGroups: { rate: number; cgst: number; sgst: number }[] = [];
   items.forEach(item => {
     const rate = item.saleValue > 0 ? Math.round((item.gst / item.saleValue) * 100) : 0;
@@ -137,10 +119,22 @@ function InvoiceContent() {
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
+          html { zoom: 0.75; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; }
           .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; }
-          .screen-card { box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
-          .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; box-shadow: 0 -4px 0 0 #ee3c30 !important; }
+          .screen-card {
+            box-shadow: none !important; margin: 0 !important; border-radius: 0 !important;
+            width: 100% !important; max-width: 100% !important;
+            overflow: visible !important;
+            padding-bottom: 70px !important;
+          }
+          .invoice-row { page-break-inside: avoid !important; }
+          .invoice-bottom { page-break-inside: avoid !important; }
+          .invoice-footer {
+            position: fixed !important; bottom: 0 !important; left: 0 !important;
+            right: 0 !important; width: 100% !important; margin: 0 !important;
+            box-shadow: 0 -4px 0 0 #ee3c30 !important;
+          }
         }
       `}</style>
 
@@ -157,26 +151,15 @@ function InvoiceContent() {
         <span style={{ fontSize: 11, color: "#888", marginLeft: 4 }}>Choose "Save as PDF" · tick "Background graphics"</span>
       </div>
 
-      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: printZoom }}>
-        {/*
-          Exact Locofy CSS:
-          .gstInvoicePrintribe {
-            width: 1062px; background-color: #fff; overflow: hidden;
-            display: flex; flex-direction: column; align-items: flex-start;
-            padding: 40px 40px 169px;   ← 169px bottom for absolute footer
-            position: relative; isolation: isolate;
-            gap: 28px; line-height: normal; letter-spacing: normal;
-          }
-        */}
-        <div ref={cardRef} className="screen-card" style={{
+      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: 0.75 }}>
+        <div className="screen-card" style={{
           width: 1062,
           maxWidth: "100%",
           backgroundColor: "#fff",
-          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
-          padding: "40px 40px 169px",
+          padding: "40px 40px 80px",
           boxSizing: "border-box",
           position: "relative",
           isolation: "isolate",
@@ -189,13 +172,7 @@ function InvoiceContent() {
           fontFamily: "Inter, sans-serif",
         }}>
 
-          {/* ── HEADER: FrameComponent11 ── */}
-          {/*
-            .frameParent (header section):
-            align-self:stretch; display:flex; align-items:flex-start;
-            justify-content:space-between; flex-wrap:wrap; gap:0; row-gap:20px;
-            z-index:2; flex-shrink:0; text-align:left; font-size:32px; color:#000;
-          */}
+          {/* ── HEADER ── */}
           <section style={{
             alignSelf: "stretch",
             display: "flex", alignItems: "flex-start", justifyContent: "space-between",
@@ -203,14 +180,12 @@ function InvoiceContent() {
             zIndex: 2, flexShrink: 0,
             textAlign: "left", fontSize: 32, color: "#000", fontFamily: "Inter",
           }}>
-            {/* Left: GST Invoice + Invoice No/Date */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 230, maxWidth: "100%" }}>
               <div style={{ alignSelf: "stretch", display: "flex", alignItems: "center" }}>
                 <h1 style={{ margin: 0, fontSize: "inherit", letterSpacing: "-0.5px", lineHeight: "40px", fontWeight: 700, fontFamily: "inherit" }}>
                   GST Invoice
                 </h1>
               </div>
-              {/* width:303.5px, gap:12px, font-size:16px, color:Neutral-500 */}
               <div style={{ width: 303.5, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, fontSize: 16, color: "#737982" }}>
                 <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 16 }}>
                   <div style={{ width: 116, flexShrink: 0, lineHeight: "24px", display: "inline-block" }}>Invoice No.</div>
@@ -222,7 +197,6 @@ function InvoiceContent() {
                 </div>
               </div>
             </div>
-            {/* Logo: width:402px, object-fit:cover, min-width:310px, max-width:402px */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/Printribe-Logo-TM-without-bg-1@2x.png"
@@ -231,14 +205,15 @@ function InvoiceContent() {
             />
           </section>
 
-          {/* ── BILLED BY / TO: .frameParent ── */}
-          <section className="invoice-section" style={{
+          {/* ── BILLED BY / TO ── */}
+          <section style={{
             alignSelf: "stretch",
             display: "flex", alignItems: "flex-start",
             flexWrap: "wrap", alignContent: "flex-start",
             padding: "2px 0 0", boxSizing: "border-box",
             gap: "10px 20px",
             maxWidth: "100%", zIndex: 3, flexShrink: 0,
+            pageBreakInside: "avoid",
           }}>
             {/* Billed By */}
             <div style={{
@@ -301,7 +276,7 @@ function InvoiceContent() {
             </div>
           </section>
 
-          {/* ── TABLE: FrameComponent111 ── */}
+          {/* ── TABLE ── */}
           <section style={{
             alignSelf: "stretch", borderRadius: "12px 12px 0 0", overflow: "hidden",
             display: "flex", flexDirection: "column", alignItems: "flex-start",
@@ -325,9 +300,9 @@ function InvoiceContent() {
               </div>
             </div>
 
-            {/* Item rows */}
+            {/* Item rows — each avoids a page break mid-row */}
             {items.map((item, idx) => (
-              <div key={idx} style={{
+              <div key={idx} className="invoice-row" style={{
                 alignSelf: "stretch",
                 borderRight: "1px solid var(--White-100)", borderBottom: "1px solid var(--White-100)", borderLeft: "1px solid var(--White-100)",
                 boxSizing: "border-box", padding: 20,
@@ -350,10 +325,7 @@ function InvoiceContent() {
             ))}
           </section>
 
-          {/* ── BOTTOM: .spanhdremovebefore ── */}
-          {/*
-            padding: 0 20px 0 0; gap: 32px; flex-wrap:wrap; align-content:flex-start;
-          */}
+          {/* ── BOTTOM: totals + bank + terms + signature — kept together across page breaks ── */}
           <main className="invoice-bottom" style={{
             alignSelf: "stretch",
             display: "flex", alignItems: "flex-start",
@@ -361,7 +333,7 @@ function InvoiceContent() {
             padding: "0 20px 0 0", boxSizing: "border-box",
             gap: 32, maxWidth: "100%", zIndex: 5, flexShrink: 0,
           }}>
-            {/* ── LEFT: FrameComponent1 ── */}
+            {/* LEFT */}
             <div style={{
               flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start",
               gap: 10, minWidth: 335, maxWidth: 574,
@@ -433,20 +405,16 @@ function InvoiceContent() {
               </div>
             </div>
 
-            {/* ── RIGHT: P (.pWrapper) ── */}
-            {/* flex:1; flex-direction:column; min-width:142px; max-width:356px */}
+            {/* RIGHT — totals */}
             <section style={{
               flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start",
               minWidth: 142, maxWidth: 356,
             }}>
-              {/* .p: align-self:stretch, display:flex, flex-direction:column, gap:24px, font-size:16px */}
               <div style={{
                 alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start",
                 gap: 24, textAlign: "left", fontSize: 16, color: "#000", fontFamily: "Inter",
               }}>
-                {/* Totals rows: .prvaKolaPlivanjaZaDojena — gap:24px, color:Neutral-500 */}
                 <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 24, overflow: "hidden", color: "#737982" }}>
-                  {/* Labels */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 108 }}>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Sub Total</div>
                     {gstGroups.map(g => (
@@ -458,7 +426,6 @@ function InvoiceContent() {
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Total Tax(GST)</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Round Off</div>
                   </div>
-                  {/* Values */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 16, minWidth: 108, textAlign: "right", color: "#000" }}>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalSaleValue)}</div>
                     {gstGroups.map(g => (
@@ -472,7 +439,6 @@ function InvoiceContent() {
                   </div>
                 </div>
 
-                {/* Amount Due: height:62px, border-top/bottom:1px solid #000, font-size:24px, letter-spacing:-0.5px */}
                 <div style={{
                   alignSelf: "stretch", height: 62,
                   borderTop: "1px solid #000", borderBottom: "1px solid #000",
@@ -484,9 +450,7 @@ function InvoiceContent() {
                   <h3 style={{ margin: 0, fontSize: "inherit", letterSpacing: "-0.5px", lineHeight: "36px", fontWeight: 600, fontFamily: "inherit" }}>{fmtAmt(amountDue)}</h3>
                 </div>
 
-                {/* Signature: justify-content:center, padding:12px 0, text-align:right */}
                 <div style={{ alignSelf: "stretch", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "12px 0", boxSizing: "border-box", maxWidth: "100%", textAlign: "right" }}>
-                  {/* width:336px, letter-spacing:-0.5px, line-height:36px */}
                   <div style={{ width: 336, position: "relative", letterSpacing: "-0.5px", lineHeight: "36px", display: "inline-block", flexShrink: 0, maxWidth: "100%" }}>
                     <span style={{ fontWeight: 600, lineHeight: "36px" }}>For PRINTRIBE<br /></span>
                     <span style={{ fontSize: 20, fontFamily: '"La Belle Aurore", cursive', color: "#2266a1", lineHeight: "36px" }}>Nehal Ganapathy<br /></span>
@@ -497,7 +461,7 @@ function InvoiceContent() {
             </section>
           </main>
 
-          {/* ── FOOTER: position:absolute, bottom:0, height:49px ── */}
+          {/* ── FOOTER — fixed in print so it appears on every page ── */}
           <footer className="invoice-footer" style={{
             width: "100%", height: 49,
             margin: 0,
