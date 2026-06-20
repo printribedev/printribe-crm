@@ -51,7 +51,7 @@ function parseProductItems(product: string): { name: string; weight: number }[] 
 function calcMargin(o: Order) {
   return o.saleValue > 0 ? (o.saleValue - orderCost(o)) / o.saleValue : 0;
 }
-function marginColor(m: number) { return m > 0.35 ? GREEN : m >= 0.15 ? "#8a7300" : R; }
+function marginColor(m: number) { return m > 0.30 ? GREEN : m >= 0.15 ? MID : R; }
 
 const PERIODS = ["This month", "Last 3 months", "Last 6 months", "FY 26-27", "All time"];
 
@@ -241,7 +241,7 @@ export default function DashboardPage() {
         <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" color={BLUE} badge="Tax" badgeColor={BLUE} />
         <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" color={GOLD} />
         <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period" color={GREEN}
-          badge={avgMargin > 0.35 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"} badgeColor={avgMargin > 0.35 ? GREEN : avgMargin >= 0.15 ? ORANGE : R} />
+          badge={avgMargin > 0.30 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"} badgeColor={avgMargin > 0.30 ? GREEN : avgMargin >= 0.15 ? MID : R} />
       </div>
 
       {/* KPI row 2 */}
@@ -396,7 +396,7 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-                {[[GREEN, "> 35%"], ["#8a7300", "15–35%"], [R, "< 15%"]].map(([c, l]) => (
+                {[[GREEN, "> 30%"], [MID, "15–30%"], [R, "< 15%"]].map(([c, l]) => (
                   <div key={l} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
                     <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />{l}
                   </div>
