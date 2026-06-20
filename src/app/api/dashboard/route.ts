@@ -22,7 +22,6 @@ export async function GET() {
       },
       orderBy: { date: "asc" },
     }),
-    prisma.product.findMany({ select: { name: true } }),
     prisma.client.findMany({
       select: {
         id: true, name: true, segment: true,
@@ -30,6 +29,7 @@ export async function GET() {
         orders: { select: { saleValue: true } },
       },
     }),
+    prisma.product.findMany({ select: { name: true } }),
   ]);
 
   const clientStats = clients.map(c => ({
