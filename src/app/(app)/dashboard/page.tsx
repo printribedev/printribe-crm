@@ -29,6 +29,11 @@ type ClientStat = { id: number; name: string; segment: string; totalValue: numbe
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 const pct = (n: number) => (n * 100).toFixed(1) + "%";
 
+function normalizeProductName(name: string, canonicalNames: string[]): string {
+  const lower = name.trim().toLowerCase();
+  return canonicalNames.find(c => c.toLowerCase() === lower) ?? name;
+}
+
 function parseProductItems(product: string): { name: string; weight: number }[] {
   try {
     const parsed = JSON.parse(product);
@@ -116,6 +121,7 @@ export default function DashboardPage() {
   const [period, setPeriod] = useState("FY 26-27");
   const [orders, setOrders] = useState<Order[]>([]);
   const [clients, setClients] = useState<ClientStat[]>([]);
+  const [productNames, setProductNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [marginSort, setMarginSort] = useState<"asc" | "desc">("desc");
   const [segView, setSegView] = useState<"client" | "product">("client");
@@ -124,6 +130,7 @@ export default function DashboardPage() {
     fetch("/api/dashboard").then(r => r.json()).then(d => {
       setOrders(d.orders);
       setClients(d.clients);
+      setProductNames(d.productNames ?? []);
       setLoading(false);
     });
   }, []);
@@ -150,7 +157,8 @@ export default function DashboardPage() {
   const prodMap: Record<string, number> = {};
   filtered.forEach(o => {
     parseProductItems(o.product).forEach(item => {
-      prodMap[item.name] = (prodMap[item.name] || 0) + o.saleValue * item.weight;
+      const canonical = normalizeProductName(item.name, productNames);
+      prodMap[canonical] = (prodMap[canonical] || 0) + o.saleValue * item.weight;
     });
   });
   const segByProduct = Object.entries(prodMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);

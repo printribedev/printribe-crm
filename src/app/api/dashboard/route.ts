@@ -12,7 +12,7 @@ export async function GET() {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [orders, clients] = await Promise.all([
+  const [orders, clients, products] = await Promise.all([
     prisma.order.findMany({
       select: {
         id: true, clientId: true, clientName: true, product: true, segment: true, stage: true, priority: true,
@@ -22,6 +22,7 @@ export async function GET() {
       },
       orderBy: { date: "asc" },
     }),
+    prisma.product.findMany({ select: { name: true } }),
     prisma.client.findMany({
       select: {
         id: true, name: true, segment: true,
@@ -41,6 +42,7 @@ export async function GET() {
   }));
 
   return NextResponse.json({
+    productNames: products.map(p => p.name),
     orders: orders.map(o => ({
       ...o,
       saleValue: Number(o.saleValue),
