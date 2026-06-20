@@ -289,7 +289,7 @@ export default function DashboardPage() {
                     <LabelList
                       dataKey="margin"
                       position="top"
-                      formatter={(v: number) => v > 0 ? v.toFixed(0) + "%" : ""}
+                      formatter={(v) => Number(v) > 0 ? Number(v).toFixed(0) + "%" : ""}
                       style={{ fontSize: 9, fontWeight: 700, fill: MID }}
                     />
                   </Bar>
