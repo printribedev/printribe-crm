@@ -15,7 +15,7 @@ export async function GET() {
   const [orders, clients] = await Promise.all([
     prisma.order.findMany({
       select: {
-        id: true, clientId: true, clientName: true, segment: true, stage: true, priority: true,
+        id: true, clientId: true, clientName: true, product: true, segment: true, stage: true, priority: true,
         saleValue: true, gst: true, fabric: true, printing: true, transport: true,
         misc: true, jobWork: true, packaging: true, design: true, ribCost: true, date: true,
         dueDate: true, deliveryDate: true,
