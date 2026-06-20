@@ -39,8 +39,7 @@ export default function QuotesPage() {
   const [lines, setLines] = useState<LineItem[]>([{ ...BLANK_LINE }]);
   const [costs, setCosts] = useState<Costs>({ ...BLANK_COSTS });
   const [perPc, setPerPc] = useState<PerPcMap>({ ...BLANK_PER_PC });
-  const [validUntil, setValidUntil] = useState("");
-  const [notes, setNotes] = useState("");
+  const [quoteDate, setQuoteDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
     fetch("/api/clients").then(r => r.json()).then(setClients);
@@ -95,7 +94,7 @@ export default function QuotesPage() {
   function reset() {
     setClientId(""); setClientSearch(""); setLines([{ ...BLANK_LINE }]);
     setCosts({ ...BLANK_COSTS }); setPerPc({ ...BLANK_PER_PC });
-    setValidUntil(""); setNotes("");
+    setQuoteDate(new Date().toISOString().slice(0, 10));
   }
 
   const activeCosts = COST_LINES.filter(l => resolvedCosts(l.key) > 0);
@@ -162,6 +161,10 @@ export default function QuotesPage() {
                 {selectedClient.email && <span><span style={{ color: MID }}>Email: </span><strong>{selectedClient.email}</strong></span>}
               </div>
             )}
+            <div style={{ marginTop: 12 }}>
+              <label style={LBL}>DATE</label>
+              <input type="date" value={quoteDate} onChange={e => setQuoteDate(e.target.value)} style={{ ...INP, width: "50%" }} />
+            </div>
           </div>
 
           {/* Product lines */}
@@ -205,22 +208,6 @@ export default function QuotesPage() {
                 style={{ alignSelf: "flex-start", fontSize: 12, padding: "6px 14px", borderRadius: 7, border: `1px dashed ${BORDER}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>
                 + Add line
               </button>
-            </div>
-          </div>
-
-          {/* Quote details */}
-          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 14 }}>Quote details</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div>
-                <label style={LBL}>VALID UNTIL</label>
-                <input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} style={INP} />
-              </div>
-            </div>
-            <div style={{ marginTop: 12 }}>
-              <label style={LBL}>NOTES / TERMS</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Delivery terms, conditions, remarks…"
-                style={{ ...INP, resize: "vertical", fontFamily: "inherit" }} />
             </div>
           </div>
 
