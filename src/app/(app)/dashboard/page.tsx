@@ -51,7 +51,7 @@ function parseProductItems(product: string): { name: string; weight: number }[] 
 function calcMargin(o: Order) {
   return o.saleValue > 0 ? (o.saleValue - orderCost(o)) / o.saleValue : 0;
 }
-function marginColor(m: number) { return m > 0.30 ? GREEN : m >= 0.15 ? MID : R; }
+function marginColor(m: number) { return m > 0.25 ? GREEN : m >= 0.15 ? MID : R; }
 
 const PERIODS = ["This month", "Last 3 months", "Last 6 months", "FY 26-27", "All time"];
 
@@ -396,7 +396,7 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-                {[[GREEN, "> 30%"], [MID, "15–30%"], [R, "< 15%"]].map(([c, l]) => (
+                {[[GREEN, "> 25%"], [MID, "15–25%"], [R, "< 15%"]].map(([c, l]) => (
                   <div key={l} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
                     <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />{l}
                   </div>
