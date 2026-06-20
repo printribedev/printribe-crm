@@ -243,7 +243,7 @@ export default function ProductionPage() {
     if (!order || order.stage === newStage) return;
     // Optimistic update
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, stage: newStage } : o));
-    await fetch(`/api/orders/${orderId}`, {
+    await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...order, stage: newStage }),
