@@ -336,21 +336,26 @@ function ProformaContent() {
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, maxWidth: "100%" }}>
                   <div style={{ lineHeight: "28px", fontWeight: 500 }}>Bank Account Details</div>
                   <div style={{ alignSelf: "stretch", display: "flex", alignItems: "flex-start", gap: 20, maxWidth: "100%", fontSize: 16 }}>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
-                      <div style={{ lineHeight: "24px" }}>Bank Name</div>
-                      <div style={{ lineHeight: "24px" }}>Account Holder Name</div>
-                      <div style={{ lineHeight: "24px" }}>Account Number</div>
-                      <div style={{ lineHeight: "24px" }}>IFSC</div>
-                      <div style={{ lineHeight: "24px" }}>Account Type</div>
-                      <div style={{ lineHeight: "24px" }}>UPI ID</div>
+                    <div style={{ flex: 1, display: "flex", gap: 16 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <div style={{ lineHeight: "24px" }}>Bank Name</div>
+                        <div style={{ lineHeight: "24px" }}>Account Holder Name</div>
+                        <div style={{ lineHeight: "24px" }}>Account Number</div>
+                        <div style={{ lineHeight: "24px" }}>IFSC</div>
+                        <div style={{ lineHeight: "24px" }}>Account Type</div>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8, color: "#000" }}>
+                        <div style={{ lineHeight: "24px", fontWeight: 500 }}>HDFC Bank, Amruthalli Branch</div>
+                        <div style={{ lineHeight: "24px", fontWeight: 500 }}>PRINTRIBE</div>
+                        <div style={{ lineHeight: "24px", fontWeight: 500 }}>59209967439181</div>
+                        <div style={{ lineHeight: "24px", fontWeight: 500 }}>HDFC0004829</div>
+                        <div style={{ lineHeight: "24px", fontWeight: 500 }}>Current</div>
+                      </div>
                     </div>
-                    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, minWidth: 224, maxWidth: "100%", color: "#000" }}>
-                      <div style={{ lineHeight: "24px", fontWeight: 500 }}>HDFC Bank, Amruthalli Branch</div>
-                      <div style={{ lineHeight: "24px", fontWeight: 500 }}>PRINTRIBE</div>
-                      <div style={{ lineHeight: "24px", fontWeight: 500 }}>59209967439181</div>
-                      <div style={{ lineHeight: "24px", fontWeight: 500 }}>HDFC0004829</div>
-                      <div style={{ lineHeight: "24px", fontWeight: 500 }}>Current</div>
-                      <div style={{ lineHeight: "24px", fontWeight: 500 }}>printribe@hdfcbank</div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/upi-qr.png" alt="UPI QR Code" style={{ width: 100, height: 100, objectFit: "contain" }} />
+                      <div style={{ fontSize: 12, color: "#000", fontWeight: 500 }}>Scan to Pay</div>
                     </div>
                   </div>
                 </div>
