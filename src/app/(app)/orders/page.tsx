@@ -124,7 +124,7 @@ function calcMargin(o: Order) {
   const grossProfit = o.saleValue - totalCost;
   return { totalCost, grossProfit, marginPct: o.saleValue > 0 ? grossProfit / o.saleValue : 0 };
 }
-function marginColor(m: number) { return m > 0.35 ? GREEN : m > 0.2 ? "#8a7300" : R; }
+function marginColor(m: number) { return m > 0.30 ? GREEN : m >= 0.15 ? MID : R; }
 
 function getProductDisplay(product: string): string {
   try {

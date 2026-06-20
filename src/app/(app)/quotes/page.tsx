@@ -12,7 +12,7 @@ type SavedProforma = { id: number; ref: string; date: string; clientName: string
 
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 const fmtDec = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-function marginColor(m: number) { return m > 0.35 ? GREEN : m > 0.2 ? "#8a7300" : R; }
+function marginColor(m: number) { return m > 0.30 ? GREEN : m >= 0.15 ? MID : R; }
 
 const COST_LINES = [
   { key: "fabric",    label: "Fabric / Blank Garment",  color: BLUE },
@@ -339,7 +339,7 @@ export default function QuotesPage() {
               <div style={{ fontSize: 12, color: MID, marginTop: 4 }}>Gross margin</div>
               {totalSaleValue > 0 && (
                 <div style={{ marginTop: 8, fontSize: 11, fontWeight: 600, padding: "4px 14px", borderRadius: 20, display: "inline-block", background: mc + "15", color: mc }}>
-                  {marginPct > 0.35 ? "Healthy margin" : marginPct > 0.2 ? "Acceptable — watch costs" : "Below target — review pricing"}
+                  {marginPct > 0.30 ? "Healthy margin" : marginPct >= 0.15 ? "Acceptable — watch costs" : "Below target — review pricing"}
                 </div>
               )}
             </div>

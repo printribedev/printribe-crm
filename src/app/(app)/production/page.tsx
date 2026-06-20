@@ -45,7 +45,7 @@ function calcMargin(o: Order) {
   const cost = o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design;
   return o.saleValue > 0 ? (o.saleValue - cost) / o.saleValue : 0;
 }
-function marginColor(m: number) { return m > 0.35 ? GREEN : m > 0.2 ? "#8a7300" : R; }
+function marginColor(m: number) { return m > 0.30 ? GREEN : m >= 0.15 ? MID : R; }
 
 function daysUntil(dateStr: string) {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
