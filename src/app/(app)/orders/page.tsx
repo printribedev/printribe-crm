@@ -12,7 +12,6 @@ const SEG_COLORS: Record<string, string> = { Reseller: R, Sports: BLUE, Educatio
 const SEG_LABELS: Record<string, string> = { Reseller: "Reseller", Sports: "Sports", Education: "Education", Corporate: "Corporate", NGO_Govt: "NGO/Govt", B2C: "B2C" };
 const SEGMENTS = ["Reseller", "Sports", "Education", "Corporate", "NGO_Govt", "B2C"];
 const STAGES = [
-  { id: "enquiry", label: "Enquiry", color: MID },
   { id: "design", label: "Design", color: PURPLE },
   { id: "sampling", label: "Sampling", color: BLUE },
   { id: "production", label: "In Production", color: ORANGE },
@@ -449,7 +448,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
     clientId: order.clientId ?? null as number | null,
     clientName: order.clientName ?? "",
     segment: order.segment ?? "Corporate",
-    stage: order.stage ?? "enquiry",
+    stage: order.stage ?? "design",
     date: order.date ? order.date.slice(0, 10) : today,
     dueDate: order.dueDate ? order.dueDate.slice(0, 10) : "",
     deliveryDate: order.deliveryDate ? order.deliveryDate.slice(0, 10) : "",

@@ -133,7 +133,7 @@ export default function DashboardPage() {
 
   // Stage breakdown from ALL orders
   const stageLabels: Record<string, string> = {
-    enquiry: "Enquiry", design: "Design", sampling: "Sampling",
+    design: "Design", sampling: "Sampling",
     production: "In Production", qc: "QC", dispatch: "Dispatched",
     delivered: "Delivered", delivered_pending: "Pmt Pending",
   };

@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       fabricPricePerKg: body.fabricPricePerKg != null ? Number(body.fabricPricePerKg) : null,
       ribWeightPerPc: body.ribWeightPerPc != null ? Number(body.ribWeightPerPc) : null,
       ribPricePerKg: body.ribPricePerKg != null ? Number(body.ribPricePerKg) : null,
-      stage: body.stage ?? "enquiry",
+      stage: body.stage ?? "design",
       priority: body.priority ?? "Normal",
       deliveryDate: body.deliveryDate ? new Date(body.deliveryDate) : null,
       paymentDate: body.paymentDate ? new Date(body.paymentDate) : null,

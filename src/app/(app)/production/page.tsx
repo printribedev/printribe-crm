@@ -9,7 +9,6 @@ const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK
 const GREEN = "#1A7A4A";
 
 const STAGES = [
-  { id: "enquiry",           label: "Enquiry",                    color: MID },
   { id: "design",            label: "Design",                     color: PURPLE },
   { id: "sampling",          label: "Sampling",                   color: BLUE },
   { id: "production",        label: "In Production",              color: ORANGE },
