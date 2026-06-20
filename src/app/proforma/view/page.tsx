@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 // ── number to words (Indian system) ─────────────────────────
 const ONES = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
@@ -56,16 +57,25 @@ function ProformaContent() {
   const [error, setError] = useState("");
   const [printZoom, setPrintZoom] = useState(0.75);
   const cardRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("printribe_proforma");
-      if (!raw) { setError("No proforma data found. Please go back and click Generate Proforma."); return; }
-      setData(JSON.parse(raw));
-    } catch {
-      setError("Failed to load proforma data.");
+    const id = searchParams.get("id");
+    if (id) {
+      fetch(`/api/proformas/${id}`)
+        .then(r => r.ok ? r.json() : Promise.reject("Not found"))
+        .then(p => setData(p.data as ProformaData))
+        .catch(() => setError("Failed to load proforma from database."));
+    } else {
+      try {
+        const raw = sessionStorage.getItem("printribe_proforma");
+        if (!raw) { setError("No proforma data found. Please go back and click Generate Proforma."); return; }
+        setData(JSON.parse(raw));
+      } catch {
+        setError("Failed to load proforma data.");
+      }
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!data || !cardRef.current) return;

@@ -8,6 +8,7 @@ const GREEN = "#1A7A4A";
 
 type Client = { id: number; name: string; gstin: string | null; address: string | null; city: string | null; email: string | null; phone: string | null; segment: string };
 type Product = { id: number; name: string; gstRate: string; basePrice: number; hsn: string; category: string; active: boolean };
+type SavedProforma = { id: number; ref: string; date: string; clientName: string; createdAt: string };
 
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 const fmtDec = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -40,13 +41,24 @@ export default function QuotesPage() {
   const [costs, setCosts] = useState<Costs>({ ...BLANK_COSTS });
   const [perPc, setPerPc] = useState<PerPcMap>({ ...BLANK_PER_PC });
   const [quoteDate, setQuoteDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [savedProformas, setSavedProformas] = useState<SavedProforma[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/clients").then(r => r.json()).then(setClients);
     fetch("/api/products").then(r => r.json()).then((data: Product[]) =>
       setProducts(data.filter(p => p.active !== false))
     );
+    loadProformas();
   }, []);
+
+  async function loadProformas() {
+    try {
+      const res = await fetch("/api/proformas");
+      if (res.ok) setSavedProformas(await res.json());
+    } catch { /* silent */ }
+  }
 
   const selectedClient = clients.find(c => c.id === clientId) ?? null;
   const filteredClients = clientSearch
@@ -59,7 +71,6 @@ export default function QuotesPage() {
     setShowClientList(false);
   }
 
-  // Line helpers
   const totalQty = lines.reduce((s, l) => s + (l.qty || 0), 0);
   const setLine = (i: number, patch: Partial<LineItem>) =>
     setLines(prev => prev.map((l, idx) => idx === i ? { ...l, ...patch } : l));
@@ -72,11 +83,9 @@ export default function QuotesPage() {
   function addLine() { setLines(prev => [...prev, { ...BLANK_LINE }]); }
   function removeLine(i: number) { setLines(prev => prev.filter((_, idx) => idx !== i)); }
 
-  // Revenue
   const lineSubtotals = lines.map(l => (l.qty || 0) * (l.unitPrice || 0));
   const totalSaleValue = lineSubtotals.reduce((s, v) => s + v, 0);
 
-  // GST per line (each product may have different rate)
   const lineGst = lines.map((l, i) => {
     const p = products.find(x => x.id === l.productId);
     const rate = p ? parseFloat(p.gstRate) / 100 : 0.05;
@@ -84,7 +93,6 @@ export default function QuotesPage() {
   });
   const totalGst = lineGst.reduce((s, v) => s + v, 0);
 
-  // Costs
   const resolvedCosts = (key: string) => perPc[key] ? (costs[key] || 0) * totalQty : (costs[key] || 0);
   const totalCost = COST_LINES.reduce((s, l) => s + resolvedCosts(l.key), 0);
   const grossProfit = totalSaleValue - totalCost;
@@ -95,6 +103,86 @@ export default function QuotesPage() {
     setClientId(""); setClientSearch(""); setLines([{ ...BLANK_LINE }]);
     setCosts({ ...BLANK_COSTS }); setPerPc({ ...BLANK_PER_PC });
     setQuoteDate(new Date().toISOString().slice(0, 10));
+  }
+
+  async function generateProforma() {
+    if (!selectedClient || totalSaleValue === 0) return;
+    setGenerating(true);
+    try {
+      const proformaItems = lines
+        .filter(l => l.productId && l.qty > 0)
+        .map(l => {
+          const p = products.find(x => x.id === l.productId);
+          return { product: p?.name ?? "Product", hsn: p?.hsn ?? "", qty: l.qty, unitPrice: l.unitPrice, gstPct: p ? parseFloat(p.gstRate) : 5 };
+        });
+
+      const yr = new Date().getFullYear();
+      const proformaRef = `PF/${String(yr).slice(-2)}-${String(yr + 1).slice(-2)}/${String(savedProformas.length + 1).padStart(3, "0")}`;
+
+      const proformaData = {
+        ref: proformaRef,
+        date: quoteDate,
+        items: proformaItems,
+        totalSaleValue,
+        totalGst,
+        client: {
+          name: selectedClient.name,
+          gstin: selectedClient.gstin,
+          address: selectedClient.address,
+          city: selectedClient.city,
+          email: selectedClient.email,
+          phone: selectedClient.phone,
+        },
+      };
+
+      const res = await fetch("/api/proformas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ref: proformaRef, date: quoteDate, clientId: selectedClient.id, clientName: selectedClient.name, data: proformaData }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save");
+      const saved = await res.json();
+
+      sessionStorage.setItem("printribe_proforma", JSON.stringify(proformaData));
+      await loadProformas();
+      window.open(`/proforma/view?id=${saved.id}`, "_blank");
+    } catch (e) {
+      console.error("Proforma generation failed:", e);
+      alert("Failed to save proforma. Please try again.");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function viewProforma(id: number) {
+    const res = await fetch(`/api/proformas/${id}`);
+    if (!res.ok) return;
+    const p = await res.json();
+    sessionStorage.setItem("printribe_proforma", JSON.stringify(p.data));
+    window.open(`/proforma/view?id=${id}`, "_blank");
+  }
+
+  async function editProforma(p: SavedProforma) {
+    const res = await fetch(`/api/proformas/${p.id}`);
+    if (!res.ok) return;
+    const full = await res.json();
+    const data = full.data as { items: { productId?: number; qty: number; unitPrice: number; gstPct: number; product: string }[]; client: { name: string } };
+    // Restore state from saved proforma
+    const matchedClient = clients.find(c => c.name === data.client.name);
+    if (matchedClient) { setClientId(matchedClient.id); setClientSearch(matchedClient.name); }
+    setQuoteDate(full.date);
+    setLines(data.items.map(item => {
+      const prod = products.find(x => x.name === item.product);
+      return { productId: prod?.id ?? "", qty: item.qty, unitPrice: item.unitPrice };
+    }));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function deleteProforma(id: number) {
+    await fetch(`/api/proformas/${id}`, { method: "DELETE" });
+    setDeleteConfirm(null);
+    setSavedProformas(prev => prev.filter(p => p.id !== id));
   }
 
   const activeCosts = COST_LINES.filter(l => resolvedCosts(l.key) > 0);
@@ -113,41 +201,10 @@ export default function QuotesPage() {
             Reset
           </button>
           <button
-            disabled={!selectedClient || totalSaleValue === 0}
-            onClick={() => {
-              if (!selectedClient) return;
-              const proformaItems = lines
-                .filter(l => l.productId && l.qty > 0)
-                .map(l => {
-                  const p = products.find(x => x.id === l.productId);
-                  return {
-                    product: p?.name ?? "Product",
-                    hsn: p?.hsn ?? "",
-                    qty: l.qty,
-                    unitPrice: l.unitPrice,
-                    gstPct: p ? parseFloat(p.gstRate) : 5,
-                  };
-                });
-              const proformaRef = `PF/${new Date().getFullYear().toString().slice(-2)}-${(new Date().getFullYear() + 1).toString().slice(-2)}/${String(Math.floor(Math.random() * 900) + 100)}`;
-              sessionStorage.setItem("printribe_proforma", JSON.stringify({
-                ref: proformaRef,
-                date: quoteDate,
-                items: proformaItems,
-                totalSaleValue,
-                totalGst,
-                client: {
-                  name: selectedClient.name,
-                  gstin: selectedClient.gstin,
-                  address: selectedClient.address,
-                  city: selectedClient.city,
-                  email: selectedClient.email,
-                  phone: selectedClient.phone,
-                },
-              }));
-              window.open("/proforma/view", "_blank");
-            }}
+            disabled={!selectedClient || totalSaleValue === 0 || generating}
+            onClick={generateProforma}
             style={{ fontSize: 12, padding: "7px 16px", borderRadius: 7, border: "none", background: (!selectedClient || totalSaleValue === 0) ? BORDER : R, color: WHITE, cursor: (!selectedClient || totalSaleValue === 0) ? "default" : "pointer", fontWeight: 700 }}>
-            Generate Proforma →
+            {generating ? "Saving…" : "Generate Proforma →"}
           </button>
         </div>
       </div>
@@ -311,7 +368,6 @@ export default function QuotesPage() {
               </div>
             )}
 
-            {/* Line summary */}
             {lines.some(l => l.productId && l.qty > 0) && (
               <div style={{ marginBottom: 20 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 8 }}>Line summary</div>
@@ -353,6 +409,69 @@ export default function QuotesPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Saved Proformas list ── */}
+      <div style={{ marginTop: 32 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: BLACK, marginBottom: 14 }}>
+          Saved Proformas <span style={{ fontSize: 12, fontWeight: 400, color: MID }}>({savedProformas.length})</span>
+        </div>
+
+        {savedProformas.length === 0 ? (
+          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "28px 0", textAlign: "center", color: MID, fontSize: 13 }}>
+            No proformas generated yet
+          </div>
+        ) : (
+          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
+            {/* Header */}
+            <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 140px 160px", gap: 16, padding: "10px 20px", background: BG, borderBottom: `1px solid ${BORDER}`, fontSize: 11, fontWeight: 700, color: MID, letterSpacing: "0.05em" }}>
+              <div>REF</div>
+              <div>CLIENT</div>
+              <div>DATE</div>
+              <div style={{ textAlign: "right" }}>ACTIONS</div>
+            </div>
+            {savedProformas.map(p => (
+              <div key={p.id} style={{ display: "grid", gridTemplateColumns: "140px 1fr 140px 160px", gap: 16, padding: "13px 20px", borderBottom: `1px solid ${BORDER}`, alignItems: "center", fontSize: 13 }}>
+                <div style={{ fontWeight: 700, color: BLUE, fontFamily: "monospace", fontSize: 12 }}>{p.ref}</div>
+                <div style={{ fontWeight: 500 }}>{p.clientName}</div>
+                <div style={{ color: MID, fontSize: 12 }}>{new Date(p.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                  <button onClick={() => viewProforma(p.id)}
+                    style={{ fontSize: 11, padding: "5px 12px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>
+                    View
+                  </button>
+                  <button onClick={() => editProforma(p)}
+                    style={{ fontSize: 11, padding: "5px 12px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, color: BLACK, cursor: "pointer", fontWeight: 600 }}>
+                    Edit
+                  </button>
+                  {deleteConfirm === p.id ? (
+                    <>
+                      <button onClick={() => deleteProforma(p.id)}
+                        style={{ fontSize: 11, padding: "5px 10px", borderRadius: 6, border: "none", background: R, color: WHITE, cursor: "pointer", fontWeight: 700 }}>
+                        Confirm
+                      </button>
+                      <button onClick={() => setDeleteConfirm(null)}
+                        style={{ fontSize: 11, padding: "5px 8px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
+                        ✕
+                      </button>
+                    </>
+                  ) : (
+                    <button onClick={() => setDeleteConfirm(p.id)}
+                      style={{ fontSize: 11, padding: "5px 12px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>
+                      Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Delete confirm overlay backdrop */}
+      {deleteConfirm !== null && (
+        <div onClick={() => setDeleteConfirm(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 40 }} />
+      )}
     </div>
   );
 }

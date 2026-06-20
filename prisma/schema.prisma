@@ -194,6 +194,18 @@ model OrderTimeline {
   @@map("order_timeline")
 }
 
+model Proforma {
+  id         Int      @id @default(autoincrement())
+  ref        String   @unique
+  date       String
+  clientId   Int?     @map("client_id")
+  clientName String   @map("client_name")
+  data       Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("proformas")
+}
+
 model Asset {
   id          Int         @id @default(autoincrement())
   name        String
