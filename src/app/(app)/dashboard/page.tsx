@@ -241,7 +241,7 @@ export default function DashboardPage() {
         <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" color={BLUE} badge="Tax" badgeColor={BLUE} />
         <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" color={GOLD} />
         <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period" color={GREEN}
-          badge={avgMargin > 0.30 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"} badgeColor={avgMargin > 0.30 ? GREEN : avgMargin >= 0.15 ? MID : R} />
+          badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"} badgeColor={avgMargin > 0.25 ? GREEN : avgMargin >= 0.15 ? MID : R} />
       </div>
 
       {/* KPI row 2 */}
