@@ -316,10 +316,10 @@ export default function DashboardPage() {
             </div>
           </div>
           {marginData.length === 0 ? (
-            <div style={{ height: 170, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>No data</div>
+            <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>No data</div>
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={Math.max(170, marginData.length * 32)}>
+              <ResponsiveContainer width="100%" height={Math.max(140, marginData.length * 24)}>
                 <BarChart data={marginData} barSize={16}>
                   <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: MID }} axisLine={false} tickLine={false} />
@@ -347,7 +347,7 @@ export default function DashboardPage() {
         {topClients.length === 0 ? (
           <div style={{ color: MID, fontSize: 12 }}>No client data for this period.</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 40px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {topClients.map((c, i) => (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: MID, width: 18, flexShrink: 0 }}>#{i + 1}</div>
