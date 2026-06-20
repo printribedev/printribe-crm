@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, PieChart, Pie, Cell, LineChart, Line,
+  CartesianGrid, PieChart, Pie, Cell, LineChart, Line, LabelList,
 } from "recharts";
 
 const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
@@ -49,8 +49,7 @@ function parseProductItems(product: string): { name: string; weight: number }[] 
 }
 
 function calcMargin(o: Order) {
-  const cost = o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design + (o.ribCost || 0);
-  return o.saleValue > 0 ? (o.saleValue - cost) / o.saleValue : 0;
+  return o.saleValue > 0 ? (o.saleValue - orderCost(o)) / o.saleValue : 0;
 }
 function marginColor(m: number) { return m > 0.35 ? GREEN : m >= 0.15 ? "#8a7300" : R; }
 
@@ -77,18 +76,26 @@ function filterOrders(orders: Order[], period: string): Order[] {
   }
 }
 
+function orderCost(o: Order) {
+  return o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design + (o.ribCost || 0);
+}
+
 function toMonthlyData(orders: Order[]) {
-  const map: Record<string, { sales: number; count: number; ts: number }> = {};
+  const map: Record<string, { sales: number; cost: number; count: number; ts: number }> = {};
   orders.forEach(o => {
     const d = analyticsDate(o);
     const key = d.toLocaleDateString("en-IN", { month: "short" }) + " " + String(d.getFullYear()).slice(2);
     const ts = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-    if (!map[key]) map[key] = { sales: 0, count: 0, ts };
+    if (!map[key]) map[key] = { sales: 0, cost: 0, count: 0, ts };
     map[key].sales += o.saleValue;
+    map[key].cost += orderCost(o);
     map[key].count += 1;
   });
-  return Object.entries(map).map(([month, v]) => ({ month, sales: v.sales, count: v.count, ts: v.ts }))
-    .sort((a, b) => a.ts - b.ts);
+  return Object.entries(map).map(([month, v]) => {
+    const profit = v.sales - v.cost;
+    const margin = v.sales > 0 ? (profit / v.sales) * 100 : 0;
+    return { month, sales: v.sales, cost: v.cost, profit, margin, count: v.count, ts: v.ts };
+  }).sort((a, b) => a.ts - b.ts);
 }
 
 function KpiCard({ label, value, sub, color = R, badge, badgeColor = GREEN }: {
@@ -190,20 +197,20 @@ export default function DashboardPage() {
     .slice(0, 10);
   const topMax = topClients[0]?.periodValue || 1;
 
-  // Avg margin per client for filtered period
-  const clientMarginMap: Record<string, { total: number; count: number }> = {};
+  // Avg margin per client for filtered period — profit/revenue
+  const clientMarginMap: Record<string, { revenue: number; profit: number }> = {};
   filtered.forEach(o => {
     const key = o.clientName;
-    if (!clientMarginMap[key]) clientMarginMap[key] = { total: 0, count: 0 };
-    clientMarginMap[key].total += calcMargin(o);
-    clientMarginMap[key].count += 1;
+    if (!clientMarginMap[key]) clientMarginMap[key] = { revenue: 0, profit: 0 };
+    clientMarginMap[key].revenue += o.saleValue;
+    clientMarginMap[key].profit += o.saleValue - orderCost(o);
   });
   const marginData = Object.entries(clientMarginMap)
-    .map(([name, { total, count }]) => ({
+    .map(([name, { revenue, profit }]) => ({
       name: name.split(" ")[0],
       fullName: name,
-      margin: parseFloat(((total / count) * 100).toFixed(1)),
-      raw: total / count,
+      margin: revenue > 0 ? parseFloat(((profit / revenue) * 100).toFixed(1)) : 0,
+      raw: revenue > 0 ? profit / revenue : 0,
     }))
     .sort((a, b) => marginSort === "desc" ? b.margin - a.margin : a.margin - b.margin);
 
@@ -252,20 +259,51 @@ export default function DashboardPage() {
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Revenue trend</div>
           <div style={{ fontSize: 11, color: MID, marginBottom: 18 }}>Monthly sale value (excl. GST) · {period}</div>
           {monthlyData.length === 0 ? (
-            <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>
+            <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>
               No orders in this period yet.
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={monthlyData} barSize={22}>
-                <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false}
-                  tickFormatter={v => v >= 100000 ? (v / 100000).toFixed(1) + "L" : (v / 1000).toFixed(0) + "K"} />
-                <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="sales" fill={R} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={monthlyData} barSize={28} stackOffset="none">
+                  <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false}
+                    tickFormatter={v => v >= 100000 ? (v / 100000).toFixed(1) + "L" : (v / 1000).toFixed(0) + "K"} />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = monthlyData.find(m => m.month === label);
+                      return (
+                        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", fontSize: 12 }}>
+                          <div style={{ fontWeight: 700, marginBottom: 6 }}>{label}</div>
+                          <div style={{ color: MID }}>Revenue: <b style={{ color: BLACK }}>{fmt(d?.sales ?? 0)}</b></div>
+                          <div style={{ color: MID }}>Profit: <b style={{ color: GREEN }}>{fmt(d?.profit ?? 0)}</b></div>
+                          <div style={{ color: MID }}>Margin: <b style={{ color: marginColor((d?.margin ?? 0) / 100) }}>{(d?.margin ?? 0).toFixed(1)}%</b></div>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Bar dataKey="cost" stackId="a" fill="#E8E7E3" radius={[0, 0, 0, 0]} name="Cost" />
+                  <Bar dataKey="profit" stackId="a" fill={GREEN} radius={[4, 4, 0, 0]} name="Profit">
+                    <LabelList
+                      dataKey="margin"
+                      position="top"
+                      formatter={(v: number) => v > 0 ? v.toFixed(0) + "%" : ""}
+                      style={{ fontSize: 9, fontWeight: 700, fill: MID }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: GREEN }} /> Profit
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#E8E7E3", border: `1px solid ${BORDER}` }} /> Cost
+                </div>
+              </div>
+            </>
           )}
         </div>
 
