@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   GRAD_PRIMARY,
-  PRIMARY, ERROR, WHITE, MID, INK, BORDER, SURFACE, SURFACE2, R_SM, R_MD, R_LG, SHADOW_XL,
+  PRIMARY, ERROR, WHITE, MID, INK, BORDER, R_SM, R_LG,
 } from "@/lib/tokens";
 
 export default function LoginPage() {
@@ -57,21 +58,15 @@ export default function LoginPage() {
         boxShadow: "0 4px 6px rgba(15,23,42,0.04), 0 20px 40px rgba(15,23,42,0.10), 0 0 0 1px rgba(15,23,42,0.06)",
       }}>
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 36 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: R_MD,
-            background: GRAD_PRIMARY,
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            boxShadow: "0 4px 12px rgba(79,70,229,0.3)",
-          }}>
-            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: INK, letterSpacing: "-0.02em", lineHeight: 1.2 }}>Printribe</div>
-            <div style={{ fontSize: 10, color: MID, letterSpacing: "0.08em", textTransform: "uppercase" }}>Operations CRM</div>
-          </div>
+        <div style={{ marginBottom: 32, display: "flex", justifyContent: "center" }}>
+          <Image
+            src="/Printribe-Logo-TM-without-bg-1@2x.png"
+            alt="Printribe"
+            width={160}
+            height={52}
+            style={{ objectFit: "contain" }}
+            priority
+          />
         </div>
 
         <div style={{ fontSize: 24, fontWeight: 700, color: INK, letterSpacing: "-0.03em", marginBottom: 6 }}>Welcome back</div>

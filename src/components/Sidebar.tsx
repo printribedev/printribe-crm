@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PRIMARY, PRIMARY_LIGHT, BODY, MID, MUTED, WHITE, BORDER, INK, GRAD_PRIMARY } from "@/lib/tokens";
@@ -42,39 +43,17 @@ const NAV = [
 
 function PrintribeLogo() {
   return (
-    <div style={{ padding: "22px 20px 18px" }}>
-      {/* Logo mark + wordmark */}
-      <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-        {/* Mark: layered print sheets icon */}
-        <div style={{ position: "relative", width: 38, height: 38, flexShrink: 0 }}>
-          <svg width={38} height={38} viewBox="0 0 38 38" fill="none">
-            <defs>
-              <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#4F46E5" />
-                <stop offset="100%" stopColor="#7C3AED" />
-              </linearGradient>
-            </defs>
-            {/* Background rounded square */}
-            <rect width="38" height="38" rx="10" fill="url(#logoGrad)" />
-            {/* Layered sheets — print press motif */}
-            <rect x="9" y="22" width="16" height="10" rx="2" fill="rgba(255,255,255,0.25)" />
-            <rect x="11" y="19" width="16" height="10" rx="2" fill="rgba(255,255,255,0.4)" />
-            {/* Top sheet / P letterform */}
-            <rect x="13" y="7" width="16" height="13" rx="2.5" fill="white" />
-            {/* P bowl */}
-            <path d="M17 11h3.5a2 2 0 010 4H17" stroke="#4F46E5" strokeWidth="1.8" strokeLinecap="round" fill="none" />
-            <line x1="17" y1="11" x2="17" y2="17" stroke="#4F46E5" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        </div>
-        {/* Wordmark */}
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: INK, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
-            Print<span style={{ color: PRIMARY }}>tribe</span>
-          </div>
-          <div style={{ fontSize: 9.5, color: MUTED, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 2, fontWeight: 500 }}>
-            Operations
-          </div>
-        </div>
+    <div style={{ padding: "20px 20px 14px", borderBottom: `1px solid ${BORDER}` }}>
+      <Image
+        src="/Printribe-Logo-TM-without-bg-1@2x.png"
+        alt="Printribe"
+        width={148}
+        height={48}
+        style={{ objectFit: "contain", objectPosition: "left center" }}
+        priority
+      />
+      <div style={{ fontSize: 9.5, color: MUTED, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 4, fontWeight: 500, paddingLeft: 2 }}>
+        Operations CRM
       </div>
     </div>
   );
@@ -117,9 +96,6 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
       borderRight: `1px solid ${BORDER}`,
     }}>
       <PrintribeLogo />
-
-      {/* Divider */}
-      <div style={{ height: 1, background: BORDER, margin: "0 16px 6px" }} />
 
       {/* Nav */}
       <nav style={{ padding: "6px 10px", flex: 1, overflowY: "auto" }}>

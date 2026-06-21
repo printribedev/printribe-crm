@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import DateFilterBar from "@/components/DateFilterBar";
 import CustomSelect from "@/components/CustomSelect";
+import DatePicker from "@/components/DatePicker";
 import { DateFilter, applyDateFilter, loadFilter } from "@/lib/dateFilter";
 
 import {
@@ -159,56 +160,133 @@ function ToggleBtn({ active, onClick, children }: { active: boolean; onClick: ()
 function CostModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const { totalCost, grossProfit, marginPct } = calcMargin(order);
   const mc = marginColor(marginPct);
+  const isHealthy = marginPct > 0.25;
+  const isWarn = marginPct >= 0.15 && marginPct <= 0.25;
+
   const costs = [
-    { label: "Fabric / Blank Garment", value: order.fabric, color: BLUE },
+    { label: "Fabric / Blank", value: order.fabric, color: BLUE },
     { label: "Rib Cost", value: order.ribCost || 0, color: "#2299cc" },
-    { label: "Printing & Decoration", value: order.printing, color: R },
-    { label: "Job Work (Outsourced)", value: order.jobWork, color: PURPLE },
+    { label: "Printing", value: order.printing, color: R },
+    { label: "Job Work", value: order.jobWork, color: PURPLE },
     { label: "Packaging", value: order.packaging, color: GOLD },
-    { label: "Transport / Courier", value: order.transport, color: GREEN },
-    { label: "Design / Artwork", value: order.design, color: ORANGE },
-    { label: "Miscellaneous", value: order.misc, color: MID },
+    { label: "Transport", value: order.transport, color: GREEN },
+    { label: "Design", value: order.design, color: ORANGE },
+    { label: "Misc", value: order.misc, color: MID },
   ].filter(c => c.value > 0);
 
+  const marginGradient = isHealthy
+    ? "linear-gradient(135deg, #059669 0%, #0D9488 100%)"
+    : isWarn
+    ? "linear-gradient(135deg, #D97706 0%, #EA580C 100%)"
+    : "linear-gradient(135deg, #DC2626 0%, #DB2777 100%)";
+
   return (
-    <div className="modal-overlay" style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: R, marginBottom: 4 }}>Job Cost Card</div>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>{order.clientName}</div>
-            <div style={{ fontSize: 12, color: MID }}>{order.id} · {order.date.slice(0, 10)}</div>
-          </div>
-          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 18 }}>
-          {([["Sale Value", fmt(order.saleValue), "excl. GST"], ["Total Cost", fmt(totalCost), "all-in"], ["Gross Profit", fmt(grossProfit), pct(marginPct) + " margin"]] as [string, string, string][]).map(([l, v, s]) => (
-            <div key={l} style={{ background: BG, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, padding: "12px 14px" }}>
-              <div style={{ fontSize: 10, color: MID, fontWeight: 600, marginBottom: 4 }}>{l}</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: l === "Gross Profit" ? mc : BLACK }}>{v}</div>
-              <div style={{ fontSize: 10, color: MID }}>{s}</div>
+    <div className="modal-overlay" style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div className="modal-panel" style={{
+        width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto",
+        background: "rgba(255,255,255,0.9)",
+        backdropFilter: "blur(28px) saturate(180%)",
+        WebkitBackdropFilter: "blur(28px) saturate(180%)",
+        borderRadius: 22,
+        border: "1px solid rgba(255,255,255,0.85)",
+        boxShadow: "0 0 0 0.5px rgba(0,0,0,0.08), 0 24px 60px rgba(0,0,0,0.18)",
+        overflow: "hidden",
+      }}>
+        {/* Header band with margin gradient */}
+        <div style={{ background: marginGradient, padding: "20px 24px 18px", position: "relative" }}>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%)", pointerEvents: "none" }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(255,255,255,0.7)", marginBottom: 5 }}>Job Cost Card</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: WHITE, letterSpacing: "-0.02em" }}>{order.clientName}</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", marginTop: 3 }}>{order.id} · {order.date.slice(0, 10)}</div>
             </div>
-          ))}
+            <button onClick={onClose} style={{
+              background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)",
+              borderRadius: 10, padding: "6px 12px", cursor: "pointer", fontSize: 12,
+              color: "rgba(255,255,255,0.85)", fontWeight: 500,
+            }}>✕</button>
+          </div>
+          {/* Margin pill */}
+          <div style={{ marginTop: 14, display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.2)", borderRadius: 20, padding: "5px 12px" }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: WHITE }} />
+            <span style={{ fontSize: 12, fontWeight: 700, color: WHITE }}>{pct(marginPct)} margin</span>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.7)" }}>· {isHealthy ? "Healthy" : isWarn ? "Watch" : "Below target"}</span>
+          </div>
         </div>
-        {costs.length > 0 && (
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 10 }}>Cost breakdown</div>
-            {costs.map(c => (
-              <div key={c.label} style={{ marginBottom: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                  <span style={{ fontSize: 12 }}>{c.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>{fmt(c.value)} <span style={{ color: MID, fontWeight: 400 }}>({pct(c.value / totalCost)})</span></span>
-                </div>
-                <div style={{ height: 5, background: BG, borderRadius: 3 }}><div style={{ width: pct(c.value / totalCost), height: "100%", background: c.color, borderRadius: 3 }} /></div>
+
+        {/* Body */}
+        <div style={{ padding: "20px 24px 24px" }}>
+          {/* 3-stat row */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+            {([
+              { label: "Sale Value", value: fmt(order.saleValue), sub: "excl. GST", accent: BLUE },
+              { label: "Total Cost", value: fmt(totalCost), sub: "all-in", accent: R },
+              { label: "Gross Profit", value: fmt(grossProfit), sub: `${pct(marginPct)} margin`, accent: mc },
+            ] as { label: string; value: string; sub: string; accent: string }[]).map(s => (
+              <div key={s.label} style={{
+                background: "rgba(255,255,255,0.7)",
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+                borderRadius: 14, border: "1px solid rgba(255,255,255,0.8)",
+                boxShadow: "0 1px 8px rgba(0,0,0,0.05)",
+                padding: "12px 14px",
+                borderTop: `3px solid ${s.accent}`,
+              }}>
+                <div style={{ fontSize: 9, color: MID, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 5 }}>{s.label}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: s.label === "Gross Profit" ? mc : INK, letterSpacing: "-0.02em" }}>{s.value}</div>
+                <div style={{ fontSize: 10, color: MID, marginTop: 2 }}>{s.sub}</div>
               </div>
             ))}
           </div>
-        )}
-        <div style={{ background: BG, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, padding: "12px 14px", fontSize: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <div><span style={{ color: MID }}>GST collected: </span><strong>{fmt(order.gst)}</strong></div>
-          <div><span style={{ color: MID }}>Units: </span><strong>{order.qty.toLocaleString()} pcs</strong></div>
-          <div><span style={{ color: MID }}>Per pc cost: </span><strong>{order.qty > 0 ? fmt(totalCost / order.qty) : "—"}</strong></div>
-          <div><span style={{ color: MID }}>Per pc sale: </span><strong>{order.qty > 0 ? fmt(order.saleValue / order.qty) : "—"}</strong></div>
+
+          {/* Cost breakdown */}
+          {costs.length > 0 && (
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: INK, letterSpacing: "-0.01em", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                Cost breakdown
+                <span style={{ fontSize: 10, fontWeight: 500, color: MID }}>({costs.length} components)</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                {costs.map(c => (
+                  <div key={c.label}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: 2, background: c.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: INK }}>{c.label}</span>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: INK }}>{fmt(c.value)}</span>
+                        <span style={{ fontSize: 10, color: MID, marginLeft: 5 }}>{pct(c.value / totalCost)}</span>
+                      </div>
+                    </div>
+                    <div style={{ height: 5, background: "rgba(0,0,0,0.06)", borderRadius: 3 }}>
+                      <div style={{ width: pct(c.value / totalCost), height: "100%", background: c.color, borderRadius: 3, transition: "width 400ms ease" }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Unit economics footer */}
+          <div style={{
+            background: "rgba(79,70,229,0.05)", borderRadius: 14,
+            border: "1px solid rgba(79,70,229,0.1)", padding: "14px 16px",
+            display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px",
+          }}>
+            {[
+              ["GST collected", fmt(order.gst)],
+              ["Units", `${order.qty.toLocaleString()} pcs`],
+              ["Cost / pc", order.qty > 0 ? fmt(totalCost / order.qty) : "—"],
+              ["Sale / pc", order.qty > 0 ? fmt(order.saleValue / order.qty) : "—"],
+            ].map(([label, val]) => (
+              <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: 11, color: MID }}>{label}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: INK }}>{val}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -564,19 +642,19 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
           </div>
           <div>
             <div style={LBL}>Date</div>
-            <input type="date" value={form.date} onChange={e => setF("date", e.target.value)} style={INP} />
+            <DatePicker value={form.date} onChange={v => setF("date", v)} style={INP} />
           </div>
           <div>
             <div style={LBL}>Due Date</div>
-            <input type="date" value={form.dueDate} onChange={e => setF("dueDate", e.target.value)} style={INP} />
+            <DatePicker value={form.dueDate} onChange={v => setF("dueDate", v)} style={INP} />
           </div>
           <div>
             <div style={LBL}>Delivery Date</div>
-            <input type="date" value={form.deliveryDate} onChange={e => setF("deliveryDate", e.target.value)} style={INP} />
+            <DatePicker value={form.deliveryDate} onChange={v => setF("deliveryDate", v)} style={INP} />
           </div>
           <div>
             <div style={LBL}>Payment Date</div>
-            <input type="date" value={form.paymentDate} onChange={e => setF("paymentDate", e.target.value)} style={INP} />
+            <DatePicker value={form.paymentDate} onChange={v => setF("paymentDate", v)} style={INP} />
           </div>
           <div style={{ gridColumn: "1/-1" }}>
             <div style={LBL}>Priority</div>

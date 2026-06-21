@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { WHITE, BORDER, INK, MID, MUTED, PRIMARY, PRIMARY_LIGHT, SURFACE2, R_SM, SHADOW_MD } from "@/lib/tokens";
+import { WHITE, BORDER, INK, MID, MUTED, PRIMARY, PRIMARY_LIGHT, SURFACE2, R_SM } from "@/lib/tokens";
 
 export interface SelectOption {
   value: string;
@@ -13,6 +13,7 @@ interface CustomSelectProps {
   onChange: (val: string) => void;
   options: SelectOption[];
   placeholder?: string;
+  /** Style applied to the trigger button only (width, padding, fontSize, etc.) */
   style?: React.CSSProperties;
   disabled?: boolean;
 }
@@ -63,8 +64,20 @@ export default function CustomSelect({
     }
   }, [focused, open]);
 
+  // Strip layout properties from style to forward to trigger; keep width/minWidth/flex on container
+  const { border, borderRadius, background, outline, boxSizing, ...triggerLayoutStyle } = (style ?? {}) as Record<string, unknown>;
+
   return (
-    <div ref={containerRef} style={{ position: "relative", ...style }}>
+    <div
+      ref={containerRef}
+      style={{
+        position: "relative",
+        width: (style as React.CSSProperties)?.width,
+        minWidth: (style as React.CSSProperties)?.minWidth,
+        flex: (style as React.CSSProperties)?.flex,
+        flexShrink: (style as React.CSSProperties)?.flexShrink,
+      }}
+    >
       {/* Trigger */}
       <div
         tabIndex={disabled ? -1 : 0}
@@ -75,22 +88,27 @@ export default function CustomSelect({
         onClick={() => { if (!disabled) { setOpen(o => !o); setFocused(options.findIndex(o => o.value === value)); } }}
         style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "8px 10px", cursor: disabled ? "default" : "pointer",
+          padding: (style as React.CSSProperties)?.padding ?? "8px 10px",
+          fontSize: (style as React.CSSProperties)?.fontSize ?? 13,
+          cursor: disabled ? "default" : "pointer",
           border: `1px solid ${open ? PRIMARY : BORDER}`,
-          borderRadius: R_SM, background: disabled ? SURFACE2 : WHITE,
-          fontSize: 13, color: selected ? INK : MUTED,
+          borderRadius: R_SM,
+          background: disabled ? SURFACE2 : WHITE,
+          color: selected ? INK : MUTED,
           outline: "none",
           transition: "border-color 150ms ease, box-shadow 150ms ease",
           boxShadow: open ? `0 0 0 3px ${PRIMARY}22` : "none",
           userSelect: "none",
+          boxSizing: "border-box",
+          width: "100%",
         }}
       >
         <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {selected ? selected.label : placeholder}
         </span>
         <svg
-          width={14} height={14} viewBox="0 0 24 24" fill="none"
-          stroke={MID} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          width={13} height={13} viewBox="0 0 24 24" fill="none"
+          stroke={MID} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
           style={{
             flexShrink: 0, marginLeft: 6,
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
@@ -101,7 +119,7 @@ export default function CustomSelect({
         </svg>
       </div>
 
-      {/* Dropdown */}
+      {/* Glass dropdown panel */}
       <div
         role="listbox"
         ref={listRef}
@@ -115,7 +133,6 @@ export default function CustomSelect({
           boxShadow: "0 0 0 0.5px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.12)",
           maxHeight: 220, overflowY: "auto",
           padding: "4px",
-          // Animation
           opacity: open ? 1 : 0,
           transform: open ? "translateY(0) scale(1)" : "translateY(-6px) scale(0.97)",
           pointerEvents: open ? "auto" : "none",
@@ -134,9 +151,7 @@ export default function CustomSelect({
               onMouseEnter={() => setFocused(i)}
               onMouseDown={e => { e.preventDefault(); onChange(opt.value); close(); }}
               style={{
-                padding: "8px 10px",
-                borderRadius: R_SM - 1,
-                fontSize: 13,
+                padding: "8px 10px", borderRadius: R_SM - 1, fontSize: 13,
                 cursor: "pointer",
                 color: isSelected ? PRIMARY : INK,
                 fontWeight: isSelected ? 600 : 400,
