@@ -79,20 +79,32 @@ function InvoiceContent() {
       .catch(() => { setError("Failed to load invoice."); setLoading(false); });
   }, [id]);
 
-  // After data renders, measure card height and pre-calculate zoom so
-  // what you see on screen = what prints (no beforeprint timing issues).
+  // After data renders, measure card height and calculate zoom.
   useEffect(() => {
     if (!data || !cardRef.current) return;
     const A4_PX = 1123;
     const BASE_ZOOM = 0.75;
     const naturalHeight = cardRef.current.scrollHeight;
     const availableHeight = A4_PX / BASE_ZOOM;
-    if (naturalHeight > availableHeight) {
-      setPrintZoom(parseFloat((A4_PX / naturalHeight).toFixed(2)));
-    } else {
-      setPrintZoom(BASE_ZOOM);
-    }
+    const zoom = naturalHeight > availableHeight
+      ? parseFloat((A4_PX / naturalHeight).toFixed(2))
+      : BASE_ZOOM;
+    setPrintZoom(zoom);
   }, [data]);
+
+  // iOS Safari ignores zoom on child elements during print.
+  // Apply zoom on <html> root via beforeprint event instead.
+  useEffect(() => {
+    const html = document.documentElement;
+    function onBefore() { html.style.setProperty("zoom", String(printZoom)); }
+    function onAfter() { html.style.removeProperty("zoom"); }
+    window.addEventListener("beforeprint", onBefore);
+    window.addEventListener("afterprint", onAfter);
+    return () => {
+      window.removeEventListener("beforeprint", onBefore);
+      window.removeEventListener("afterprint", onAfter);
+    };
+  }, [printZoom]);
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "Inter, sans-serif", color: "#737982" }}>
@@ -147,9 +159,9 @@ function InvoiceContent() {
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
-          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; overflow: visible !important; }
-          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; overflow: visible !important; min-width: unset !important; }
-          .screen-card { display: block !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+          body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; overflow: visible !important; min-width: unset !important; zoom: unset !important; }
+          .screen-card { display: block !important; box-shadow: none !important; margin: 0 auto !important; border-radius: 0 !important; width: 1062px !important; max-width: 1062px !important; overflow: visible !important; }
           .invoice-bottom { display: flex !important; }
           .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; box-shadow: 0 -4px 0 0 #ee3c30 !important; }
         }
