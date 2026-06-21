@@ -193,42 +193,81 @@ export default function ClientsPage() {
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clients by name, segment, city…"
         style={{ width: "100%", padding: "10px 14px", borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16 }} />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-        {sorted.map(c => (
-          <div key={c.id} style={{ background: WHITE, border: `1px solid ${selected === c.id ? BLUE : BORDER}`, borderRadius: CARD_RADIUS, padding: "18px 20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-              <div onClick={() => setSelected(selected === c.id ? null : c.id)} style={{ cursor: "pointer", flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{c.name}</div>
-                <div style={{ fontSize: 11, color: MID, marginTop: 2 }}>{c.city || "—"}</div>
+      {/* Column headers */}
+      <div style={{
+        display: "grid", gridTemplateColumns: "32px 1fr 120px 110px 64px 88px 52px",
+        alignItems: "center", gap: 0, padding: "0 16px",
+        background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
+        borderBottom: `1px solid ${BORDER}`, minHeight: 36,
+      }}>
+        <div />
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase" }}>Client</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase" }}>Segment</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>Total Value</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>Orders</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingRight: 8 }}>Last Order</div>
+        <div />
+      </div>
+
+      <div style={{
+        background: "rgba(255,255,255,0.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+        border: `1px solid rgba(255,255,255,0.85)`, borderTop: "none",
+        borderRadius: `0 0 ${CARD_RADIUS}px ${CARD_RADIUS}px`,
+        boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
+        overflow: "hidden",
+      }}>
+        {sorted.map(c => {
+          const segColor = SEG_COLORS[c.segment] || MID;
+          const initials = c.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+          return (
+            <div
+              key={c.id}
+              style={{
+                display: "grid", gridTemplateColumns: "32px 1fr 120px 110px 64px 88px 52px",
+                alignItems: "center", gap: 0, padding: "0 16px",
+                borderBottom: `1px solid ${BORDER}`, minHeight: 52,
+                background: selected === c.id ? "rgba(79,70,229,0.04)" : "transparent",
+                transition: "background 100ms ease",
+                cursor: "pointer",
+              }}
+              onClick={() => setSelected(selected === c.id ? null : c.id)}
+              onMouseEnter={e => { if (selected !== c.id) (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.03)"; }}
+              onMouseLeave={e => { if (selected !== c.id) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+            >
+              {/* Avatar */}
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                background: segColor + "22", display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: segColor }}>{initials}</span>
               </div>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <Badge text={SEG_LABELS[c.segment] || c.segment} color={SEG_COLORS[c.segment] || MID} />
-                <button onClick={() => { setDeleteError(""); setModal(c); }} style={{ fontSize: 11, padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID }}>
+              {/* Name + city */}
+              <div style={{ paddingRight: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: INK, letterSpacing: "-0.01em" }}>{c.name}</div>
+                <div style={{ fontSize: 11, color: MID, marginTop: 1 }}>{c.city || c.type || "—"}</div>
+              </div>
+              {/* Segment */}
+              <div><Badge text={SEG_LABELS[c.segment] || c.segment} color={segColor} /></div>
+              {/* Total value */}
+              <div style={{ fontSize: 13, fontWeight: 700, color: INK, textAlign: "right", paddingRight: 16 }}>{fmt(c.totalValue)}</div>
+              {/* Orders */}
+              <div style={{ fontSize: 12, color: MID, textAlign: "right", paddingRight: 16 }}>{c.orderCount}</div>
+              {/* Last order */}
+              <div style={{ fontSize: 11, color: MID, paddingRight: 8 }}>{c.lastOrder ? c.lastOrder.slice(0, 10) : "—"}</div>
+              {/* Edit */}
+              <div>
+                <button
+                  onClick={e => { e.stopPropagation(); setDeleteError(""); setModal(c); }}
+                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, fontWeight: 500 }}
+                >
                   Edit
                 </button>
               </div>
             </div>
-
-            <div onClick={() => setSelected(selected === c.id ? null : c.id)} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, cursor: "pointer" }}>
-              {[["Total Value", fmt(c.totalValue)], ["Orders", String(c.orderCount)], ["Last Order", c.lastOrder || "—"]].map(([l, v]) => (
-                <div key={l}>
-                  <div style={{ fontSize: 10, color: MID, marginBottom: 2 }}>{l}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700 }}>{v}</div>
-                </div>
-              ))}
-            </div>
-
-            {selected === c.id && (
-              <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${BORDER}`, fontSize: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                {[["Type", c.type], ["Phone", c.phone], ["Email", c.email], ["GSTIN", c.gstin]].map(([l, v]) => (
-                  <div key={l}><span style={{ color: MID }}>{l}: </span><span style={{ fontWeight: 500 }}>{v || "—"}</span></div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
         {sorted.length === 0 && (
-          <div style={{ gridColumn: "1 / -1", padding: "32px", textAlign: "center", color: MID, fontSize: 13 }}>
+          <div style={{ padding: "32px", textAlign: "center", color: MID, fontSize: 13 }}>
             {search ? "No clients match your search." : "No clients yet. Click '+ Add client' to get started."}
           </div>
         )}

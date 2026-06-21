@@ -349,49 +349,54 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
   );
 }
 
-function ProductCard({ product, onClick }: { product: Product; onClick: () => void }) {
-  const [imgUrl, setImgUrl] = useState<string | null>(null);
+function ProductRow({ product, onClick }: { product: Product; onClick: () => void }) {
   const catColor = CAT_COLORS[product.category] || MID;
-
-  useEffect(() => {
-    if (!product.imagePath) return;
-    fetch(`/api/products/image-url?path=${encodeURIComponent(product.imagePath)}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => d?.url && setImgUrl(d.url));
-  }, [product.imagePath]);
-
   return (
     <div
       onClick={onClick}
       style={{
-        background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS,
-        overflow: "hidden", cursor: "pointer", opacity: product.active ? 1 : 0.6,
-        transition: "box-shadow 0.15s, transform 0.15s",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+        display: "grid",
+        gridTemplateColumns: "4px 1fr auto auto auto auto auto",
+        alignItems: "center",
+        gap: 0,
+        padding: "0 16px",
+        borderBottom: `1px solid ${BORDER}`,
+        cursor: "pointer",
+        background: "rgba(255,255,255,0.6)",
+        transition: "background 100ms ease",
+        minHeight: 48,
+        opacity: product.active ? 1 : 0.55,
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.1)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-1px)"; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 1px 3px rgba(0,0,0,0.06)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}
+      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.04)"}
+      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.6)"}
     >
-      {/* Image or color bar */}
-      {imgUrl ? (
-        <div style={{ width: "100%", height: 130, overflow: "hidden" }}>
-          <img src={imgUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        </div>
-      ) : (
-        <div style={{ height: 4, background: catColor }} />
-      )}
-
-      <div style={{ padding: "12px 14px" }}>
-        <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, marginBottom: 6 }}>{product.name}</div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      {/* Color strip */}
+      <div style={{ width: 4, height: 32, borderRadius: 2, background: catColor, marginRight: 14 }} />
+      {/* Name + category */}
+      <div style={{ paddingRight: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: INK, letterSpacing: "-0.01em" }}>{product.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
           <Badge text={product.category} color={catColor} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: BLACK }}>{fmt(product.basePrice)}</span>
+          {product.variants && product.variants.length > 0 && (
+            <span style={{ fontSize: 10, color: MID }}>{product.variants.length} variant{product.variants.length > 1 ? "s" : ""}</span>
+          )}
         </div>
-        {product.variants && product.variants.length > 0 && (
-          <div style={{ marginTop: 8, fontSize: 10, color: MID }}>
-            {product.variants.length} variant dimension{product.variants.length > 1 ? "s" : ""}
-          </div>
-        )}
+      </div>
+      {/* HSN */}
+      <div style={{ fontSize: 11, color: MID, width: 60, textAlign: "right", paddingRight: 20 }}>{product.hsn || "—"}</div>
+      {/* GST */}
+      <div style={{ fontSize: 11, fontWeight: 600, color: MID, width: 44, textAlign: "right", paddingRight: 20 }}>{product.gstRate}</div>
+      {/* MOQ */}
+      <div style={{ fontSize: 11, color: MID, width: 56, textAlign: "right", paddingRight: 20 }}>MOQ {product.moq}</div>
+      {/* Price */}
+      <div style={{ fontSize: 13, fontWeight: 700, color: INK, width: 72, textAlign: "right", paddingRight: 20 }}>{fmt(product.basePrice)}</div>
+      {/* Active chip */}
+      <div style={{
+        fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
+        background: product.active ? GREEN + "15" : MID + "15",
+        color: product.active ? GREEN : MID,
+      }}>
+        {product.active ? "Active" : "Inactive"}
       </div>
     </div>
   );
@@ -446,12 +451,34 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      {/* Column headers */}
+      <div style={{
+        display: "grid", gridTemplateColumns: "4px 1fr auto auto auto auto auto",
+        alignItems: "center", gap: 0, padding: "0 16px",
+        background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
+        borderBottom: `1px solid ${BORDER}`, minHeight: 36,
+      }}>
+        <div />
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingRight: 16 }}>Product</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", width: 60, textAlign: "right", paddingRight: 20 }}>HSN</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", width: 44, textAlign: "right", paddingRight: 20 }}>GST</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", width: 56, textAlign: "right", paddingRight: 20 }}>MOQ</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", width: 72, textAlign: "right", paddingRight: 20 }}>Price</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase" }}>Status</div>
+      </div>
+
+      <div style={{
+        background: "rgba(255,255,255,0.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+        border: `1px solid rgba(255,255,255,0.85)`, borderTop: "none",
+        borderRadius: `0 0 ${CARD_RADIUS}px ${CARD_RADIUS}px`,
+        boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
+        overflow: "hidden",
+      }}>
         {products.map(p => (
-          <ProductCard key={p.id} product={p} onClick={() => setDetail(p)} />
+          <ProductRow key={p.id} product={p} onClick={() => setDetail(p)} />
         ))}
         {products.length === 0 && (
-          <div style={{ gridColumn: "1 / -1", padding: 32, textAlign: "center", color: MID, fontSize: 13 }}>No products yet.</div>
+          <div style={{ padding: 32, textAlign: "center", color: MID, fontSize: 13 }}>No products yet.</div>
         )}
       </div>
 

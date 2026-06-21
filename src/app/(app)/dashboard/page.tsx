@@ -102,36 +102,34 @@ function toMonthlyData(orders: Order[]) {
   }).sort((a, b) => a.ts - b.ts);
 }
 
-// Apple liquid-glass KPI card
+// Compact glass KPI card — Dashboard skill: 8pt grid, tight data hierarchy
 function KpiCard({ label, value, sub, gradient = GRAD_PRIMARY, badge, badgeColor = SUCCESS }: {
   label: string; value: string | number; sub?: string;
   gradient?: string; badge?: string; badgeColor?: string;
 }) {
   return (
     <div style={{
-      background: "rgba(255,255,255,0.72)",
+      background: "rgba(255,255,255,0.76)",
       backdropFilter: "blur(20px) saturate(180%)",
       WebkitBackdropFilter: "blur(20px) saturate(180%)",
-      borderRadius: 20,
+      borderRadius: 14,
       border: "1px solid rgba(255,255,255,0.85)",
-      boxShadow: "0 0 0 0.5px rgba(0,0,0,0.07), 0 6px 28px rgba(0,0,0,0.07)",
-      padding: "20px 22px",
+      boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.06)",
+      padding: "14px 16px",
       position: "relative", overflow: "hidden",
     }}>
-      {/* Gradient accent line at top */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: gradient, borderRadius: "20px 20px 0 0" }} />
-      {/* Subtle inner glow at top */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, transparent 100%)", borderRadius: "20px 20px 0 0", pointerEvents: "none" }} />
-      <div style={{ fontSize: 10, fontWeight: 600, color: MID, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.04em", color: INK, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>{sub}</div>}
-      {badge && (
-        <div style={{
-          display: "inline-flex", alignItems: "center", marginTop: 10,
-          fontSize: 10, fontWeight: 600, padding: "3px 9px", borderRadius: 20,
-          background: badgeColor + "18", color: badgeColor, letterSpacing: "0.02em",
-        }}>{badge}</div>
-      )}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: gradient }} />
+      <div style={{ fontSize: 9.5, fontWeight: 600, color: MID, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.03em", color: INK, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
+        {sub && <div style={{ fontSize: 10, color: MUTED, lineHeight: 1.3 }}>{sub}</div>}
+        {badge && (
+          <div style={{
+            fontSize: 9.5, fontWeight: 600, padding: "2px 7px", borderRadius: 20,
+            background: badgeColor + "18", color: badgeColor, letterSpacing: "0.02em", flexShrink: 0, marginLeft: 4,
+          }}>{badge}</div>
+        )}
+      </div>
     </div>
   );
 }
@@ -143,9 +141,9 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
       background: "rgba(255,255,255,0.78)",
       backdropFilter: "blur(16px) saturate(160%)",
       WebkitBackdropFilter: "blur(16px) saturate(160%)",
-      borderRadius: 18,
+      borderRadius: 14,
       border: "1px solid rgba(255,255,255,0.85)",
-      boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.06)",
+      boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
       ...style,
     }}>
       {children}
@@ -155,9 +153,9 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 
 function SectionTitle({ title, sub }: { title: string; sub?: string }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: INK, letterSpacing: "-0.01em" }}>{title}</div>
-      {sub && <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{sub}</div>}
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: INK, letterSpacing: "-0.01em" }}>{title}</div>
+      {sub && <div style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>{sub}</div>}
     </div>
   );
 }
@@ -279,19 +277,19 @@ export default function DashboardPage() {
   };
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1400 }}>
+    <div style={{ padding: "22px 28px", maxWidth: 1400 }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: INK, letterSpacing: "-0.03em" }}>Dashboard</div>
-          <div style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>
-            Printribe CRM · {orders.length} orders total
+          <div style={{ fontSize: 18, fontWeight: 700, color: INK, letterSpacing: "-0.03em" }}>Dashboard</div>
+          <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>
+            {orders.length} orders total
           </div>
         </div>
-        <div style={{ display: "flex", gap: 4, background: SURFACE2, borderRadius: R_SM, padding: 4 }}>
+        <div style={{ display: "flex", gap: 3, background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: `1px solid ${BORDER}`, borderRadius: R_SM + 2, padding: 3 }}>
           {PERIODS.map(p => (
             <button key={p} onClick={() => setPeriod(p)} style={{
-              fontSize: 11, fontWeight: 500, padding: "6px 12px", borderRadius: R_SM - 1,
+              fontSize: 10, fontWeight: 500, padding: "5px 10px", borderRadius: R_SM,
               border: "none",
               background: period === p ? WHITE : "transparent",
               color: period === p ? INK : MID,
@@ -303,8 +301,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI row 1 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 14 }}>
+      {/* KPI rows — 8 cards in 2 rows of 4, tight 8pt gaps */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 8 }}>
         <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} gradient={GRAD_PRIMARY} />
         <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" gradient={GRAD_TEAL} badge="Tax" badgeColor={TEAL} />
         <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" gradient={GRAD_GOLD} />
@@ -313,9 +311,7 @@ export default function DashboardPage() {
           badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"}
           badgeColor={avgMargin > 0.25 ? SUCCESS : avgMargin >= 0.15 ? WARNING : ERROR} />
       </div>
-
-      {/* KPI row 2 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
         <KpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" gradient={GRAD_WARNING} badge="Live" badgeColor={ORANGE} />
         <KpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay"
           gradient={GRAD_PRIMARY}
@@ -330,16 +326,16 @@ export default function DashboardPage() {
       {/* Charts below */}
       <div>
         {/* Revenue trend + Segment mix */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-          <Card style={{ padding: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+          <Card style={{ padding: 16 }}>
             <SectionTitle title="Revenue trend" sub={`Monthly sale value (excl. GST) · ${period}`} />
             {monthlyData.length === 0 ? (
-              <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>
+              <div style={{ height: 180, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>
                 No orders in this period yet.
               </div>
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={monthlyData} barSize={26}>
                     <defs>
                       <linearGradient id="profitGrad" x1="0" y1="1" x2="0" y2="0">
@@ -391,8 +387,8 @@ export default function DashboardPage() {
             )}
           </Card>
 
-          <Card style={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+          <Card style={{ padding: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
               <SectionTitle title="Segment mix" sub={`Revenue · ${period}`} />
               <ToggleGroup
                 options={[{ value: "client" as const, label: "Client" }, { value: "product" as const, label: "Product" }]}
@@ -401,10 +397,10 @@ export default function DashboardPage() {
               />
             </div>
             {segData.length === 0 ? (
-              <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
+              <div style={{ height: 120, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={140}>
+                <ResponsiveContainer width="100%" height={120}>
                   <PieChart>
                     <Pie data={segData} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" paddingAngle={3}>
                       {segData.map((e, i) => {
@@ -433,9 +429,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Margin per client + Top clients */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <Card style={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <Card style={{ padding: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
               <SectionTitle title="Avg margin per client" sub={period} />
               <ToggleGroup
                 options={[{ value: "desc" as const, label: "High → Low" }, { value: "asc" as const, label: "Low → High" }]}
@@ -480,7 +476,7 @@ export default function DashboardPage() {
             )}
           </Card>
 
-          <Card style={{ padding: 24 }}>
+          <Card style={{ padding: 16 }}>
             <SectionTitle title={`Top clients · ${period}`} />
             {topClients.length === 0 ? (
               <div style={{ color: MUTED, fontSize: 13 }}>No client data for this period.</div>
