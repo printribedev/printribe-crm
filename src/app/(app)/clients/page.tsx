@@ -197,7 +197,7 @@ export default function ClientsPage() {
 
       {/* Column headers */}
       <div style={{
-        display: "grid", gridTemplateColumns: "32px 1fr 110px 120px 56px 100px",
+        display: "grid", gridTemplateColumns: "32px 2fr 1fr 1fr 1fr 1fr",
         alignItems: "center", gap: 0, padding: "0 16px",
         background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
         borderBottom: `1px solid ${BORDER}`, minHeight: 32,
@@ -224,7 +224,7 @@ export default function ClientsPage() {
             <div
               key={c.id}
               style={{
-                display: "grid", gridTemplateColumns: "32px 1fr 110px 120px 56px 100px",
+                display: "grid", gridTemplateColumns: "32px 2fr 1fr 1fr 1fr 1fr",
                 alignItems: "center", gap: 0, padding: "0 16px",
                 borderBottom: `1px solid ${BORDER}`, minHeight: 44,
                 background: "transparent",

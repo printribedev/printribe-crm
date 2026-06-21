@@ -354,7 +354,7 @@ function ProductRow({ product, onClick }: { product: Product; onClick: () => voi
       onClick={onClick}
       style={{
         display: "grid",
-        gridTemplateColumns: "48px 1fr 80px 56px 80px 88px",
+        gridTemplateColumns: "24px 2fr 1fr 1fr 1fr 1fr",
         alignItems: "center",
         gap: 0,
         padding: "0 20px 0 12px",
@@ -409,6 +409,7 @@ function ProductRow({ product, onClick }: { product: Product; onClick: () => voi
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [detail, setDetail] = useState<Product | null>(null);
   const [editModal, setEditModal] = useState<Partial<Product> | null>(null);
 
@@ -445,19 +446,22 @@ export default function ProductsPage() {
 
   return (
     <div style={{ padding: "26px 28px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Products</div>
-          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{products.length} products in catalog · click any card to view details</div>
+          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{products.length} products in catalog</div>
         </div>
         <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
           + Add product
         </button>
       </div>
 
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products by name, category…"
+        style={{ width: "100%", padding: "10px 14px", borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16, boxSizing: "border-box" }} />
+
       {/* Column headers */}
       <div style={{
-        display: "grid", gridTemplateColumns: "48px 1fr 80px 56px 80px 88px",
+        display: "grid", gridTemplateColumns: "24px 2fr 1fr 1fr 1fr 1fr",
         alignItems: "center", gap: 0, padding: "0 20px 0 12px",
         background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
         borderBottom: `1px solid ${BORDER}`, minHeight: 32,
@@ -477,12 +481,14 @@ export default function ProductsPage() {
         boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
         overflow: "hidden",
       }}>
-        {products.map(p => (
-          <ProductRow key={p.id} product={p} onClick={() => setDetail(p)} />
-        ))}
-        {products.length === 0 && (
-          <div style={{ padding: 32, textAlign: "center", color: MID, fontSize: 13 }}>No products yet.</div>
-        )}
+        {(() => {
+          const filtered = search
+            ? products.filter(p => [p.name, p.category, p.decoration, p.gsm].some(f => f?.toLowerCase().includes(search.toLowerCase())))
+            : products;
+          return filtered.length > 0
+            ? filtered.map(p => <ProductRow key={p.id} product={p} onClick={() => setDetail(p)} />)
+            : <div style={{ padding: 32, textAlign: "center", color: MID, fontSize: 13 }}>{search ? "No products match your search." : "No products yet."}</div>;
+        })()}
       </div>
 
       {detail && !editModal && (
