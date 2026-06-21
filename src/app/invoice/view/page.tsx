@@ -63,6 +63,14 @@ function InvoiceContent() {
   const [printZoom, setPrintZoom] = useState(0.75);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Force desktop viewport so the invoice renders identically on mobile and PC
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    const original = meta?.getAttribute("content") ?? "";
+    meta?.setAttribute("content", "width=1200");
+    return () => { meta?.setAttribute("content", original); };
+  }, []);
+
   useEffect(() => {
     if (!id) { setError("No invoice ID provided."); setLoading(false); return; }
     fetch(`/api/invoices/${encodeURIComponent(id)}`)

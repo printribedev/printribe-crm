@@ -59,6 +59,14 @@ function ProformaContent() {
   const cardRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
+  // Force desktop viewport so the proforma renders identically on mobile and PC
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    const original = meta?.getAttribute("content") ?? "";
+    meta?.setAttribute("content", "width=1200");
+    return () => { meta?.setAttribute("content", original); };
+  }, []);
+
   useEffect(() => {
     const id = searchParams.get("id");
     if (id) {
