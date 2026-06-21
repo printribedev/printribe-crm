@@ -95,12 +95,13 @@ function statusBadge(o: Order): { text: string; color: string } | null {
   return null;
 }
 
-function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
+function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance, onTouchDrop }: {
   order: Order;
   dragging: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
   onAdvance: () => void;
+  onTouchDrop?: (stageId: string) => void;
 }) {
   const margin = calcMargin(order);
   const mc = marginColor(margin);
@@ -108,11 +109,36 @@ function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
   const segColor = SEG_COLORS[order.segment] || MID;
   const canAdvance = order.stage !== "delivered";
 
+  function handleTouchMove(e: React.TouchEvent) {
+    e.preventDefault();
+    onDragStart();
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const col = el?.closest("[data-stage]");
+    if (col) {
+      document.querySelectorAll("[data-stage]").forEach(c => (c as HTMLElement).style.outline = "");
+      (col as HTMLElement).style.outline = `2px dashed ${(col as HTMLElement).dataset.color || "#6366f1"}`;
+    }
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    document.querySelectorAll("[data-stage]").forEach(c => (c as HTMLElement).style.outline = "");
+    const touch = e.changedTouches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const col = el?.closest("[data-stage]");
+    const stageId = (col as HTMLElement | null)?.dataset?.stage;
+    if (stageId && onTouchDrop) onTouchDrop(stageId);
+    onDragEnd();
+  }
+
   return (
     <div
       draggable
       onDragStart={e => { e.dataTransfer.effectAllowed = "move"; onDragStart(); }}
       onDragEnd={onDragEnd}
+      onTouchStart={() => {}}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         background: WHITE,
         border: `1px solid ${BORDER}`,
@@ -178,6 +204,8 @@ function KanbanColumn({ stage, orders, dragOverStage, onDragOver, onDragLeave, o
 
   return (
     <div
+      data-stage={stage.id}
+      data-color={stage.color}
       onDragOver={e => { e.preventDefault(); onDragOver(stage.id); }}
       onDragLeave={onDragLeave}
       onDrop={e => { e.preventDefault(); onDrop(stage.id); }}
@@ -206,6 +234,7 @@ function KanbanColumn({ stage, orders, dragOverStage, onDragOver, onDragLeave, o
             onDragStart={() => onDragStart(o.id)}
             onDragEnd={onDragEnd}
             onAdvance={() => onAdvance(o)}
+            onTouchDrop={stageId => { onDrop(stageId); }}
           />
         ))}
         {orders.length === 0 && !isOver && (

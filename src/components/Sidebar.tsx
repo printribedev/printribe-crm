@@ -123,7 +123,7 @@ export default function Sidebar({ activeJobCount = 0, isOpen = false, onClose }:
           const isActive = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
           const showBadge = n.href === "/production" && activeJobCount > 0;
           return (
-            <Link key={n.href} href={n.href} style={{ textDecoration: "none" }}>
+            <Link key={n.href} href={n.href} style={{ textDecoration: "none" }} onClick={onClose}>
               <div
                 style={{
                   display: "flex", alignItems: "center", gap: 10,

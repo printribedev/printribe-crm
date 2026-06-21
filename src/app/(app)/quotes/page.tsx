@@ -262,7 +262,8 @@ export default function QuotesPage() {
               {lines.map((line, i) => {
                 const p = products.find(x => x.id === line.productId);
                 return (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 80px 100px 28px", gap: 8, alignItems: "end" }}>
+                  <div key={i} style={{ overflowX: "auto" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 80px 100px 28px", gap: 8, alignItems: "end", minWidth: 340 }}>
                     <div>
                       {i === 0 && <label style={LBL}>PRODUCT</label>}
                       <select value={line.productId} onChange={e => handleProductSelect(i, e.target.value ? Number(e.target.value) : "")}
@@ -289,6 +290,7 @@ export default function QuotesPage() {
                       style={{ padding: "7px 8px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, background: WHITE, color: MID, cursor: lines.length === 1 ? "default" : "pointer", fontSize: 14, opacity: lines.length === 1 ? 0.3 : 1 }}>
                       ×
                     </button>
+                  </div>
                   </div>
                 );
               })}

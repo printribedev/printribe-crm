@@ -95,8 +95,12 @@ input[type="number"] {
 .sidebar-close-btn { display: none !important; }
 
 /* Table horizontal scroll wrapper */
-.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.table-scroll > div { min-width: 560px; }
+.table-scroll { /* layout wrapper only */ }
+.table-scroll > div {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll > div > table { min-width: 760px; }
 
 /* ── Mobile  (≤ 768px) ── */
 @media (max-width: 768px) {

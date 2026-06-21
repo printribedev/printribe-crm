@@ -812,7 +812,7 @@ export default function OrdersPage() {
 
       <div className="table-scroll">
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+        <table style={{ width: "100%", minWidth: 900, borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
               <th style={{ padding: "10px 8px", width: 32 }} />
