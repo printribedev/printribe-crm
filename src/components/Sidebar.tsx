@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   SIDEBAR_BG, SIDEBAR_HOVER, SIDEBAR_BORDER, SIDEBAR_TEXT, SIDEBAR_ACTIVE,
-  PRIMARY, PRIMARY_MID, BORDER, MID, WHITE, INK,
+  PRIMARY, PRIMARY_MID, WHITE,
+  GRAD_PRIMARY, GLASS_DARK_BG, GLASS_DARK_BORDER, GLASS_BLUR_SM,
 } from "@/lib/tokens";
 
 const NAV = [
@@ -82,7 +83,8 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 8,
-            background: PRIMARY, display: "flex", alignItems: "center", justifyContent: "center",
+            background: GRAD_PRIMARY, display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 12px rgba(79,70,229,0.4)",
             flexShrink: 0,
           }}>
             <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -117,8 +119,11 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
                 padding: "8px 10px",
                 borderRadius: 7,
                 marginBottom: 2,
-                background: isActive ? PRIMARY + "22" : "transparent",
+                background: isActive ? GLASS_DARK_BG : "transparent",
+                border: isActive ? `1px solid ${GLASS_DARK_BORDER}` : "1px solid transparent",
                 borderLeft: isActive ? `3px solid ${PRIMARY}` : "3px solid transparent",
+                backdropFilter: isActive ? GLASS_BLUR_SM : undefined,
+                WebkitBackdropFilter: isActive ? GLASS_BLUR_SM : undefined,
                 cursor: "pointer",
                 transition: "background 150ms ease",
               }}

@@ -7,12 +7,13 @@ import {
   CartesianGrid, PieChart, Pie, Cell, LabelList,
 } from "recharts";
 import {
-  PRIMARY, PRIMARY_LIGHT, SUCCESS, ERROR, WARNING, GOLD, PURPLE, ORANGE, TEAL, PINK,
+  PRIMARY, SUCCESS, ERROR, WARNING, GOLD, PURPLE, ORANGE, TEAL, PINK,
   INK, BODY, MID, MUTED, WHITE, SURFACE, SURFACE2, BORDER, SHADOW_SM, SHADOW_MD,
   R_SM, R_MD,
+  GLASS_DARK_BG, GLASS_DARK_BORDER, GLASS_BLUR_SM,
+  GRAD_HERO, GRAD_PRIMARY, GRAD_SUCCESS, GRAD_WARNING, GRAD_DANGER, GRAD_TEAL, GRAD_GOLD,
 } from "@/lib/tokens";
 
-// — Color maps —
 const SEG_COLORS: Record<string, string> = {
   Reseller: ERROR, Sports: PRIMARY, Education: SUCCESS,
   Corporate: GOLD, NGO_Govt: PURPLE, B2C: ORANGE,
@@ -61,6 +62,7 @@ function calcMargin(o: Order) {
   return o.saleValue > 0 ? (o.saleValue - orderCost(o)) / o.saleValue : 0;
 }
 function marginColor(m: number) { return m > 0.25 ? SUCCESS : m >= 0.15 ? WARNING : ERROR; }
+function marginGrad(m: number) { return m > 0.25 ? GRAD_SUCCESS : m >= 0.15 ? GRAD_WARNING : GRAD_DANGER; }
 
 const PERIODS = ["This month", "Last 3 months", "Last 6 months", "FY 26-27", "All time"];
 
@@ -101,26 +103,32 @@ function toMonthlyData(orders: Order[]) {
   }).sort((a, b) => a.ts - b.ts);
 }
 
-function KpiCard({ label, value, sub, accent = PRIMARY, badge, badgeColor = SUCCESS }: {
+// Glass KPI card — sits on the dark hero band
+function GlassKpiCard({ label, value, sub, accent = PRIMARY, gradient, badge, badgeColor = SUCCESS }: {
   label: string; value: string | number; sub?: string;
-  accent?: string; badge?: string; badgeColor?: string;
+  accent?: string; gradient?: string; badge?: string; badgeColor?: string;
 }) {
   return (
     <div style={{
-      background: WHITE, borderRadius: R_MD, padding: "18px 20px",
-      boxShadow: SHADOW_SM, border: `1px solid ${BORDER}`,
+      background: GLASS_DARK_BG,
+      backdropFilter: GLASS_BLUR_SM,
+      WebkitBackdropFilter: GLASS_BLUR_SM,
+      border: `1px solid ${GLASS_DARK_BORDER}`,
+      borderRadius: R_MD + 2,
+      padding: "18px 20px",
+      boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: accent, flexShrink: 0 }} />
-        <div style={{ fontSize: 11, fontWeight: 600, color: MID, letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</div>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: gradient ?? accent, flexShrink: 0 }} />
+        <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</div>
       </div>
-      <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", color: INK, lineHeight: 1.1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: MUTED, marginTop: 5, lineHeight: 1.4 }}>{sub}</div>}
+      <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", color: WHITE, lineHeight: 1.1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 5, lineHeight: 1.4 }}>{sub}</div>}
       {badge && (
         <div style={{
           display: "inline-flex", alignItems: "center", marginTop: 8,
           fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: R_SM,
-          background: badgeColor + "18", color: badgeColor, letterSpacing: "0.02em",
+          background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em",
         }}>{badge}</div>
       )}
     </div>
@@ -163,6 +171,24 @@ function ToggleGroup<T extends string>({ options, value, onChange }: { options: 
     </div>
   );
 }
+
+// Gradient bar shape for recharts
+const GradientBar = (props: { x?: number; y?: number; width?: number; height?: number; fill?: string; gradient?: string }) => {
+  const { x = 0, y = 0, width = 0, height = 0, gradient = GRAD_PRIMARY } = props;
+  const id = `grad-${Math.random().toString(36).slice(2, 6)}`;
+  const [c1, c2] = gradient.replace(/linear-gradient\(135deg,\s*/, "").replace(/\s*\)$/, "").split(",").map(s => s.trim().split(" ")[0]);
+  return (
+    <svg>
+      <defs>
+        <linearGradient id={id} x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stopColor={c2 || c1} />
+          <stop offset="100%" stopColor={c1} />
+        </linearGradient>
+      </defs>
+      <rect x={x} y={y} width={width} height={height} rx={4} fill={`url(#${id})`} />
+    </svg>
+  );
+};
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState("FY 26-27");
@@ -246,210 +272,253 @@ export default function DashboardPage() {
   };
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1400 }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
-        <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: INK, letterSpacing: "-0.03em" }}>Dashboard</div>
-          <div style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>
-            Printribe CRM · {orders.length} orders total
+    <div style={{ minHeight: "100vh" }}>
+      <style>{`
+        @keyframes heroShimmer { 0%,100%{opacity:1} 50%{opacity:0.8} }
+      `}</style>
+
+      {/* Dark hero band */}
+      <div style={{
+        background: GRAD_HERO,
+        padding: "28px 32px 32px",
+        position: "relative", overflow: "hidden",
+      }}>
+        {/* Subtle ambient glow */}
+        <div style={{ position: "absolute", width: 600, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(79,70,229,0.2) 0%, transparent 70%)", top: -100, right: 100, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", width: 400, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(13,148,136,0.15) 0%, transparent 70%)", bottom: -80, left: 200, pointerEvents: "none" }} />
+
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, position: "relative", zIndex: 1 }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: WHITE, letterSpacing: "-0.03em" }}>Dashboard</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 4 }}>
+              Printribe CRM · {orders.length} orders total
+            </div>
+          </div>
+          <div style={{
+            display: "flex", gap: 3,
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: R_SM, padding: 4,
+            backdropFilter: GLASS_BLUR_SM,
+            WebkitBackdropFilter: GLASS_BLUR_SM,
+          }}>
+            {PERIODS.map(p => (
+              <button key={p} onClick={() => setPeriod(p)} style={{
+                fontSize: 11, fontWeight: 500, padding: "6px 12px", borderRadius: R_SM - 1,
+                border: "none",
+                background: period === p ? "rgba(255,255,255,0.15)" : "transparent",
+                color: period === p ? WHITE : "rgba(255,255,255,0.5)",
+                cursor: "pointer",
+                transition: "all 120ms ease",
+              }}>{p}</button>
+            ))}
           </div>
         </div>
-        <div style={{
-          display: "flex", gap: 4, background: SURFACE2,
-          borderRadius: R_SM, padding: 4,
-        }}>
-          {PERIODS.map(p => (
-            <button key={p} onClick={() => setPeriod(p)} style={{
-              fontSize: 11, fontWeight: 500, padding: "6px 12px", borderRadius: R_SM - 1,
-              border: "none",
-              background: period === p ? WHITE : "transparent",
-              color: period === p ? INK : MID,
-              cursor: "pointer",
-              boxShadow: period === p ? SHADOW_SM : "none",
-              transition: "all 120ms ease",
-            }}>{p}</button>
-          ))}
+
+        {/* Glass KPI row 1 */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 12, position: "relative", zIndex: 1 }}>
+          <GlassKpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} gradient={GRAD_PRIMARY} />
+          <GlassKpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" gradient={GRAD_TEAL} badge="Tax" />
+          <GlassKpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" gradient={GRAD_GOLD} />
+          <GlassKpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period"
+            gradient={avgMargin > 0.25 ? GRAD_SUCCESS : avgMargin >= 0.15 ? GRAD_WARNING : GRAD_DANGER}
+            badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"} />
+        </div>
+
+        {/* Glass KPI row 2 */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, position: "relative", zIndex: 1 }}>
+          <GlassKpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" gradient={GRAD_WARNING} badge="Live" />
+          <GlassKpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay"
+            badge={pendingPayment > 0 ? "Follow up" : "All clear"} />
+          <GlassKpiCard label="Overdue Orders" value={overdue} sub="Past due date"
+            gradient={overdue > 0 ? GRAD_DANGER : GRAD_SUCCESS}
+            badge={overdue > 0 ? "Action needed" : "On track"} />
+          <GlassKpiCard label="Total Clients" value={clients.length}
+            sub={`${clients.filter(c => (clientOrderValue[c.id] || 0) > 0).length} active this period`} gradient={GRAD_PRIMARY} />
         </div>
       </div>
 
-      {/* KPI row 1 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 14 }}>
-        <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} accent={PRIMARY} />
-        <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" accent={TEAL} badge="Tax" badgeColor={TEAL} />
-        <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" accent={GOLD} />
-        <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period" accent={SUCCESS}
-          badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"}
-          badgeColor={avgMargin > 0.25 ? SUCCESS : avgMargin >= 0.15 ? WARNING : ERROR} />
-      </div>
-
-      {/* KPI row 2 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
-        <KpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" accent={ORANGE} badge="Live" badgeColor={ORANGE} />
-        <KpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay" accent={PURPLE}
-          badge={pendingPayment > 0 ? "Follow up" : "All clear"} badgeColor={pendingPayment > 0 ? ERROR : SUCCESS} />
-        <KpiCard label="Overdue Orders" value={overdue} sub="Past due date" accent={ERROR}
-          badge={overdue > 0 ? "Action needed" : "On track"} badgeColor={overdue > 0 ? ERROR : SUCCESS} />
-        <KpiCard label="Total Clients" value={clients.length}
-          sub={`${clients.filter(c => (clientOrderValue[c.id] || 0) > 0).length} active this period`} accent={PRIMARY} />
-      </div>
-
-      {/* Revenue trend + Segment mix */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-        <Card style={{ padding: 24 }}>
-          <SectionTitle title="Revenue trend" sub={`Monthly sale value (excl. GST) · ${period}`} />
-          {monthlyData.length === 0 ? (
-            <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>
-              No orders in this period yet.
-            </div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={monthlyData} barSize={26}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false}
-                    tickFormatter={v => v >= 100000 ? (v / 100000).toFixed(1) + "L" : (v / 1000).toFixed(0) + "K"} />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null;
-                      const d = monthlyData.find(m => m.month === label);
-                      return (
-                        <div style={tooltipStyle}>
-                          <div style={{ fontWeight: 700, color: INK, marginBottom: 6 }}>{label}</div>
-                          <div style={{ color: MID, marginBottom: 2 }}>Revenue: <b style={{ color: INK }}>{fmt(d?.sales ?? 0)}</b></div>
-                          <div style={{ color: MID, marginBottom: 2 }}>Profit: <b style={{ color: SUCCESS }}>{fmt(d?.profit ?? 0)}</b></div>
-                          <div style={{ color: MID }}>Margin: <b style={{ color: marginColor((d?.margin ?? 0) / 100) }}>{(d?.margin ?? 0).toFixed(1)}%</b></div>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Bar dataKey="cost" stackId="a" fill={SURFACE2} radius={[0, 0, 0, 0]} name="Cost" />
-                  <Bar dataKey="profit" stackId="a" fill={SUCCESS} radius={[4, 4, 0, 0]} name="Profit">
-                    <LabelList
-                      dataKey="margin"
-                      position="top"
-                      formatter={(v) => Number(v) > 0 ? Number(v).toFixed(0) + "%" : ""}
-                      style={{ fontSize: 9, fontWeight: 700, fill: MID }}
+      {/* Chart section */}
+      <div style={{ padding: "24px 32px", maxWidth: 1400 }}>
+        {/* Revenue trend + Segment mix */}
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
+          <Card style={{ padding: 24 }}>
+            <SectionTitle title="Revenue trend" sub={`Monthly sale value (excl. GST) · ${period}`} />
+            {monthlyData.length === 0 ? (
+              <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>
+                No orders in this period yet.
+              </div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={monthlyData} barSize={26}>
+                    <defs>
+                      <linearGradient id="profitGrad" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stopColor="#059669" />
+                        <stop offset="100%" stopColor="#0D9488" />
+                      </linearGradient>
+                      <linearGradient id="costGrad" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stopColor="#E2E8F0" />
+                        <stop offset="100%" stopColor="#F1F5F9" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false}
+                      tickFormatter={v => v >= 100000 ? (v / 100000).toFixed(1) + "L" : (v / 1000).toFixed(0) + "K"} />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = monthlyData.find(m => m.month === label);
+                        return (
+                          <div style={tooltipStyle}>
+                            <div style={{ fontWeight: 700, color: INK, marginBottom: 6 }}>{label}</div>
+                            <div style={{ color: MID, marginBottom: 2 }}>Revenue: <b style={{ color: INK }}>{fmt(d?.sales ?? 0)}</b></div>
+                            <div style={{ color: MID, marginBottom: 2 }}>Profit: <b style={{ color: SUCCESS }}>{fmt(d?.profit ?? 0)}</b></div>
+                            <div style={{ color: MID }}>Margin: <b style={{ color: marginColor((d?.margin ?? 0) / 100) }}>{(d?.margin ?? 0).toFixed(1)}%</b></div>
+                          </div>
+                        );
+                      }}
                     />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-                {[[SUCCESS, "Profit"], [SURFACE2, "Cost"]].map(([c, l]) => (
-                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: MID }}>
-                    <div style={{ width: 10, height: 10, borderRadius: 2, background: c, border: `1px solid ${BORDER}` }} />{l}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </Card>
-
-        <Card style={{ padding: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-            <SectionTitle title="Segment mix" sub={`Revenue · ${period}`} />
-            <ToggleGroup
-              options={[{ value: "client" as const, label: "Client" }, { value: "product" as const, label: "Product" }]}
-              value={segView}
-              onChange={setSegView}
-            />
-          </div>
-          {segData.length === 0 ? (
-            <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={140}>
-                <PieChart>
-                  <Pie data={segData} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" paddingAngle={3}>
-                    {segData.map((e, i) => {
-                      const fill = segView === "client" ? (SEG_COLORS[e.name] || MID) : CHART_PALETTE[i % CHART_PALETTE.length];
-                      return <Cell key={e.name} fill={fill} />;
-                    })}
-                  </Pie>
-                  <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={tooltipStyle} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 12px", marginTop: 8 }}>
-                {segData.map((s, i) => {
-                  const color = segView === "client" ? (SEG_COLORS[s.name] || MID) : CHART_PALETTE[i % CHART_PALETTE.length];
-                  return (
-                    <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
-                      <span style={{ color: MID }}>{segView === "client" ? (SEG_LABELS[s.name] || s.name) : s.name}</span>
-                      <span style={{ fontWeight: 700, color: INK }}>{pct(s.value / (totalRevenue || 1))}</span>
+                    <Bar dataKey="cost" stackId="a" fill="url(#costGrad)" radius={[0, 0, 0, 0]} name="Cost" />
+                    <Bar dataKey="profit" stackId="a" fill="url(#profitGrad)" radius={[4, 4, 0, 0]} name="Profit">
+                      <LabelList
+                        dataKey="margin"
+                        position="top"
+                        formatter={(v) => Number(v) > 0 ? Number(v).toFixed(0) + "%" : ""}
+                        style={{ fontSize: 9, fontWeight: 700, fill: MID }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
+                  {[[SUCCESS, "Profit"], [SURFACE2, "Cost"]].map(([c, l]) => (
+                    <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: MID }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 2, background: c, border: `1px solid ${BORDER}` }} />{l}
                     </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </Card>
-      </div>
-
-      {/* Margin per client + Top clients */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Card style={{ padding: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-            <SectionTitle title="Avg margin per client" sub={period} />
-            <ToggleGroup
-              options={[{ value: "desc" as const, label: "High → Low" }, { value: "asc" as const, label: "Low → High" }]}
-              value={marginSort}
-              onChange={setMarginSort}
-            />
-          </div>
-          {marginData.length === 0 ? (
-            <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
-          ) : (
-            <>
-              <ResponsiveContainer width="100%" height={Math.max(140, marginData.length * 24)}>
-                <BarChart data={marginData} barSize={16}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 9, fill: MID }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} unit="%" />
-                  <Tooltip formatter={(v, _, props) => [Number(v).toFixed(1) + "%", props.payload?.fullName || ""]} contentStyle={tooltipStyle} />
-                  <Bar dataKey="margin" radius={[4, 4, 0, 0]}>
-                    {marginData.map((d, i) => <Cell key={i} fill={marginColor(d.raw)} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-                {[[SUCCESS, "> 25%"], [WARNING, "15–25%"], [ERROR, "< 15%"]].map(([c, l]) => (
-                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: MID }}>
-                    <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />{l}
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </Card>
-
-        <Card style={{ padding: 24 }}>
-          <SectionTitle title={`Top clients · ${period}`} />
-          {topClients.length === 0 ? (
-            <div style={{ color: MUTED, fontSize: 13 }}>No client data for this period.</div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-              {topClients.map((c, i) => (
-                <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, width: 20, flexShrink: 0, textAlign: "right" }}>#{i + 1}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: BODY }}>{c.name}</span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{fmt(c.periodValue)}</span>
-                    </div>
-                    <div style={{ height: 4, background: SURFACE2, borderRadius: 2 }}>
-                      <div style={{
-                        width: `${(c.periodValue / topMax) * 100}%`, height: "100%",
-                        background: SEG_COLORS[c.segment] || PRIMARY, borderRadius: 2,
-                      }} />
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </>
+            )}
+          </Card>
+
+          <Card style={{ padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+              <SectionTitle title="Segment mix" sub={`Revenue · ${period}`} />
+              <ToggleGroup
+                options={[{ value: "client" as const, label: "Client" }, { value: "product" as const, label: "Product" }]}
+                value={segView}
+                onChange={setSegView}
+              />
             </div>
-          )}
-        </Card>
+            {segData.length === 0 ? (
+              <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={140}>
+                  <PieChart>
+                    <Pie data={segData} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" paddingAngle={3}>
+                      {segData.map((e, i) => {
+                        const fill = segView === "client" ? (SEG_COLORS[e.name] || MID) : CHART_PALETTE[i % CHART_PALETTE.length];
+                        return <Cell key={e.name} fill={fill} />;
+                      })}
+                    </Pie>
+                    <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={tooltipStyle} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 12px", marginTop: 8 }}>
+                  {segData.map((s, i) => {
+                    const color = segView === "client" ? (SEG_COLORS[s.name] || MID) : CHART_PALETTE[i % CHART_PALETTE.length];
+                    return (
+                      <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
+                        <span style={{ color: MID }}>{segView === "client" ? (SEG_LABELS[s.name] || s.name) : s.name}</span>
+                        <span style={{ fontWeight: 700, color: INK }}>{pct(s.value / (totalRevenue || 1))}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
+
+        {/* Margin per client + Top clients */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          <Card style={{ padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+              <SectionTitle title="Avg margin per client" sub={period} />
+              <ToggleGroup
+                options={[{ value: "desc" as const, label: "High → Low" }, { value: "asc" as const, label: "Low → High" }]}
+                value={marginSort}
+                onChange={setMarginSort}
+              />
+            </div>
+            {marginData.length === 0 ? (
+              <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={Math.max(140, marginData.length * 24)}>
+                  <BarChart data={marginData} barSize={16}>
+                    <defs>
+                      {marginData.map((d, i) => {
+                        const [c1, c2] = marginGrad(d.raw).replace(/linear-gradient\(135deg,\s*/, "").replace(/\s*\)$/, "").split(",").map(s => s.trim().split(" ")[0]);
+                        return (
+                          <linearGradient key={i} id={`mg${i}`} x1="0" y1="1" x2="0" y2="0">
+                            <stop offset="0%" stopColor={c2 || c1} />
+                            <stop offset="100%" stopColor={c1} />
+                          </linearGradient>
+                        );
+                      })}
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 9, fill: MID }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} unit="%" />
+                    <Tooltip formatter={(v, _, props) => [Number(v).toFixed(1) + "%", props.payload?.fullName || ""]} contentStyle={tooltipStyle} />
+                    <Bar dataKey="margin" radius={[4, 4, 0, 0]}>
+                      {marginData.map((d, i) => <Cell key={i} fill={`url(#mg${i})`} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
+                  {[[SUCCESS, "> 25%"], [WARNING, "15–25%"], [ERROR, "< 15%"]].map(([c, l]) => (
+                    <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: MID }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />{l}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </Card>
+
+          <Card style={{ padding: 24 }}>
+            <SectionTitle title={`Top clients · ${period}`} />
+            {topClients.length === 0 ? (
+              <div style={{ color: MUTED, fontSize: 13 }}>No client data for this period.</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+                {topClients.map((c, i) => (
+                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, width: 20, flexShrink: 0, textAlign: "right" }}>#{i + 1}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: BODY }}>{c.name}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{fmt(c.periodValue)}</span>
+                      </div>
+                      <div style={{ height: 4, background: SURFACE2, borderRadius: 2 }}>
+                        <div style={{
+                          width: `${(c.periodValue / topMax) * 100}%`, height: "100%",
+                          background: SEG_COLORS[c.segment] || PRIMARY, borderRadius: 2,
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
       </div>
     </div>
   );
