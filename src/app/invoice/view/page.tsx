@@ -134,14 +134,13 @@ function InvoiceContent() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { margin: 0; line-height: normal; background: #f0f0f0; font-family: Inter, sans-serif; }
         @page { size: A4 portrait; margin: 0; }
-        @media (max-width: 768px) {
-          .screen-outer { overflow-x: auto !important; -webkit-overflow-scrolling: touch; padding: 12px 8px !important; }
-        }
+        html, body { overflow-x: auto; }
+        .screen-outer { overflow-x: auto; min-width: 1100px; }
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
-          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; }
-          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; overflow: visible !important; }
+          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; overflow: visible !important; }
+          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; width: 100% !important; overflow: visible !important; min-width: unset !important; }
           .screen-card { display: block !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 100% !important; max-width: 100% !important; overflow: visible !important; }
           .invoice-bottom { display: flex !important; }
           .invoice-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; box-shadow: 0 -4px 0 0 #ee3c30 !important; }
