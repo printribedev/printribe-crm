@@ -279,7 +279,7 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
   }, [product.imagePath]);
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+    <div className="modal-overlay" style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 560, maxHeight: "93vh", overflowY: "auto" }}>
         {/* Image header */}
         {imgUrl ? (
@@ -474,4 +474,6 @@ export default function ProductsPage() {
     </div>
   );
 }
+
+
 

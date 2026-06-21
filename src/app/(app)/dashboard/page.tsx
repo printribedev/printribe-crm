@@ -7,11 +7,10 @@ import {
   CartesianGrid, PieChart, Pie, Cell, LabelList,
 } from "recharts";
 import {
-  PRIMARY, SUCCESS, ERROR, WARNING, GOLD, PURPLE, ORANGE, TEAL, PINK,
+  PRIMARY, PRIMARY_LIGHT, SUCCESS, ERROR, WARNING, GOLD, PURPLE, ORANGE, TEAL, PINK,
   INK, BODY, MID, MUTED, WHITE, SURFACE, SURFACE2, BORDER, SHADOW_SM, SHADOW_MD,
   R_SM, R_MD,
-  GLASS_DARK_BG, GLASS_DARK_BORDER, GLASS_BLUR_SM,
-  GRAD_HERO, GRAD_PRIMARY, GRAD_SUCCESS, GRAD_WARNING, GRAD_DANGER, GRAD_TEAL, GRAD_GOLD,
+  GRAD_PRIMARY, GRAD_SUCCESS, GRAD_WARNING, GRAD_DANGER, GRAD_TEAL, GRAD_GOLD,
 } from "@/lib/tokens";
 
 const SEG_COLORS: Record<string, string> = {
@@ -103,32 +102,33 @@ function toMonthlyData(orders: Order[]) {
   }).sort((a, b) => a.ts - b.ts);
 }
 
-// Glass KPI card — sits on the dark hero band
-function GlassKpiCard({ label, value, sub, accent = PRIMARY, gradient, badge, badgeColor = SUCCESS }: {
+// KPI card with gradient left accent strip
+function KpiCard({ label, value, sub, gradient = GRAD_PRIMARY, badge, badgeColor = SUCCESS }: {
   label: string; value: string | number; sub?: string;
-  accent?: string; gradient?: string; badge?: string; badgeColor?: string;
+  gradient?: string; badge?: string; badgeColor?: string;
 }) {
   return (
     <div style={{
-      background: GLASS_DARK_BG,
-      backdropFilter: GLASS_BLUR_SM,
-      WebkitBackdropFilter: GLASS_BLUR_SM,
-      border: `1px solid ${GLASS_DARK_BORDER}`,
-      borderRadius: R_MD + 2,
-      padding: "18px 20px",
-      boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
+      background: WHITE, borderRadius: R_MD, padding: "18px 20px",
+      boxShadow: SHADOW_SM, border: `1px solid ${BORDER}`,
+      borderTop: `3px solid transparent`,
+      backgroundImage: `${WHITE}, ${gradient}`,
+      backgroundOrigin: "border-box",
+      backgroundClip: "padding-box, border-box",
+      position: "relative", overflow: "hidden",
     }}>
+      {/* Gradient top stripe */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: gradient }} />
       <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: gradient ?? accent, flexShrink: 0 }} />
-        <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: MID, letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</div>
       </div>
-      <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", color: WHITE, lineHeight: 1.1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 5, lineHeight: 1.4 }}>{sub}</div>}
+      <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", color: INK, lineHeight: 1.1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: MUTED, marginTop: 5, lineHeight: 1.4 }}>{sub}</div>}
       {badge && (
         <div style={{
           display: "inline-flex", alignItems: "center", marginTop: 8,
           fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: R_SM,
-          background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em",
+          background: badgeColor + "15", color: badgeColor, letterSpacing: "0.02em",
         }}>{badge}</div>
       )}
     </div>
@@ -272,75 +272,56 @@ export default function DashboardPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh" }}>
-      <style>{`
-        @keyframes heroShimmer { 0%,100%{opacity:1} 50%{opacity:0.8} }
-      `}</style>
-
-      {/* Dark hero band */}
-      <div style={{
-        background: GRAD_HERO,
-        padding: "28px 32px 32px",
-        position: "relative", overflow: "hidden",
-      }}>
-        {/* Subtle ambient glow */}
-        <div style={{ position: "absolute", width: 600, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(79,70,229,0.2) 0%, transparent 70%)", top: -100, right: 100, pointerEvents: "none" }} />
-        <div style={{ position: "absolute", width: 400, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(13,148,136,0.15) 0%, transparent 70%)", bottom: -80, left: 200, pointerEvents: "none" }} />
-
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, position: "relative", zIndex: 1 }}>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: WHITE, letterSpacing: "-0.03em" }}>Dashboard</div>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginTop: 4 }}>
-              Printribe CRM · {orders.length} orders total
-            </div>
-          </div>
-          <div style={{
-            display: "flex", gap: 3,
-            background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: R_SM, padding: 4,
-            backdropFilter: GLASS_BLUR_SM,
-            WebkitBackdropFilter: GLASS_BLUR_SM,
-          }}>
-            {PERIODS.map(p => (
-              <button key={p} onClick={() => setPeriod(p)} style={{
-                fontSize: 11, fontWeight: 500, padding: "6px 12px", borderRadius: R_SM - 1,
-                border: "none",
-                background: period === p ? "rgba(255,255,255,0.15)" : "transparent",
-                color: period === p ? WHITE : "rgba(255,255,255,0.5)",
-                cursor: "pointer",
-                transition: "all 120ms ease",
-              }}>{p}</button>
-            ))}
+    <div style={{ padding: "28px 32px", maxWidth: 1400 }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: INK, letterSpacing: "-0.03em" }}>Dashboard</div>
+          <div style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>
+            Printribe CRM · {orders.length} orders total
           </div>
         </div>
-
-        {/* Glass KPI row 1 */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 12, position: "relative", zIndex: 1 }}>
-          <GlassKpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} gradient={GRAD_PRIMARY} />
-          <GlassKpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" gradient={GRAD_TEAL} badge="Tax" />
-          <GlassKpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" gradient={GRAD_GOLD} />
-          <GlassKpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period"
-            gradient={avgMargin > 0.25 ? GRAD_SUCCESS : avgMargin >= 0.15 ? GRAD_WARNING : GRAD_DANGER}
-            badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"} />
-        </div>
-
-        {/* Glass KPI row 2 */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, position: "relative", zIndex: 1 }}>
-          <GlassKpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" gradient={GRAD_WARNING} badge="Live" />
-          <GlassKpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay"
-            badge={pendingPayment > 0 ? "Follow up" : "All clear"} />
-          <GlassKpiCard label="Overdue Orders" value={overdue} sub="Past due date"
-            gradient={overdue > 0 ? GRAD_DANGER : GRAD_SUCCESS}
-            badge={overdue > 0 ? "Action needed" : "On track"} />
-          <GlassKpiCard label="Total Clients" value={clients.length}
-            sub={`${clients.filter(c => (clientOrderValue[c.id] || 0) > 0).length} active this period`} gradient={GRAD_PRIMARY} />
+        <div style={{ display: "flex", gap: 4, background: SURFACE2, borderRadius: R_SM, padding: 4 }}>
+          {PERIODS.map(p => (
+            <button key={p} onClick={() => setPeriod(p)} style={{
+              fontSize: 11, fontWeight: 500, padding: "6px 12px", borderRadius: R_SM - 1,
+              border: "none",
+              background: period === p ? WHITE : "transparent",
+              color: period === p ? INK : MID,
+              cursor: "pointer",
+              boxShadow: period === p ? SHADOW_SM : "none",
+              transition: "all 120ms ease",
+            }}>{p}</button>
+          ))}
         </div>
       </div>
 
-      {/* Chart section */}
-      <div style={{ padding: "24px 32px", maxWidth: 1400 }}>
+      {/* KPI row 1 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 14 }}>
+        <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} gradient={GRAD_PRIMARY} />
+        <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" gradient={GRAD_TEAL} badge="Tax" badgeColor={TEAL} />
+        <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" gradient={GRAD_GOLD} />
+        <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period"
+          gradient={avgMargin > 0.25 ? GRAD_SUCCESS : avgMargin >= 0.15 ? GRAD_WARNING : GRAD_DANGER}
+          badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"}
+          badgeColor={avgMargin > 0.25 ? SUCCESS : avgMargin >= 0.15 ? WARNING : ERROR} />
+      </div>
+
+      {/* KPI row 2 */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
+        <KpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" gradient={GRAD_WARNING} badge="Live" badgeColor={ORANGE} />
+        <KpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay"
+          gradient={GRAD_PRIMARY}
+          badge={pendingPayment > 0 ? "Follow up" : "All clear"} badgeColor={pendingPayment > 0 ? ERROR : SUCCESS} />
+        <KpiCard label="Overdue Orders" value={overdue} sub="Past due date"
+          gradient={overdue > 0 ? GRAD_DANGER : GRAD_SUCCESS}
+          badge={overdue > 0 ? "Action needed" : "On track"} badgeColor={overdue > 0 ? ERROR : SUCCESS} />
+        <KpiCard label="Total Clients" value={clients.length}
+          sub={`${clients.filter(c => (clientOrderValue[c.id] || 0) > 0).length} active this period`} gradient={GRAD_PRIMARY} />
+      </div>
+
+      {/* Charts below */}
+      <div>
         {/* Revenue trend + Segment mix */}
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
           <Card style={{ padding: 24 }}>
@@ -523,3 +504,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

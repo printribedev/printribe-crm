@@ -4,9 +4,8 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
-  GLASS_DARK_BG, GLASS_DARK_BORDER, GLASS_LIGHT_BG, GLASS_LIGHT_BORDER,
-  GLASS_BLUR, GRAD_HERO, GRAD_PRIMARY, GRAD_SUCCESS,
-  PRIMARY, ERROR, WHITE, MID, INK, BORDER, R_SM, R_MD, R_LG, SHADOW_MODAL,
+  GRAD_PRIMARY,
+  PRIMARY, ERROR, WHITE, MID, INK, BORDER, SURFACE, SURFACE2, R_SM, R_MD, R_LG, SHADOW_XL,
 } from "@/lib/tokens";
 
 export default function LoginPage() {
@@ -34,33 +33,28 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: GRAD_HERO,
+      background: "linear-gradient(135deg, #EEF2FF 0%, #F8FAFC 55%, #F0FDF4 100%)",
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: 24, position: "relative", overflow: "hidden",
     }}>
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes float1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,-20px) scale(1.05)} }
-        @keyframes float2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-20px,30px) scale(0.95)} }
-        .glass-input:focus { outline: none; border-color: rgba(129,140,248,0.6) !important; background: rgba(255,255,255,0.12) !important; }
-        .glass-input::placeholder { color: rgba(255,255,255,0.3); }
+        @keyframes floatA { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,-16px)} }
+        @keyframes floatB { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-16px,20px)} }
       `}</style>
 
-      {/* Ambient blobs */}
-      <div style={{ position: "absolute", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(79,70,229,0.35) 0%, transparent 70%)", top: -100, left: -100, animation: "float1 8s ease-in-out infinite", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(124,58,237,0.3) 0%, transparent 70%)", bottom: -80, right: -80, animation: "float2 10s ease-in-out infinite", pointerEvents: "none" }} />
-      <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(13,148,136,0.2) 0%, transparent 70%)", top: "40%", right: "15%", animation: "float1 12s ease-in-out infinite reverse", pointerEvents: "none" }} />
+      {/* Light ambient blobs */}
+      <div style={{ position: "absolute", width: 560, height: 560, borderRadius: "50%", background: "radial-gradient(circle, rgba(79,70,229,0.08) 0%, transparent 70%)", top: -120, left: -120, animation: "floatA 10s ease-in-out infinite", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(13,148,136,0.07) 0%, transparent 70%)", bottom: -80, right: -60, animation: "floatB 12s ease-in-out infinite", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(124,58,237,0.06) 0%, transparent 70%)", top: "35%", right: "12%", animation: "floatA 14s ease-in-out infinite reverse", pointerEvents: "none" }} />
 
-      {/* Glass card */}
+      {/* Card */}
       <div style={{
         width: "100%", maxWidth: 400, position: "relative", zIndex: 1,
-        background: GLASS_LIGHT_BG,
-        backdropFilter: GLASS_BLUR,
-        WebkitBackdropFilter: GLASS_BLUR,
-        border: `1px solid ${GLASS_LIGHT_BORDER}`,
+        background: WHITE,
         borderRadius: R_LG + 4,
         padding: "40px 40px 36px",
-        boxShadow: "0 32px 64px rgba(15,23,42,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset",
+        boxShadow: "0 4px 6px rgba(15,23,42,0.04), 0 20px 40px rgba(15,23,42,0.10), 0 0 0 1px rgba(15,23,42,0.06)",
       }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 36 }}>
@@ -68,7 +62,7 @@ export default function LoginPage() {
             width: 40, height: 40, borderRadius: R_MD,
             background: GRAD_PRIMARY,
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            boxShadow: "0 4px 14px rgba(79,70,229,0.5)",
+            boxShadow: "0 4px 12px rgba(79,70,229,0.3)",
           }}>
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
@@ -123,16 +117,16 @@ export default function LoginPage() {
           )}
         </div>
 
-        {/* Sign in button — gradient */}
+        {/* Sign in button */}
         <button
           onClick={handleLogin} disabled={loading}
           style={{
             width: "100%", padding: "13px 16px",
-            background: loading ? "rgba(79,70,229,0.6)" : GRAD_PRIMARY,
+            background: loading ? "rgba(79,70,229,0.65)" : GRAD_PRIMARY,
             color: WHITE, border: "none", borderRadius: R_SM,
             fontSize: 14, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer",
             letterSpacing: "-0.01em",
-            boxShadow: loading ? "none" : "0 4px 16px rgba(79,70,229,0.45)",
+            boxShadow: loading ? "none" : "0 4px 14px rgba(79,70,229,0.35)",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             transition: "opacity 150ms ease",
           }}
