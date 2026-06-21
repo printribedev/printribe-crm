@@ -15,7 +15,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }}>
       {/* Dim overlay — mobile only, sits behind open sidebar */}
       <div
-        className="sidebar-overlay"
+        className={`sidebar-overlay${sidebarOpen ? " sidebar-overlay-open" : ""}`}
         onClick={() => setSidebarOpen(false)}
         aria-hidden="true"
       />
