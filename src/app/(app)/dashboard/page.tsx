@@ -416,16 +416,16 @@ export default function DashboardPage() {
   return (
     <div className="page-pad" style={{ padding: "22px 28px", maxWidth: 1400 }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div className="dash-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 700, color: INK, letterSpacing: "-0.03em" }}>Dashboard</div>
           <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>
             {orders.length} orders total
           </div>
         </div>
-        <div style={{ display: "flex", gap: 3, background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: `1px solid ${BORDER}`, borderRadius: R_SM + 2, padding: 3 }}>
+        <div className="dash-period-bar" style={{ display: "flex", gap: 3, background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: `1px solid ${BORDER}`, borderRadius: R_SM + 2, padding: 3, flexWrap: "wrap" }}>
           {PERIODS.map(p => (
-            <button key={p} onClick={() => setPeriod(p)} style={{
+            <button key={p} onClick={() => setPeriod(p)} className="dash-period-btn" style={{
               fontSize: 10, fontWeight: 500, padding: "5px 10px", borderRadius: R_SM,
               border: "none",
               background: period === p ? WHITE : "transparent",

@@ -197,4 +197,19 @@ input[type="number"] {
   .date-filter-range {
     font-size: 10px !important;
   }
+  /* Dashboard period filter — smaller buttons */
+  .dash-period-btn {
+    font-size: 9px !important;
+    padding: 4px 7px !important;
+  }
+  /* Sidebar — ensure footer always visible */
+  .sidebar-drawer {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .sidebar-drawer nav {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    min-height: 0 !important;
+  }
 }

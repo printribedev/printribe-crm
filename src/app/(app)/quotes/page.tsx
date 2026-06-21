@@ -424,15 +424,16 @@ export default function QuotesPage() {
           </div>
         ) : (
           <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
+            <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" as unknown as undefined }}>
             {/* Header */}
-            <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 140px 160px", gap: 16, padding: "10px 20px", background: BG, borderBottom: `1px solid ${BORDER}`, fontSize: 11, fontWeight: 700, color: MID, letterSpacing: "0.05em" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "140px 1fr 130px 170px", gap: 16, padding: "10px 20px", background: BG, borderBottom: `1px solid ${BORDER}`, fontSize: 11, fontWeight: 700, color: MID, letterSpacing: "0.05em", minWidth: 500 }}>
               <div>REF</div>
               <div>CLIENT</div>
               <div>DATE</div>
               <div style={{ textAlign: "right" }}>ACTIONS</div>
             </div>
-            {savedProformas.map(p => (
-              <div key={p.id} style={{ display: "grid", gridTemplateColumns: "140px 1fr 140px 160px", gap: 16, padding: "13px 20px", borderBottom: `1px solid ${BORDER}`, alignItems: "center", fontSize: 13 }}>
+            {savedProformas.map((p, idx) => (
+              <div key={p.id} style={{ display: "grid", gridTemplateColumns: "140px 1fr 130px 170px", gap: 16, padding: "13px 20px", borderBottom: idx < savedProformas.length - 1 ? `1px solid ${BORDER}` : "none", alignItems: "center", fontSize: 13, minWidth: 500 }}>
                 <div style={{ fontWeight: 700, color: BLUE, fontFamily: "monospace", fontSize: 12 }}>{p.ref}</div>
                 <div style={{ fontWeight: 500 }}>{p.clientName}</div>
                 <div style={{ color: MID, fontSize: 12 }}>{new Date(p.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
@@ -465,6 +466,7 @@ export default function QuotesPage() {
                 </div>
               </div>
             ))}
+            </div>{/* end overflowX scroll */}
           </div>
         )}
       </div>
