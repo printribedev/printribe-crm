@@ -206,7 +206,7 @@ function HeatmapCard({ products, months, heatMax, period, fmt, tooltipStyle }: {
   fmt: (n: number) => string;
   tooltipStyle: React.CSSProperties;
 }) {
-  const [tooltip, setTooltip] = useState<{ x: number; y: number; product: string; month: string; rev: number; margin: number } | null>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; below: boolean; product: string; month: string; rev: number; margin: number } | null>(null);
 
   return (
     <Card style={{ padding: 16, marginTop: 12 }}>
@@ -247,7 +247,9 @@ function HeatmapCard({ products, months, heatMax, period, fmt, tooltipStyle }: {
                         const wrapper = el.closest("[data-heatmap]") as HTMLElement | null;
                         const rect = el.getBoundingClientRect();
                         const wRect = wrapper?.getBoundingClientRect();
-                        setTooltip({ x: rect.left - (wRect?.left || 0) + rect.width / 2, y: rect.top - (wRect?.top || 0), product: p.name, month: m, rev, margin: margin ?? 0 });
+                        const yInWrapper = rect.top - (wRect?.top || 0);
+                        const below = yInWrapper < 90;
+                        setTooltip({ x: rect.left - (wRect?.left || 0) + rect.width / 2, y: below ? yInWrapper + rect.height + 6 : yInWrapper - 6, below, product: p.name, month: m, rev, margin: margin ?? 0 });
                       }
                     }}
                     onMouseLeave={() => setTooltip(null)}
@@ -279,7 +281,8 @@ function HeatmapCard({ products, months, heatMax, period, fmt, tooltipStyle }: {
               ...tooltipStyle,
               position: "absolute",
               left: tooltip.x,
-              top: tooltip.y - 80,
+              top: tooltip.below ? tooltip.y : undefined,
+              bottom: tooltip.below ? undefined : `calc(100% - ${tooltip.y}px)`,
               transform: "translateX(-50%)",
               pointerEvents: "none",
               zIndex: 50,
