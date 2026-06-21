@@ -274,7 +274,7 @@ export default function AssetsPage() {
   const productsWithImages = products.filter(p => p.imagePath);
 
   return (
-    <div style={{ padding: "26px 28px" }}>
+    <div className="page-pad" style={{ padding: "26px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Asset Library</div>
@@ -309,7 +309,7 @@ export default function AssetsPage() {
               No product images yet — add images to products in the Products section.
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+            <div className="assets-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
               {productsWithImages.map(p => (
                 <div key={p.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
                   {productImgUrls[p.id] ? (
@@ -353,7 +353,7 @@ export default function AssetsPage() {
       </div>
 
       {/* Asset grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+      <div className="assets-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
         {filtered.map(a => (
           <div key={a.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, padding: 18, display: "flex", flexDirection: "column", gap: 10, borderTop: `3px solid ${TYPE_COLORS[a.type] || MID}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>

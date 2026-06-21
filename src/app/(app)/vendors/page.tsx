@@ -148,7 +148,7 @@ export default function VendorsPage() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div style={{ padding: "26px 28px" }}>
+    <div className="page-pad" style={{ padding: "26px 28px" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
         <div>
@@ -161,7 +161,8 @@ export default function VendorsPage() {
       </div>
 
       {/* Table */}
-      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden", marginBottom: 18 }}>
+      <div className="table-scroll" style={{ marginBottom: 18 }}>
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
@@ -199,6 +200,7 @@ export default function VendorsPage() {
           </tbody>
         </table>
       </div>
+      </div>{/* end table-scroll */}
 
       {/* Purchase concentration chart */}
       {vendors.length > 0 && (

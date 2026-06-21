@@ -190,7 +190,7 @@ export default function QuotesPage() {
   const LBL: React.CSSProperties = { fontSize: 10, color: MID, marginBottom: 4, fontWeight: 600, display: "block", textTransform: "uppercase", letterSpacing: "0.06em" };
 
   return (
-    <div style={{ padding: "26px 28px" }}>
+    <div className="page-pad" style={{ padding: "26px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Quote / Proforma Estimator</div>
@@ -209,7 +209,7 @@ export default function QuotesPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+      <div className="quotes-layout" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
 
         {/* LEFT */}
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -328,7 +328,7 @@ export default function QuotesPage() {
         </div>
 
         {/* RIGHT — live result */}
-        <div style={{ position: "sticky", top: 24 }}>
+        <div className="quotes-sticky" style={{ position: "sticky", top: 24 }}>
           <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, padding: 24 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: R, marginBottom: 12 }}>Live estimate</div>
 

@@ -181,7 +181,7 @@ export default function ClientsPage() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div style={{ padding: "26px 28px" }}>
+    <div className="page-pad" style={{ padding: "26px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK, letterSpacing: "-0.01em" }}>Clients</div>
@@ -195,6 +195,7 @@ export default function ClientsPage() {
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clients by name, segment, city…"
         style={{ width: "100%", padding: "10px 14px", borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16 }} />
 
+      <div className="table-scroll">
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
@@ -252,6 +253,8 @@ export default function ClientsPage() {
           </tbody>
         </table>
       </div>
+
+      </div>{/* end table-scroll */}
 
       {modal !== null && (
         <Modal

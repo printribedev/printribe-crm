@@ -70,7 +70,11 @@ function NavIcon({ d, active }: { d: string; active: boolean }) {
   );
 }
 
-export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: number }) {
+export default function Sidebar({ activeJobCount = 0, isOpen = false, onClose }: {
+  activeJobCount?: number;
+  isOpen?: boolean;
+  onClose?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -82,19 +86,35 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
   }
 
   return (
-    <div style={{
-      width: 224,
-      background: "rgba(255,255,255,0.88)",
-      backdropFilter: "blur(20px) saturate(180%)",
-      WebkitBackdropFilter: "blur(20px) saturate(180%)",
-      display: "flex",
-      flexDirection: "column",
-      height: "100vh",
-      position: "sticky",
-      top: 0,
-      flexShrink: 0,
-      borderRight: `1px solid ${BORDER}`,
-    }}>
+    <div
+      className={`sidebar-drawer${isOpen ? " sidebar-open" : ""}`}
+      style={{
+        width: 224,
+        background: "rgba(255,255,255,0.88)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        position: "sticky",
+        top: 0,
+        flexShrink: 0,
+        borderRight: `1px solid ${BORDER}`,
+      }}
+    >
+      {/* Close button — visible on mobile only */}
+      <button
+        className="sidebar-close-btn"
+        onClick={onClose}
+        aria-label="Close menu"
+        style={{
+          position: "absolute", top: 12, right: 12,
+          background: "rgba(0,0,0,0.06)", border: "none", borderRadius: 8,
+          width: 32, height: 32, cursor: "pointer",
+          alignItems: "center", justifyContent: "center", color: "#64748B", fontSize: 16,
+        }}
+      >✕</button>
+
       <PrintribeLogo />
 
       {/* Nav */}

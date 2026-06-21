@@ -386,7 +386,7 @@ export default function ProductsPage() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div style={{ padding: "26px 28px" }}>
+    <div className="page-pad" style={{ padding: "26px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Products</div>
@@ -400,6 +400,7 @@ export default function ProductsPage() {
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products by name, category…"
         style={{ width: "100%", padding: "10px 14px", borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16, boxSizing: "border-box" }} />
 
+      <div className="table-scroll">
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
@@ -456,6 +457,8 @@ export default function ProductsPage() {
           </tbody>
         </table>
       </div>
+
+      </div>{/* end table-scroll */}
 
       {detail && !editModal && (
         <DetailPopup

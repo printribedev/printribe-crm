@@ -414,7 +414,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div style={{ padding: "22px 28px", maxWidth: 1400 }}>
+    <div className="page-pad" style={{ padding: "22px 28px", maxWidth: 1400 }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <div>
@@ -439,7 +439,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI rows — 8 cards in 2 rows of 4, tight 8pt gaps */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 8 }}>
+      <div className="kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 8 }}>
         <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} gradient={GRAD_PRIMARY} />
         <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" gradient={GRAD_TEAL} badge="Tax" badgeColor={TEAL} />
         <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" gradient={GRAD_GOLD} />
@@ -448,7 +448,7 @@ export default function DashboardPage() {
           badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"}
           badgeColor={avgMargin > 0.25 ? SUCCESS : avgMargin >= 0.15 ? WARNING : ERROR} />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
+      <div className="kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
         <KpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" gradient={GRAD_WARNING} badge="Live" badgeColor={ORANGE} />
         <KpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay"
           gradient={GRAD_PRIMARY}
@@ -463,7 +463,7 @@ export default function DashboardPage() {
       {/* Charts below */}
       <div>
         {/* Revenue trend + Segment mix */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div className="chart-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
           <Card style={{ padding: 16 }}>
             <SectionTitle title="Revenue trend" sub={`Monthly sale value (excl. GST) · ${period}`} />
             {monthlyData.length === 0 ? (
@@ -553,7 +553,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Margin per client + Top clients */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="chart-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Card style={{ padding: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
               <SectionTitle title="Avg margin per client" sub={period} />
