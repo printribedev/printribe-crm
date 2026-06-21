@@ -5,9 +5,9 @@ import LoadingScreen from "@/components/LoadingScreen";
 import DateFilterBar from "@/components/DateFilterBar";
 import { DateFilter, applyDateFilter, loadFilter } from "@/lib/dateFilter";
 
-const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
-const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
-const GREEN = "#1A7A4A";
+import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
+const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
+const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
 const STAGES = [
   { id: "design",            label: "Design",                     color: PURPLE },
@@ -116,7 +116,7 @@ function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
       style={{
         background: WHITE,
         border: `1px solid ${BORDER}`,
-        borderRadius: 9,
+        borderRadius: BTN_RADIUS,
         padding: "12px 13px",
         marginBottom: 8,
         borderLeft: `3px solid ${order.priority === "High" ? R : BORDER}`,
@@ -151,7 +151,7 @@ function OrderCard({ order, dragging, onDragStart, onDragEnd, onAdvance }: {
           onClick={e => { e.stopPropagation(); onAdvance(); }}
           style={{
             width: "100%", fontSize: 11, fontWeight: 600, padding: "5px 0",
-            borderRadius: 6, background: BG, color: MID,
+            borderRadius: BTN_RADIUS, background: BG, color: MID,
             border: `1px solid ${BORDER}`, cursor: "pointer",
           }}
         >
@@ -185,7 +185,7 @@ function KanbanColumn({ stage, orders, dragOverStage, onDragOver, onDragLeave, o
         minWidth: 185,
         background: isOver ? stage.color + "0D" : "transparent",
         border: isOver ? `2px dashed ${stage.color}` : "2px dashed transparent",
-        borderRadius: 10,
+        borderRadius: CARD_RADIUS,
         padding: 6,
         transition: "background 0.15s, border-color 0.15s",
       }}
@@ -212,7 +212,7 @@ function KanbanColumn({ stage, orders, dragOverStage, onDragOver, onDragLeave, o
           <div style={{ fontSize: 11, color: BORDER, padding: "16px 0", textAlign: "center" }}>Empty</div>
         )}
         {isOver && (
-          <div style={{ height: 60, border: `2px dashed ${stage.color}`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ height: 60, border: `2px dashed ${stage.color}`, borderRadius: BTN_RADIUS, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ fontSize: 11, color: stage.color, fontWeight: 600 }}>Drop here</span>
           </div>
         )}
@@ -282,12 +282,12 @@ export default function ProductionPage() {
       <div style={{ padding: "26px 28px", minHeight: "100vh" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
           <div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Production Board</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: BLACK, letterSpacing: "-0.01em" }}>Production Board</div>
             <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>
               {activeOrders.length} active · {delivered.length} delivered · drag cards to move stages
             </div>
           </div>
-          <button onClick={() => setView("list")} style={{ fontSize: 12, padding: "7px 14px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>
+          <button onClick={() => setView("list")} style={{ fontSize: 12, padding: "7px 14px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>
             List view
           </button>
         </div>
@@ -338,17 +338,17 @@ export default function ProductionPage() {
     <div style={{ padding: "26px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Production — List View</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: BLACK, letterSpacing: "-0.01em" }}>Production — List View</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{activeOrders.length} active · {delivered.length} delivered</div>
         </div>
-        <button onClick={() => setView("kanban")} style={{ fontSize: 12, padding: "7px 14px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>
+        <button onClick={() => setView("kanban")} style={{ fontSize: 12, padding: "7px 14px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>
           Kanban view
         </button>
       </div>
 
       <DateFilterBar filter={dateFilter} onChange={setDateFilter} />
 
-      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
@@ -369,7 +369,7 @@ export default function ProductionPage() {
                   <td style={{ padding: "10px 13px", fontWeight: 500 }}>{o.clientName}</td>
                   <td style={{ padding: "10px 13px", color: MID }}>{getProductDisplay(o.product)}</td>
                   <td style={{ padding: "10px 13px" }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 8px", borderRadius: 20 }}>{stage.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 8px", borderRadius: BTN_RADIUS }}>{stage.label}</span>
                   </td>
                   <td style={{ padding: "10px 13px" }}>
                     {o.priority === "High" && <span style={{ fontSize: 10, fontWeight: 700, color: R, background: R + "18", padding: "2px 8px", borderRadius: 20 }}>High</span>}
@@ -382,7 +382,7 @@ export default function ProductionPage() {
                   </td>
                   <td style={{ padding: "10px 13px" }}>
                     {o.stage !== "delivered" && (
-                      <button onClick={() => advance(o)} style={{ fontSize: 10, padding: "4px 10px", borderRadius: 6, background: R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 600 }}>
+                      <button onClick={() => advance(o)} style={{ fontSize: 10, padding: "4px 10px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 600 }}>
                         Advance →
                       </button>
                     )}

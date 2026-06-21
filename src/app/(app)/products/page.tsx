@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import { createClient } from "@/lib/supabase/client";
 
-const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
-const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
-const GREEN = "#1A7A4A";
+import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
+const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
+const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
 const CAT_COLORS: Record<string, string> = {
   Apparel: R, Sportswear: BLUE, Accessories: PURPLE, Service: GOLD, Promotional: ORANGE,
@@ -39,11 +39,11 @@ const BLANK: Omit<Product, "id"> = {
   moq: 20, basePrice: 0, gsm: "", decoration: "", description: "", variants: [], imagePath: null, active: true,
 };
 
-const INP = { width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", background: WHITE, boxSizing: "border-box" as const };
-const LBL = { fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 as const, textTransform: "uppercase" as const, letterSpacing: "0.05em" };
+const INP = { width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", background: WHITE, boxSizing: "border-box" as const };
+const LBL = { fontSize: 10, color: MID, marginBottom: 4, fontWeight: 600 as const, textTransform: "uppercase" as const, letterSpacing: "0.06em" };
 
 function Badge({ text, color = R }: { text: string; color?: string }) {
-  return <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color + "18", color }}>{text}</span>;
+  return <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: BTN_RADIUS, background: color + "18", color }}>{text}</span>;
 }
 
 function VariantBuilder({ variants, onChange }: { variants: VariantDef[]; onChange: (v: VariantDef[]) => void }) {
@@ -57,7 +57,7 @@ function VariantBuilder({ variants, onChange }: { variants: VariantDef[]; onChan
   return (
     <div>
       {variants.map((v, i) => (
-        <div key={i} style={{ background: BG, borderRadius: 8, padding: "12px 14px", marginBottom: 10 }}>
+        <div key={i} style={{ background: BG, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, padding: "12px 14px", marginBottom: 10 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
             <div style={{ flex: 1 }}>
               <div style={LBL}>Variant Name</div>
@@ -79,12 +79,12 @@ function VariantBuilder({ variants, onChange }: { variants: VariantDef[]; onChan
               </div>
             ))}
             <button type="button" onClick={() => addValue(i)}
-              style={{ fontSize: 11, padding: "4px 10px", borderRadius: 6, border: `1px dashed ${BLUE}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>+ Value</button>
+              style={{ fontSize: 11, padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px dashed ${BLUE}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>+ Value</button>
           </div>
         </div>
       ))}
       <button type="button" onClick={addVariant}
-        style={{ fontSize: 12, padding: "7px 14px", borderRadius: 7, border: `1px dashed ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600, width: "100%" }}>
+        style={{ fontSize: 12, padding: "7px 14px", borderRadius: BTN_RADIUS, border: `1px dashed ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600, width: "100%" }}>
         + Add variant dimension
       </button>
     </div>
@@ -138,7 +138,7 @@ function ImageUploader({ currentPath, onUploaded }: { currentPath: string | null
       <div
         onClick={() => fileRef.current?.click()}
         style={{
-          border: `2px dashed ${preview ? GREEN : BORDER}`, borderRadius: 10,
+          border: `2px dashed ${preview ? GREEN : BORDER}`, borderRadius: CARD_RADIUS,
           padding: preview ? 0 : "20px",
           textAlign: "center", cursor: "pointer", overflow: "hidden",
           background: preview ? "transparent" : BG, transition: "all 0.15s",
@@ -158,7 +158,7 @@ function ImageUploader({ currentPath, onUploaded }: { currentPath: string | null
       </div>
       {preview && (
         <button type="button" onClick={() => fileRef.current?.click()}
-          style={{ marginTop: 6, fontSize: 11, padding: "4px 10px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
+          style={{ marginTop: 6, fontSize: 11, padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
           Change image
         </button>
       )}
@@ -181,10 +181,10 @@ function EditModal({ product, onSave, onClose, onDelete }: {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 600, maxHeight: "93vh", overflowY: "auto", padding: 28 }}>
+      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 600, maxHeight: "93vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "Add New Product" : `Edit — ${product.name}`}</div>
-          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
+          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
 
         <div style={{ marginBottom: 18 }}>
@@ -252,12 +252,12 @@ function EditModal({ product, onSave, onClose, onDelete }: {
         <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "space-between" }}>
           <div>
             {onDelete && (
-              <button onClick={onDelete} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${R}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>Delete product</button>
+              <button onClick={onDelete} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>Delete product</button>
             )}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button onClick={() => { onSave(form); onClose(); }} style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
+            <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
+            <button onClick={() => { onSave(form); onClose(); }} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
               {isNew ? "Add product" : "Save changes"}
             </button>
           </div>
@@ -280,15 +280,15 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 560, maxHeight: "93vh", overflowY: "auto" }}>
+      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 560, maxHeight: "93vh", overflowY: "auto" }}>
         {/* Image header */}
         {imgUrl ? (
-          <div style={{ width: "100%", height: 220, overflow: "hidden", borderRadius: "14px 14px 0 0", position: "relative" }}>
+          <div style={{ width: "100%", height: 220, overflow: "hidden", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`, position: "relative" }}>
             <img src={imgUrl} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.5))" }} />
           </div>
         ) : (
-          <div style={{ height: 10, background: catColor, borderRadius: "14px 14px 0 0" }} />
+          <div style={{ height: 10, background: catColor, borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0` }} />
         )}
 
         <div style={{ padding: 26 }}>
@@ -301,8 +301,8 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
               </div>
             </div>
             <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 12 }}>
-              <button onClick={onEdit} style={{ fontSize: 12, fontWeight: 600, padding: "7px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>Edit</button>
-              <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "7px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕</button>
+              <button onClick={onEdit} style={{ fontSize: 12, fontWeight: 600, padding: "7px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>Edit</button>
+              <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "7px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕</button>
             </div>
           </div>
 
@@ -321,7 +321,7 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
               ["Material", product.gsm || "—"],
               ["Decoration", product.decoration || "—"],
             ].map(([l, v]) => (
-              <div key={l} style={{ background: BG, borderRadius: 8, padding: "10px 12px" }}>
+              <div key={l} style={{ background: BG, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, padding: "10px 12px" }}>
                 <div style={{ fontSize: 10, color: MID, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 3 }}>{l}</div>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>{v}</div>
               </div>
@@ -336,7 +336,7 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
                   <div style={{ fontSize: 11, fontWeight: 700, color: BLACK, marginBottom: 6 }}>{v.name}</div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {v.values.filter(Boolean).map((val, j) => (
-                      <span key={j} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: BLUE + "12", color: BLUE, fontWeight: 600 }}>{val}</span>
+                      <span key={j} style={{ fontSize: 11, padding: "3px 10px", borderRadius: BTN_RADIUS, background: BLUE + "12", color: BLUE, fontWeight: 600 }}>{val}</span>
                     ))}
                   </div>
                 </div>
@@ -364,7 +364,7 @@ function ProductCard({ product, onClick }: { product: Product; onClick: () => vo
     <div
       onClick={onClick}
       style={{
-        background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10,
+        background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS,
         overflow: "hidden", cursor: "pointer", opacity: product.active ? 1 : 0.6,
         transition: "box-shadow 0.15s, transform 0.15s",
         boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
@@ -441,7 +441,7 @@ export default function ProductsPage() {
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Products</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{products.length} products in catalog · click any card to view details</div>
         </div>
-        <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>
+        <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
           + Add product
         </button>
       </div>

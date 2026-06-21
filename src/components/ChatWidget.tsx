@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const R = "#EE3C30", BLUE = "#2266A1", GREEN = "#1A7A4A", GOLD = "#D4B800";
-const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
-const ORANGE = "#E67E22", PURPLE = "#7B4FBF";
+import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
+const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -459,8 +458,8 @@ export default function ChatWidget() {
         style={{
           position: "fixed", bottom: 24, right: 24, zIndex: 2000,
           width: 52, height: 52, borderRadius: "50%",
-          background: R, border: "none", cursor: "pointer",
-          boxShadow: "0 4px 16px rgba(238,60,48,0.4)",
+          background: BLUE, border: "none", cursor: "pointer",
+          boxShadow: "0 4px 16px rgba(59,130,246,0.35)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 22, color: WHITE, transition: "transform 0.15s",
         }}
@@ -474,12 +473,12 @@ export default function ChatWidget() {
         <div style={{
           position: "fixed", bottom: 88, right: 24, zIndex: 1999,
           width: 420, height: 560, background: WHITE,
-          borderRadius: 16, boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+          borderRadius: 12, boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
           display: "flex", flexDirection: "column", overflow: "hidden",
           border: `1px solid ${BORDER}`,
         }}>
           {/* Header */}
-          <div style={{ background: R, padding: "14px 18px", flexShrink: 0 }}>
+          <div style={{ background: BLUE, padding: "14px 18px", flexShrink: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: WHITE }}>CRM Assistant</div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>
               {loading ? "Loading your data…" : data ? `${data.orders.length} orders · ${data.clients.length} clients loaded` : "Opening…"}
@@ -492,7 +491,7 @@ export default function ChatWidget() {
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.role === "user" ? "flex-end" : "flex-start" }}>
                 <div style={{
                   maxWidth: "85%", padding: "8px 12px", borderRadius: m.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-                  background: m.role === "user" ? R : BG,
+                  background: m.role === "user" ? BLUE : BG,
                   color: m.role === "user" ? WHITE : BLACK,
                   fontSize: 12, lineHeight: 1.5,
                 }}>
@@ -522,7 +521,7 @@ export default function ChatWidget() {
                       <thead>
                         <tr style={{ background: BLACK }}>
                           {m.table.headers.map((h, j) => (
-                            <th key={j} style={{ padding: "5px 8px", textAlign: "left", color: WHITE, fontWeight: 600, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap" }}>{h}</th>
+                            <th key={j} style={{ padding: "5px 8px", textAlign: "left", color: WHITE, fontWeight: 600, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap", background: BLACK }}>{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -552,13 +551,13 @@ export default function ChatWidget() {
               placeholder={loading ? "Loading data…" : "Ask something…"}
               disabled={loading || !data}
               style={{
-                flex: 1, padding: "8px 12px", borderRadius: 20, border: `1px solid ${BORDER}`,
+                flex: 1, padding: "8px 12px", borderRadius: 8, border: `1px solid ${BORDER}`,
                 fontSize: 12, outline: "none", background: BG,
               }}
             />
             <button onClick={send} disabled={loading || !data || !input.trim()}
               style={{
-                padding: "8px 14px", borderRadius: 20, background: input.trim() && data ? R : BORDER,
+                padding: "8px 14px", borderRadius: 8, background: input.trim() && data ? BLUE : BORDER,
                 color: WHITE, border: "none", cursor: input.trim() && data ? "pointer" : "default",
                 fontSize: 12, fontWeight: 600, transition: "background 0.15s",
               }}>

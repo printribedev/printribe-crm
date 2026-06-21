@@ -5,8 +5,8 @@ import {
   DateFilter, FilterPreset, PRESET_LABELS, presetToRange, saveFilter,
 } from "@/lib/dateFilter";
 
-const BORDER = "#E8E7E3", MID = "#888", WHITE = "#FFFFFF", BG = "#F7F6F2";
-const R = "#EE3C30", BLACK = "#111111";
+import { PRIMARY, ERROR, INK, MID, BORDER, SURFACE, WHITE, R_SM } from "@/lib/tokens";
+const R = ERROR, BLUE = PRIMARY, BLACK = INK, BG = SURFACE;
 
 const PRESETS: FilterPreset[] = ["all", "7d", "1m", "3m", "6m", "cfy", "lfy", "ytd", "custom"];
 
@@ -55,9 +55,9 @@ export default function DateFilterBar({
               type="button"
               onClick={() => select(p)}
               style={{
-                fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer", fontWeight: 600,
-                border: `1px solid ${active ? R : BORDER}`,
-                background: active ? R : WHITE,
+                fontSize: 11, padding: "5px 12px", borderRadius: 8, cursor: "pointer", fontWeight: 600,
+                border: `1px solid ${active ? BLUE : BORDER}`,
+                background: active ? BLUE : WHITE,
                 color: active ? WHITE : BLACK,
                 transition: "all 0.12s",
               }}
@@ -81,7 +81,7 @@ export default function DateFilterBar({
               type="date"
               value={filter.from}
               onChange={e => setCustomDate("from", e.target.value)}
-              style={{ fontSize: 12, padding: "5px 10px", borderRadius: 7, border: `1px solid ${BORDER}`, background: BG, outline: "none" }}
+              style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: `1px solid ${BORDER}`, background: BG, outline: "none" }}
             />
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -90,7 +90,7 @@ export default function DateFilterBar({
               type="date"
               value={filter.to}
               onChange={e => setCustomDate("to", e.target.value)}
-              style={{ fontSize: 12, padding: "5px 10px", borderRadius: 7, border: `1px solid ${BORDER}`, background: BG, outline: "none" }}
+              style={{ fontSize: 12, padding: "5px 10px", borderRadius: 8, border: `1px solid ${BORDER}`, background: BG, outline: "none" }}
             />
           </div>
         </div>

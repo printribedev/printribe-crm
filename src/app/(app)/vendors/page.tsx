@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 
-const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF";
-const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
-const GREEN = "#1A7A4A";
+import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
+const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
+const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
 const CAT_COLORS: Record<string, string> = {
   Production: R, Raw_Material: BLUE, Printing: PURPLE, Operations: GOLD,
@@ -32,7 +32,7 @@ const BLANK: Omit<Vendor, "id"> = {
 
 function Badge({ text, color = R }: { text: string; color?: string }) {
   return (
-    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color + "18", color }}>
+    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: BTN_RADIUS, background: color + "18", color }}>
       {text}
     </span>
   );
@@ -63,10 +63,10 @@ function Modal({ vendor, onSave, onClose, onDelete }: {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "Add New Vendor" : `Edit — ${vendor.name}`}</div>
-          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
+          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {fields.map(f => (
@@ -74,13 +74,13 @@ function Modal({ vendor, onSave, onClose, onDelete }: {
               <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>{f.label}</div>
               {f.type === "select" ? (
                 <select value={String(form[f.key] ?? "")} onChange={e => set(f.key, e.target.value)}
-                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", background: WHITE }}>
+                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", background: WHITE }}>
                   {f.options!.map(o => <option key={o} value={o}>{CAT_LABELS[o] ?? o}</option>)}
                 </select>
               ) : (
                 <input type={f.type === "number" ? "number" : "text"} value={String(form[f.key] ?? "")}
                   onChange={e => set(f.key, f.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value)}
-                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none" }} />
+                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none" }} />
               )}
             </div>
           ))}
@@ -88,14 +88,14 @@ function Modal({ vendor, onSave, onClose, onDelete }: {
         <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "space-between" }}>
           <div>
             {onDelete && (
-              <button onClick={onDelete} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${R}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>
+              <button onClick={onDelete} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>
                 Delete vendor
               </button>
             )}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button onClick={() => { onSave(form); onClose(); }} style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
+            <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
+            <button onClick={() => { onSave(form); onClose(); }} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
               {isNew ? "Add vendor" : "Save changes"}
             </button>
           </div>
@@ -152,13 +152,13 @@ export default function VendorsPage() {
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK, letterSpacing: "-0.01em" }}>Vendors</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{vendors.length} suppliers · {fmt(total)} total purchased</div>
         </div>
-        <button onClick={() => setModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>
+        <button onClick={() => setModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
           + Add vendor
         </button>
       </div>
 
       {/* Table */}
-      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden", marginBottom: 18 }}>
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden", marginBottom: 18 }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
@@ -184,7 +184,7 @@ export default function VendorsPage() {
                   <span style={{ fontSize: 11, fontWeight: 600, color: REL_COLOR[v.reliability] }}>{v.reliability}</span>
                 </td>
                 <td style={{ padding: "12px 14px" }}>
-                  <button onClick={() => setModal(v)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}>
+                  <button onClick={() => setModal(v)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}>
                     Edit
                   </button>
                 </td>
@@ -199,7 +199,7 @@ export default function VendorsPage() {
 
       {/* Purchase concentration chart */}
       {vendors.length > 0 && (
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
+        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, padding: 22 }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>Purchase concentration</div>
           {sorted.map(v => (
             <div key={v.id} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>

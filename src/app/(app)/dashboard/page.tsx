@@ -4,23 +4,28 @@ import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  CartesianGrid, PieChart, Pie, Cell, LineChart, Line, LabelList,
+  CartesianGrid, PieChart, Pie, Cell, LabelList,
 } from "recharts";
+import {
+  PRIMARY, PRIMARY_LIGHT, SUCCESS, ERROR, WARNING, GOLD, PURPLE, ORANGE, TEAL, PINK,
+  INK, BODY, MID, MUTED, WHITE, SURFACE, SURFACE2, BORDER, SHADOW_SM, SHADOW_MD,
+  R_SM, R_MD,
+} from "@/lib/tokens";
 
-const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
-const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
-const GREEN = "#1A7A4A";
-
+// — Color maps —
 const SEG_COLORS: Record<string, string> = {
-  Reseller: R, Sports: BLUE, Education: GREEN, Corporate: GOLD, NGO_Govt: PURPLE, B2C: ORANGE,
+  Reseller: ERROR, Sports: PRIMARY, Education: SUCCESS,
+  Corporate: GOLD, NGO_Govt: PURPLE, B2C: ORANGE,
 };
 const SEG_LABELS: Record<string, string> = {
   Reseller: "Reseller", Sports: "Sports", Education: "Education",
   Corporate: "Corporate", NGO_Govt: "NGO/Govt", B2C: "B2C",
 };
+const CHART_PALETTE = [ERROR, PRIMARY, SUCCESS, GOLD, PURPLE, ORANGE, TEAL, PINK, MID];
 
 type Order = {
-  id: string; clientId: number | null; clientName: string; product: string; segment: string; stage: string; priority: string;
+  id: string; clientId: number | null; clientName: string; product: string;
+  segment: string; stage: string; priority: string;
   saleValue: number; gst: number; fabric: number; printing: number; transport: number;
   misc: number; jobWork: number; packaging: number; design: number; ribCost: number;
   date: string; dueDate: string | null; deliveryDate: string | null;
@@ -49,16 +54,17 @@ function parseProductItems(product: string): { name: string; weight: number }[] 
   return [{ name: product, weight: 1 }];
 }
 
+function orderCost(o: Order) {
+  return o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design + (o.ribCost || 0);
+}
 function calcMargin(o: Order) {
   return o.saleValue > 0 ? (o.saleValue - orderCost(o)) / o.saleValue : 0;
 }
-function marginColor(m: number) { return m > 0.25 ? GREEN : m >= 0.15 ? MID : R; }
+function marginColor(m: number) { return m > 0.25 ? SUCCESS : m >= 0.15 ? WARNING : ERROR; }
 
 const PERIODS = ["This month", "Last 3 months", "Last 6 months", "FY 26-27", "All time"];
 
-function analyticsDate(o: Order): Date {
-  return new Date(o.deliveryDate ?? o.date);
-}
+function analyticsDate(o: Order): Date { return new Date(o.deliveryDate ?? o.date); }
 
 function filterOrders(orders: Order[], period: string): Order[] {
   const now = new Date();
@@ -75,10 +81,6 @@ function filterOrders(orders: Order[], period: string): Order[] {
     default:
       return orders;
   }
-}
-
-function orderCost(o: Order) {
-  return o.fabric + o.printing + o.transport + o.misc + o.jobWork + o.packaging + o.design + (o.ribCost || 0);
 }
 
 function toMonthlyData(orders: Order[]) {
@@ -99,27 +101,64 @@ function toMonthlyData(orders: Order[]) {
   }).sort((a, b) => a.ts - b.ts);
 }
 
-function KpiCard({ label, value, sub, color = R, badge, badgeColor = GREEN }: {
+function KpiCard({ label, value, sub, accent = PRIMARY, badge, badgeColor = SUCCESS }: {
   label: string; value: string | number; sub?: string;
-  color?: string; badge?: string; badgeColor?: string;
+  accent?: string; badge?: string; badgeColor?: string;
 }) {
   return (
-    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: "20px 22px", borderTop: `3px solid ${color}` }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: MID, marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em", color: BLACK }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: MID, marginTop: 5 }}>{sub}</div>}
-      {badge && <div style={{ display: "inline-block", marginTop: 6, fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 20, background: badgeColor + "18", color: badgeColor }}>{badge}</div>}
+    <div style={{
+      background: WHITE, borderRadius: R_MD, padding: "18px 20px",
+      boxShadow: SHADOW_SM, border: `1px solid ${BORDER}`,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: accent, flexShrink: 0 }} />
+        <div style={{ fontSize: 11, fontWeight: 600, color: MID, letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</div>
+      </div>
+      <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", color: INK, lineHeight: 1.1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: MUTED, marginTop: 5, lineHeight: 1.4 }}>{sub}</div>}
+      {badge && (
+        <div style={{
+          display: "inline-flex", alignItems: "center", marginTop: 8,
+          fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: R_SM,
+          background: badgeColor + "18", color: badgeColor, letterSpacing: "0.02em",
+        }}>{badge}</div>
+      )}
     </div>
   );
 }
 
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; name?: string }[]; label?: string }) {
-  if (!active || !payload?.length) return null;
+function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", fontSize: 12 }}>
-      <div style={{ fontWeight: 700, marginBottom: 4 }}>{label}</div>
-      {payload.map((p, i) => (
-        <div key={i} style={{ color: R }}>{fmt(p.value)}</div>
+    <div style={{
+      background: WHITE, borderRadius: R_MD, boxShadow: SHADOW_SM,
+      border: `1px solid ${BORDER}`, ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function SectionTitle({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: INK, letterSpacing: "-0.01em" }}>{title}</div>
+      {sub && <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function ToggleGroup<T extends string>({ options, value, onChange }: { options: { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
+  return (
+    <div style={{ display: "flex", gap: 4, background: SURFACE2, borderRadius: R_SM, padding: 3 }}>
+      {options.map(o => (
+        <button key={o.value} onClick={() => onChange(o.value)} style={{
+          fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 5, cursor: "pointer",
+          border: "none",
+          background: value === o.value ? WHITE : "transparent",
+          color: value === o.value ? INK : MID,
+          boxShadow: value === o.value ? SHADOW_SM : "none",
+          transition: "all 120ms ease",
+        }}>{o.label}</button>
       ))}
     </div>
   );
@@ -148,7 +187,6 @@ export default function DashboardPage() {
   const filtered = filterOrders(orders, period);
   const monthlyData = toMonthlyData(filtered);
 
-  // KPIs from filtered orders
   const totalRevenue = filtered.reduce((s, o) => s + o.saleValue, 0);
   const totalGst = filtered.reduce((s, o) => s + o.gst, 0);
   const totalProfit = filtered.reduce((s, o) => s + (o.saleValue - orderCost(o)), 0);
@@ -158,7 +196,6 @@ export default function DashboardPage() {
   const avgOrderValue = filtered.length ? totalRevenue / filtered.length : 0;
   const overdue = filtered.filter(o => o.stage !== "delivered" && o.stage !== "delivered_pending" && o.dueDate && new Date(o.dueDate) < new Date()).length;
 
-  // Segment breakdown from filtered orders
   const segMap: Record<string, number> = {};
   filtered.forEach(o => { segMap[o.segment] = (segMap[o.segment] || 0) + o.saleValue; });
   const segByClient = Object.entries(segMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
@@ -171,20 +208,8 @@ export default function DashboardPage() {
     });
   });
   const segByProduct = Object.entries(prodMap).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-
   const segData = segView === "client" ? segByClient : segByProduct;
 
-  // Stage breakdown from ALL orders
-  const stageLabels: Record<string, string> = {
-    design: "Design", sampling: "Sampling",
-    production: "In Production", qc: "QC", dispatch: "Dispatched",
-    delivered: "Delivered", delivered_pending: "Pmt Pending",
-  };
-  const stageMap: Record<string, number> = {};
-  orders.forEach(o => { stageMap[o.stage] = (stageMap[o.stage] || 0) + 1; });
-  const stageData = Object.entries(stageMap).map(([id, count]) => ({ name: stageLabels[id] || id, count }));
-
-  // Top clients from filtered orders — match by clientId first, fall back to name
   const clientOrderValue: Record<number, number> = {};
   filtered.forEach(o => {
     const c = o.clientId
@@ -199,7 +224,6 @@ export default function DashboardPage() {
     .slice(0, 10);
   const topMax = topClients[0]?.periodValue || 1;
 
-  // Avg margin per client for filtered period — profit/revenue
   const clientMarginMap: Record<string, { revenue: number; profit: number }> = {};
   filtered.forEach(o => {
     const key = o.clientName;
@@ -216,21 +240,34 @@ export default function DashboardPage() {
     }))
     .sort((a, b) => marginSort === "desc" ? b.margin - a.margin : a.margin - b.margin);
 
+  const tooltipStyle: React.CSSProperties = {
+    background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_SM,
+    padding: "10px 14px", fontSize: 12, boxShadow: SHADOW_MD,
+  };
+
   return (
-    <div style={{ padding: "26px 28px" }}>
+    <div style={{ padding: "28px 32px", maxWidth: 1400 }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Dashboard</div>
-          <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>Printribe CRM · FY 26-27 · {orders.length} orders total</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: INK, letterSpacing: "-0.03em" }}>Dashboard</div>
+          <div style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>
+            Printribe CRM · {orders.length} orders total
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <div style={{
+          display: "flex", gap: 4, background: SURFACE2,
+          borderRadius: R_SM, padding: 4,
+        }}>
           {PERIODS.map(p => (
             <button key={p} onClick={() => setPeriod(p)} style={{
-              fontSize: 11, fontWeight: 600, padding: "5px 12px", borderRadius: 20,
-              border: `1px solid ${period === p ? R : BORDER}`,
-              background: period === p ? R : WHITE,
-              color: period === p ? WHITE : MID, cursor: "pointer",
+              fontSize: 11, fontWeight: 500, padding: "6px 12px", borderRadius: R_SM - 1,
+              border: "none",
+              background: period === p ? WHITE : "transparent",
+              color: period === p ? INK : MID,
+              cursor: "pointer",
+              boxShadow: period === p ? SHADOW_SM : "none",
+              transition: "all 120ms ease",
             }}>{p}</button>
           ))}
         </div>
@@ -238,36 +275,37 @@ export default function DashboardPage() {
 
       {/* KPI row 1 */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 14 }}>
-        <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} color={R} />
-        <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" color={BLUE} badge="Tax" badgeColor={BLUE} />
-        <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" color={GOLD} />
-        <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period" color={GREEN}
-          badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"} badgeColor={avgMargin > 0.25 ? GREEN : avgMargin >= 0.15 ? MID : R} />
+        <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} accent={PRIMARY} />
+        <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" accent={TEAL} badge="Tax" badgeColor={TEAL} />
+        <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" accent={GOLD} />
+        <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period" accent={SUCCESS}
+          badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"}
+          badgeColor={avgMargin > 0.25 ? SUCCESS : avgMargin >= 0.15 ? WARNING : ERROR} />
       </div>
 
       {/* KPI row 2 */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
-        <KpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" color={ORANGE} badge="Live" badgeColor={ORANGE} />
-        <KpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay" color={PURPLE}
-          badge={pendingPayment > 0 ? "Follow up" : "All clear"} badgeColor={pendingPayment > 0 ? R : GREEN} />
-        <KpiCard label="Overdue Orders" value={overdue} sub="Past due date" color={R}
-          badge={overdue > 0 ? "Action needed" : "On track"} badgeColor={overdue > 0 ? R : GREEN} />
-        <KpiCard label="Total Clients" value={clients.length} sub={`${clients.filter(c => (clientOrderValue[c.id] || 0) > 0).length} active this period`} color={BLUE} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
+        <KpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" accent={ORANGE} badge="Live" badgeColor={ORANGE} />
+        <KpiCard label="Payment Pending" value={pendingPayment} sub="Delivered, awaiting pay" accent={PURPLE}
+          badge={pendingPayment > 0 ? "Follow up" : "All clear"} badgeColor={pendingPayment > 0 ? ERROR : SUCCESS} />
+        <KpiCard label="Overdue Orders" value={overdue} sub="Past due date" accent={ERROR}
+          badge={overdue > 0 ? "Action needed" : "On track"} badgeColor={overdue > 0 ? ERROR : SUCCESS} />
+        <KpiCard label="Total Clients" value={clients.length}
+          sub={`${clients.filter(c => (clientOrderValue[c.id] || 0) > 0).length} active this period`} accent={PRIMARY} />
       </div>
 
       {/* Revenue trend + Segment mix */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Revenue trend</div>
-          <div style={{ fontSize: 11, color: MID, marginBottom: 18 }}>Monthly sale value (excl. GST) · {period}</div>
+        <Card style={{ padding: 24 }}>
+          <SectionTitle title="Revenue trend" sub={`Monthly sale value (excl. GST) · ${period}`} />
           {monthlyData.length === 0 ? (
-            <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>
+            <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>
               No orders in this period yet.
             </div>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={monthlyData} barSize={28} stackOffset="none">
+                <BarChart data={monthlyData} barSize={26}>
                   <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false}
@@ -277,17 +315,17 @@ export default function DashboardPage() {
                       if (!active || !payload?.length) return null;
                       const d = monthlyData.find(m => m.month === label);
                       return (
-                        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "10px 14px", fontSize: 12 }}>
-                          <div style={{ fontWeight: 700, marginBottom: 6 }}>{label}</div>
-                          <div style={{ color: MID }}>Revenue: <b style={{ color: BLACK }}>{fmt(d?.sales ?? 0)}</b></div>
-                          <div style={{ color: MID }}>Profit: <b style={{ color: GREEN }}>{fmt(d?.profit ?? 0)}</b></div>
+                        <div style={tooltipStyle}>
+                          <div style={{ fontWeight: 700, color: INK, marginBottom: 6 }}>{label}</div>
+                          <div style={{ color: MID, marginBottom: 2 }}>Revenue: <b style={{ color: INK }}>{fmt(d?.sales ?? 0)}</b></div>
+                          <div style={{ color: MID, marginBottom: 2 }}>Profit: <b style={{ color: SUCCESS }}>{fmt(d?.profit ?? 0)}</b></div>
                           <div style={{ color: MID }}>Margin: <b style={{ color: marginColor((d?.margin ?? 0) / 100) }}>{(d?.margin ?? 0).toFixed(1)}%</b></div>
                         </div>
                       );
                     }}
                   />
-                  <Bar dataKey="cost" stackId="a" fill="#E8E7E3" radius={[0, 0, 0, 0]} name="Cost" />
-                  <Bar dataKey="profit" stackId="a" fill={GREEN} radius={[4, 4, 0, 0]} name="Profit">
+                  <Bar dataKey="cost" stackId="a" fill={SURFACE2} radius={[0, 0, 0, 0]} name="Cost" />
+                  <Bar dataKey="profit" stackId="a" fill={SUCCESS} radius={[4, 4, 0, 0]} name="Profit">
                     <LabelList
                       dataKey="margin"
                       position="top"
@@ -297,92 +335,71 @@ export default function DashboardPage() {
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-              <div style={{ display: "flex", gap: 14, marginTop: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, background: GREEN }} /> Profit
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
-                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#E8E7E3", border: `1px solid ${BORDER}` }} /> Cost
-                </div>
+              <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
+                {[[SUCCESS, "Profit"], [SURFACE2, "Cost"]].map(([c, l]) => (
+                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: MID }}>
+                    <div style={{ width: 10, height: 10, borderRadius: 2, background: c, border: `1px solid ${BORDER}` }} />{l}
+                  </div>
+                ))}
               </div>
             </>
           )}
-        </div>
+        </Card>
 
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
+        <Card style={{ padding: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Segment mix</div>
-              <div style={{ fontSize: 11, color: MID }}>Revenue breakdown · {period}</div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              {(["client", "product"] as const).map(v => (
-                <button key={v} onClick={() => setSegView(v)} style={{
-                  fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 6, cursor: "pointer",
-                  border: `1px solid ${segView === v ? BLUE : BORDER}`,
-                  background: segView === v ? BLUE : WHITE,
-                  color: segView === v ? WHITE : MID,
-                }}>{v === "client" ? "By Client" : "By Product"}</button>
-              ))}
-            </div>
+            <SectionTitle title="Segment mix" sub={`Revenue · ${period}`} />
+            <ToggleGroup
+              options={[{ value: "client" as const, label: "Client" }, { value: "product" as const, label: "Product" }]}
+              value={segView}
+              onChange={setSegView}
+            />
           </div>
           {segData.length === 0 ? (
-            <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>No data</div>
+            <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={140}>
                 <PieChart>
                   <Pie data={segData} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" paddingAngle={3}>
                     {segData.map((e, i) => {
-                      const fill = segView === "client"
-                        ? (SEG_COLORS[e.name] || MID)
-                        : [R, BLUE, GREEN, GOLD, PURPLE, ORANGE, MID][i % 7];
+                      const fill = segView === "client" ? (SEG_COLORS[e.name] || MID) : CHART_PALETTE[i % CHART_PALETTE.length];
                       return <Cell key={e.name} fill={fill} />;
                     })}
                   </Pie>
-                  <Tooltip formatter={(v) => fmt(Number(v))} />
+                  <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={tooltipStyle} />
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 12px", marginTop: 8 }}>
                 {segData.map((s, i) => {
-                  const color = segView === "client"
-                    ? (SEG_COLORS[s.name] || MID)
-                    : [R, BLUE, GREEN, GOLD, PURPLE, ORANGE, MID][i % 7];
+                  const color = segView === "client" ? (SEG_COLORS[s.name] || MID) : CHART_PALETTE[i % CHART_PALETTE.length];
                   return (
                     <div key={s.name} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10 }}>
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
                       <span style={{ color: MID }}>{segView === "client" ? (SEG_LABELS[s.name] || s.name) : s.name}</span>
-                      <span style={{ fontWeight: 700, color: BLACK }}>{pct(s.value / (totalRevenue || 1))}</span>
+                      <span style={{ fontWeight: 700, color: INK }}>{pct(s.value / (totalRevenue || 1))}</span>
                     </div>
                   );
                 })}
               </div>
             </>
           )}
-        </div>
+        </Card>
       </div>
 
-      {/* Avg margin per client + Top clients */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
+      {/* Margin per client + Top clients */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <Card style={{ padding: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>Avg margin per client</div>
-              <div style={{ fontSize: 11, color: MID }}>{period}</div>
-            </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              {(["desc", "asc"] as const).map(s => (
-                <button key={s} onClick={() => setMarginSort(s)} style={{
-                  fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 6, cursor: "pointer",
-                  border: `1px solid ${marginSort === s ? BLUE : BORDER}`,
-                  background: marginSort === s ? BLUE : WHITE,
-                  color: marginSort === s ? WHITE : MID,
-                }}>{s === "desc" ? "High → Low" : "Low → High"}</button>
-              ))}
-            </div>
+            <SectionTitle title="Avg margin per client" sub={period} />
+            <ToggleGroup
+              options={[{ value: "desc" as const, label: "High → Low" }, { value: "asc" as const, label: "Low → High" }]}
+              value={marginSort}
+              onChange={setMarginSort}
+            />
           </div>
           {marginData.length === 0 ? (
-            <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MID, fontSize: 12 }}>No data</div>
+            <div style={{ height: 140, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={Math.max(140, marginData.length * 24)}>
@@ -390,47 +407,49 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke={BORDER} vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 9, fill: MID }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: MID }} axisLine={false} tickLine={false} unit="%" />
-                  <Tooltip formatter={(v, _, props) => [Number(v).toFixed(1) + "%", props.payload?.fullName || ""]} />
-                  <Bar dataKey="margin" radius={[3, 3, 0, 0]}>
+                  <Tooltip formatter={(v, _, props) => [Number(v).toFixed(1) + "%", props.payload?.fullName || ""]} contentStyle={tooltipStyle} />
+                  <Bar dataKey="margin" radius={[4, 4, 0, 0]}>
                     {marginData.map((d, i) => <Cell key={i} fill={marginColor(d.raw)} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
               <div style={{ display: "flex", gap: 14, marginTop: 8 }}>
-                {[[GREEN, "> 25%"], [MID, "15–25%"], [R, "< 15%"]].map(([c, l]) => (
-                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: MID }}>
+                {[[SUCCESS, "> 25%"], [WARNING, "15–25%"], [ERROR, "< 15%"]].map(([c, l]) => (
+                  <div key={l} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10, color: MID }}>
                     <div style={{ width: 8, height: 8, borderRadius: 2, background: c }} />{l}
                   </div>
                 ))}
               </div>
             </>
           )}
-        </div>
+        </Card>
 
-        {/* Top clients */}
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 22 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16 }}>Top clients · {period}</div>
-        {topClients.length === 0 ? (
-          <div style={{ color: MID, fontSize: 12 }}>No client data for this period.</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {topClients.map((c, i) => (
-              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: MID, width: 18, flexShrink: 0 }}>#{i + 1}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>{c.name}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700 }}>{fmt(c.periodValue)}</span>
-                  </div>
-                  <div style={{ height: 4, background: BG, borderRadius: 2 }}>
-                    <div style={{ width: `${(c.periodValue / topMax) * 100}%`, height: "100%", background: SEG_COLORS[c.segment] || R, borderRadius: 2 }} />
+        <Card style={{ padding: 24 }}>
+          <SectionTitle title={`Top clients · ${period}`} />
+          {topClients.length === 0 ? (
+            <div style={{ color: MUTED, fontSize: 13 }}>No client data for this period.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+              {topClients.map((c, i) => (
+                <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, width: 20, flexShrink: 0, textAlign: "right" }}>#{i + 1}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: BODY }}>{c.name}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{fmt(c.periodValue)}</span>
+                    </div>
+                    <div style={{ height: 4, background: SURFACE2, borderRadius: 2 }}>
+                      <div style={{
+                        width: `${(c.periodValue / topMax) * 100}%`, height: "100%",
+                        background: SEG_COLORS[c.segment] || PRIMARY, borderRadius: 2,
+                      }} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-        </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );

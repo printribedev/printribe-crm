@@ -5,9 +5,14 @@ import LoadingScreen from "@/components/LoadingScreen";
 import DateFilterBar from "@/components/DateFilterBar";
 import { DateFilter, applyDateFilter, loadFilter } from "@/lib/dateFilter";
 
-const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
-const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
-const GREEN = "#1A7A4A";
+import {
+  PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, TEAL,
+  INK, MID, BORDER, SURFACE, SURFACE2, WHITE, SHADOW_SM,
+  R_SM, R_MD,
+} from "@/lib/tokens";
+const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS;
+const BG = SURFACE, BLACK = INK;
+const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
 const SEG_COLORS: Record<string, string> = { Reseller: R, Sports: BLUE, Education: GREEN, Corporate: GOLD, NGO_Govt: PURPLE, B2C: ORANGE };
 const SEG_LABELS: Record<string, string> = { Reseller: "Reseller", Sports: "Sports", Education: "Education", Corporate: "Corporate", NGO_Govt: "NGO/Govt", B2C: "B2C" };
@@ -138,13 +143,13 @@ function getProductDisplay(product: string): string {
 const noWheel = (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur();
 
 function Badge({ text, color = R }: { text: string; color?: string }) {
-  return <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: color + "18", color }}>{text}</span>;
+  return <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: BTN_RADIUS, background: color + "18", color }}>{text}</span>;
 }
 
 function ToggleBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick} style={{
-      fontSize: 10, padding: "3px 9px", borderRadius: 5, cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap",
+      fontSize: 10, padding: "3px 9px", borderRadius: BTN_RADIUS, cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap",
       border: `1px solid ${active ? BLUE : BORDER}`, background: active ? BLUE + "18" : WHITE, color: active ? BLUE : MID,
     }}>{children}</button>
   );
@@ -166,18 +171,18 @@ function CostModal({ order, onClose }: { order: Order; onClose: () => void }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
+      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: R, marginBottom: 4 }}>Job Cost Card</div>
             <div style={{ fontSize: 16, fontWeight: 700 }}>{order.clientName}</div>
             <div style={{ fontSize: 12, color: MID }}>{order.id} · {order.date.slice(0, 10)}</div>
           </div>
-          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
+          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 18 }}>
           {([["Sale Value", fmt(order.saleValue), "excl. GST"], ["Total Cost", fmt(totalCost), "all-in"], ["Gross Profit", fmt(grossProfit), pct(marginPct) + " margin"]] as [string, string, string][]).map(([l, v, s]) => (
-            <div key={l} style={{ background: BG, borderRadius: 8, padding: "12px 14px" }}>
+            <div key={l} style={{ background: BG, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, padding: "12px 14px" }}>
               <div style={{ fontSize: 10, color: MID, fontWeight: 600, marginBottom: 4 }}>{l}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: l === "Gross Profit" ? mc : BLACK }}>{v}</div>
               <div style={{ fontSize: 10, color: MID }}>{s}</div>
@@ -198,7 +203,7 @@ function CostModal({ order, onClose }: { order: Order; onClose: () => void }) {
             ))}
           </div>
         )}
-        <div style={{ background: BG, borderRadius: 8, padding: "12px 14px", fontSize: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div style={{ background: BG, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, padding: "12px 14px", fontSize: 12, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
           <div><span style={{ color: MID }}>GST collected: </span><strong>{fmt(order.gst)}</strong></div>
           <div><span style={{ color: MID }}>Units: </span><strong>{order.qty.toLocaleString()} pcs</strong></div>
           <div><span style={{ color: MID }}>Per pc cost: </span><strong>{order.qty > 0 ? fmt(totalCost / order.qty) : "—"}</strong></div>
@@ -209,8 +214,8 @@ function CostModal({ order, onClose }: { order: Order; onClose: () => void }) {
   );
 }
 
-const INP = { width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", background: WHITE, boxSizing: "border-box" as const };
-const LBL = { fontSize: 10, color: MID, marginBottom: 3, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.05em" };
+const INP = { width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", background: WHITE, boxSizing: "border-box" as const };
+const LBL = { fontSize: 10, color: MID, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.06em" };
 const SINP = { ...INP, padding: "7px 8px", fontSize: 12 };
 
 function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, canRemove }: {
@@ -262,7 +267,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
   };
 
   return (
-    <div style={{ border: `1px solid ${BORDER}`, borderRadius: 10, marginBottom: 12, overflow: "hidden" }}>
+    <div style={{ border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, marginBottom: 12, overflow: "hidden" }}>
       {/* Product row */}
       <div style={{ background: BG, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, minWidth: 70 }}>Product {idx + 1}</div>
@@ -509,11 +514,11 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 740, maxHeight: "93vh", overflowY: "auto", padding: 28 }}>
+      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 740, maxHeight: "93vh", overflowY: "auto", padding: 28 }}>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "New Order" : `Edit — ${order.id}`}</div>
-          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
+          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
 
         {/* Order Details */}
@@ -589,7 +594,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
           />
         ))}
         <button type="button" onClick={() => setLines(ls => [...ls, { ...BLANK_LINE }])}
-          style={{ fontSize: 12, padding: "7px 16px", borderRadius: 7, border: `1px solid ${BLUE}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>
+          style={{ fontSize: 12, padding: "7px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BLUE}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>
           + Add product
         </button>
 
@@ -603,12 +608,12 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
         <div style={{ display: "flex", gap: 8, marginTop: 24, justifyContent: "space-between" }}>
           <div>
             {onDelete && (
-              <button type="button" onClick={onDelete} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${R}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>Delete order</button>
+              <button type="button" onClick={onDelete} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>Delete order</button>
             )}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button type="button" onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button type="button" onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
+            <button type="button" onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
+            <button type="button" onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
               {isNew ? "Create order" : "Save changes"}
             </button>
           </div>
@@ -705,10 +710,10 @@ export default function OrdersPage() {
     <div style={{ padding: "26px 28px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Orders</div>
+          <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em", color: BLACK }}>Orders</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{orders.length} orders · Click Cost to see job costing</div>
         </div>
-        <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>
+        <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
           + New order
         </button>
       </div>
@@ -716,9 +721,9 @@ export default function OrdersPage() {
       <DateFilterBar filter={dateFilter} onChange={setDateFilter} />
 
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by invoice, client or product…"
-        style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16 }} />
+        style={{ width: "100%", padding: "10px 14px", borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16 }} />
 
-      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
@@ -777,9 +782,9 @@ export default function OrdersPage() {
                   </td>
                   <td style={{ ...TD, overflow: "visible" }}>
                     <div style={{ display: "flex", gap: 4 }}>
-                      <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>
-                      <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: 6, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>
-                      <button title="View invoice" onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 12, width: 28, height: 26, borderRadius: 6, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
+                      <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>
+                      <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>
+                      <button title="View invoice" onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
                     </div>
                   </td>
                 </tr>

@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import { createClient } from "@/lib/supabase/client";
 
-const R = "#EE3C30", BLUE = "#2266A1", GOLD = "#D4B800", PURPLE = "#7B4FBF", ORANGE = "#E67E22";
-const MID = "#888", BORDER = "#E8E7E3", BG = "#F7F6F2", WHITE = "#FFFFFF", BLACK = "#111111";
-const GREEN = "#1A7A4A";
+import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
+const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
+const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
 const ASSET_TYPES = ["Size_Chart", "Catalog", "Brand_File", "Mockup", "Other"];
 const ASSET_TYPE_LABELS: Record<string, string> = { Size_Chart: "Size Chart", Catalog: "Catalog", Brand_File: "Brand File", Mockup: "Mockup", Other: "Other" };
@@ -30,11 +30,11 @@ function formatDate(d: string) {
 
 function FormatBadge({ format }: { format: string }) {
   const color = FORMAT_COLORS[format] || MID;
-  return <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: color + "18", color, letterSpacing: "0.05em" }}>{format}</span>;
+  return <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: BTN_RADIUS, background: color + "18", color, letterSpacing: "0.05em" }}>{format}</span>;
 }
 function TypeBadge({ type }: { type: string }) {
   const color = TYPE_COLORS[type] || MID;
-  return <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 6, background: color + "18", color }}>{ASSET_TYPE_LABELS[type] || type}</span>;
+  return <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: BTN_RADIUS, background: color + "18", color }}>{ASSET_TYPE_LABELS[type] || type}</span>;
 }
 
 function UploadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
@@ -87,17 +87,17 @@ function UploadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 520, maxHeight: "92vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 520, maxHeight: "92vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>Add New Asset</div>
-          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
+          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
 
         {/* File drop zone */}
         <div
           onClick={() => fileRef.current?.click()}
           style={{
-            border: `2px dashed ${file ? GREEN : BORDER}`, borderRadius: 10, padding: "24px 20px",
+            border: `2px dashed ${file ? GREEN : BORDER}`, borderRadius: CARD_RADIUS, padding: "24px 20px",
             textAlign: "center", cursor: "pointer", marginBottom: 18,
             background: file ? GREEN + "08" : BG,
             transition: "all 0.15s",
@@ -123,13 +123,13 @@ function UploadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
           <div style={{ gridColumn: "1 / -1" }}>
             <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>ASSET NAME</div>
             <input value={form.name} onChange={e => set("name", e.target.value)} placeholder="e.g. T-shirt Size Chart"
-              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none" }} />
+              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none" }} />
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
             <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>DESCRIPTION</div>
             <textarea value={form.description} onChange={e => set("description", e.target.value)} placeholder="What is this file for?"
               rows={2}
-              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
           </div>
           {[
             { key: "type", label: "TYPE", options: ASSET_TYPES, labels: ASSET_TYPE_LABELS },
@@ -139,19 +139,19 @@ function UploadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
             <div key={f.key}>
               <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>{f.label}</div>
               <select value={(form as Record<string, string>)[f.key]} onChange={e => set(f.key, e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", background: WHITE }}>
+                style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", background: WHITE }}>
                 {f.options.map(o => <option key={o} value={o}>{f.labels ? f.labels[o] || o : o}</option>)}
               </select>
             </div>
           ))}
         </div>
 
-        {error && <div style={{ marginTop: 12, fontSize: 12, color: R, background: R + "10", padding: "8px 12px", borderRadius: 7 }}>{error}</div>}
+        {error && <div style={{ marginTop: 12, fontSize: 12, color: R, background: R + "10", padding: "8px 12px", borderRadius: BTN_RADIUS }}>{error}</div>}
 
         <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "flex-end" }}>
-          <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
+          <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
           <button onClick={handleSave} disabled={uploading}
-            style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: uploading ? MID : R, color: WHITE, border: "none", cursor: uploading ? "not-allowed" : "pointer", fontWeight: 700 }}>
+            style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: uploading ? MID : BLUE, color: WHITE, border: "none", cursor: uploading ? "not-allowed" : "pointer", fontWeight: 700 }}>
             {uploading ? "Uploading…" : "Upload & Save"}
           </button>
         </div>
@@ -171,21 +171,21 @@ function EditModal({ asset, onClose, onSaved }: { asset: Asset; onClose: () => v
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div style={{ background: WHITE, borderRadius: 14, width: "100%", maxWidth: 480, padding: 28 }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 480, padding: 28 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>Edit Asset</div>
-          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: 7, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
+          <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div style={{ gridColumn: "1 / -1" }}>
             <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>ASSET NAME</div>
             <input value={form.name} onChange={e => set("name", e.target.value)}
-              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none" }} />
+              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none" }} />
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
             <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>DESCRIPTION</div>
             <textarea value={form.description} onChange={e => set("description", e.target.value)} rows={2}
-              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
+              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
           </div>
           {[
             { key: "type", label: "TYPE", options: ASSET_TYPES, labels: ASSET_TYPE_LABELS },
@@ -195,15 +195,15 @@ function EditModal({ asset, onClose, onSaved }: { asset: Asset; onClose: () => v
             <div key={f.key}>
               <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>{f.label}</div>
               <select value={(form as Record<string, string>)[f.key]} onChange={e => set(f.key, e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: 7, fontSize: 13, outline: "none", background: WHITE }}>
+                style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", background: WHITE }}>
                 {f.options.map(o => <option key={o} value={o}>{f.labels ? f.labels[o] || o : o}</option>)}
               </select>
             </div>
           ))}
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "flex-end" }}>
-          <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-          <button onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>Save changes</button>
+          <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
+          <button onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>Save changes</button>
         </div>
       </div>
     </div>
@@ -281,7 +281,7 @@ export default function AssetsPage() {
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{assets.length} files · {productsWithImages.length} product images</div>
         </div>
         {tab === "assets" && (
-          <button onClick={() => setShowUpload(true)} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: 7, background: R, color: WHITE, border: "none", cursor: "pointer" }}>
+          <button onClick={() => setShowUpload(true)} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
             + Add asset
           </button>
         )}
@@ -292,6 +292,7 @@ export default function AssetsPage() {
         {(["assets", "products"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             fontSize: 13, fontWeight: 600, padding: "8px 18px", borderRadius: "8px 8px 0 0",
+
             border: `1px solid ${tab === t ? BORDER : "transparent"}`, borderBottom: tab === t ? `1px solid ${WHITE}` : "none",
             background: tab === t ? WHITE : "transparent", color: tab === t ? BLACK : MID,
             cursor: "pointer", marginBottom: tab === t ? -1 : 0,
@@ -310,7 +311,7 @@ export default function AssetsPage() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
               {productsWithImages.map(p => (
-                <div key={p.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, overflow: "hidden" }}>
+                <div key={p.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
                   {productImgUrls[p.id] ? (
                     <div style={{ height: 160, overflow: "hidden" }}>
                       <img src={productImgUrls[p.id]} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -323,7 +324,7 @@ export default function AssetsPage() {
                     <div style={{ fontSize: 10, color: MID, marginTop: 2 }}>{p.category}</div>
                     <button
                       onClick={() => productImgUrls[p.id] && window.open(productImgUrls[p.id], "_blank")}
-                      style={{ marginTop: 8, width: "100%", fontSize: 11, fontWeight: 600, padding: "6px 0", borderRadius: 6, background: BLACK, color: WHITE, border: "none", cursor: "pointer" }}>
+                      style={{ marginTop: 8, width: "100%", fontSize: 11, fontWeight: 600, padding: "6px 0", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
                       ↓ View full size
                     </button>
                   </div>
@@ -338,14 +339,14 @@ export default function AssetsPage() {
       {/* Search + filters */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search assets…"
-          style={{ flex: 1, minWidth: 200, padding: "9px 14px", borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none" }} />
+          style={{ flex: 1, minWidth: 200, padding: "9px 14px", borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none" }} />
         <select value={filterType} onChange={e => setFilterType(e.target.value)}
-          style={{ padding: "9px 12px", borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 12, outline: "none", background: WHITE, color: filterType !== "All" ? BLACK : MID }}>
+          style={{ padding: "9px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, fontSize: 12, outline: "none", background: WHITE, color: filterType !== "All" ? BLACK : MID }}>
           <option value="All">All types</option>
           {ASSET_TYPES.map(t => <option key={t} value={t}>{ASSET_TYPE_LABELS[t]}</option>)}
         </select>
         <select value={filterAudience} onChange={e => setFilterAudience(e.target.value)}
-          style={{ padding: "9px 12px", borderRadius: 8, border: `1px solid ${BORDER}`, fontSize: 12, outline: "none", background: WHITE, color: filterAudience !== "All" ? BLACK : MID }}>
+          style={{ padding: "9px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, fontSize: 12, outline: "none", background: WHITE, color: filterAudience !== "All" ? BLACK : MID }}>
           <option value="All">All audiences</option>
           {CLIENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
@@ -354,7 +355,7 @@ export default function AssetsPage() {
       {/* Asset grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
         {filtered.map(a => (
-          <div key={a.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: 18, display: "flex", flexDirection: "column", gap: 10, borderTop: `3px solid ${TYPE_COLORS[a.type] || MID}` }}>
+          <div key={a.id} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, padding: 18, display: "flex", flexDirection: "column", gap: 10, borderTop: `3px solid ${TYPE_COLORS[a.type] || MID}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ flex: 1, paddingRight: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, color: BLACK }}>{a.name}</div>
@@ -373,16 +374,16 @@ export default function AssetsPage() {
             <div style={{ display: "flex", gap: 7, marginTop: 2 }}>
               {a.storagePath && (
                 <button onClick={() => handleDownload(a)} disabled={downloading === a.id}
-                  style={{ flex: 1, fontSize: 11, fontWeight: 600, padding: "7px 0", borderRadius: 7, background: downloading === a.id ? BG : BLACK, color: downloading === a.id ? MID : WHITE, border: "none", cursor: downloading === a.id ? "not-allowed" : "pointer" }}>
+                  style={{ flex: 1, fontSize: 11, fontWeight: 600, padding: "7px 0", borderRadius: BTN_RADIUS, background: downloading === a.id ? BG : BLUE, color: downloading === a.id ? MID : WHITE, border: "none", cursor: downloading === a.id ? "not-allowed" : "pointer" }}>
                   {downloading === a.id ? "Opening…" : "↓ Download"}
                 </button>
               )}
               <button onClick={() => setEditAsset(a)}
-                style={{ fontSize: 11, fontWeight: 600, padding: "7px 14px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
+                style={{ fontSize: 11, fontWeight: 600, padding: "7px 14px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
                 Edit
               </button>
               <button onClick={() => handleDelete(a)}
-                style={{ fontSize: 11, fontWeight: 600, padding: "7px 10px", borderRadius: 7, border: `1px solid ${BORDER}`, background: WHITE, color: R, cursor: "pointer" }}>
+                style={{ fontSize: 11, fontWeight: 600, padding: "7px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: R, cursor: "pointer" }}>
                 ✕
               </button>
             </div>
