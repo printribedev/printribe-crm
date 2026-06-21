@@ -195,76 +195,62 @@ export default function ClientsPage() {
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clients by name, segment, city…"
         style={{ width: "100%", padding: "10px 14px", borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16 }} />
 
-      {/* Column headers */}
-      <div style={{
-        display: "grid", gridTemplateColumns: "32px 2fr 1fr 1fr 1fr 1fr",
-        alignItems: "center", gap: 0, padding: "0 16px",
-        background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
-        borderBottom: `1px solid ${BORDER}`, minHeight: 32,
-      }}>
-        <div />
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase" }}>Client</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase" }}>Segment</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>Total Value</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>Orders</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingLeft: 8 }}>Last Order</div>
-      </div>
-
-      <div style={{
-        background: "rgba(255,255,255,0.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-        border: `1px solid rgba(255,255,255,0.85)`, borderTop: "none",
-        borderRadius: `0 0 ${CARD_RADIUS}px ${CARD_RADIUS}px`,
-        boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
-        overflow: "hidden",
-      }}>
-        {sorted.map(c => {
-          const segColor = SEG_COLORS[c.segment] || MID;
-          const initials = c.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-          return (
-            <div
-              key={c.id}
-              style={{
-                display: "grid", gridTemplateColumns: "32px 2fr 1fr 1fr 1fr 1fr",
-                alignItems: "center", gap: 0, padding: "0 16px",
-                borderBottom: `1px solid ${BORDER}`, minHeight: 44,
-                background: "transparent",
-                transition: "background 100ms ease",
-                cursor: "pointer",
-              }}
-              onClick={() => { setDeleteError(""); setModal(c); }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.04)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-            >
-              {/* Avatar */}
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                background: `linear-gradient(135deg, ${segColor}30, ${segColor}18)`,
-                border: `1.5px solid ${segColor}35`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: segColor }}>{initials}</span>
-              </div>
-              {/* Name + city */}
-              <div style={{ paddingRight: 12 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: INK, letterSpacing: "-0.01em" }}>{c.name}</div>
-                <div style={{ fontSize: 10, color: MID, marginTop: 1 }}>{c.city || c.type || "—"}</div>
-              </div>
-              {/* Segment */}
-              <div><Badge text={SEG_LABELS[c.segment] || c.segment} color={segColor} /></div>
-              {/* Total value */}
-              <div style={{ fontSize: 12, fontWeight: 700, color: INK, textAlign: "right", paddingRight: 16 }}>{fmt(c.totalValue)}</div>
-              {/* Orders */}
-              <div style={{ fontSize: 11, color: MID, textAlign: "right", paddingRight: 16 }}>{c.orderCount}</div>
-              {/* Last order */}
-              <div style={{ fontSize: 11, color: MID, paddingLeft: 8 }}>{c.lastOrder ? c.lastOrder.slice(0, 10) : "—"}</div>
-            </div>
-          );
-        })}
-        {sorted.length === 0 && (
-          <div style={{ padding: "32px", textAlign: "center", color: MID, fontSize: 13 }}>
-            {search ? "No clients match your search." : "No clients yet. Click '+ Add client' to get started."}
-          </div>
-        )}
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ background: BLACK, color: WHITE }}>
+              {["Client", "Segment", "Total Value", "Orders", "Last Order", ""].map(h => (
+                <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: WHITE }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((c, i) => {
+              const segColor = SEG_COLORS[c.segment] || MID;
+              const initials = c.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+              return (
+                <tr
+                  key={c.id}
+                  style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG, cursor: "pointer" }}
+                  onClick={() => { setDeleteError(""); setModal(c); }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = BLUE + "08"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = i % 2 === 0 ? WHITE : BG; }}
+                >
+                  <td style={{ padding: "10px 14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                        background: segColor + "22", border: `1.5px solid ${segColor}40`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: segColor }}>{initials}</span>
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, color: INK }}>{c.name}</div>
+                        <div style={{ fontSize: 11, color: MID, marginTop: 1 }}>{c.city || c.type || "—"}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: "10px 14px" }}>
+                    <Badge text={SEG_LABELS[c.segment] || c.segment} color={segColor} />
+                  </td>
+                  <td style={{ padding: "10px 14px", fontWeight: 700 }}>{fmt(c.totalValue)}</td>
+                  <td style={{ padding: "10px 14px", color: MID }}>{c.orderCount}</td>
+                  <td style={{ padding: "10px 14px", color: MID, fontSize: 11 }}>{c.lastOrder ? c.lastOrder.slice(0, 10) : "—"}</td>
+                  <td style={{ padding: "10px 14px" }}>
+                    <button
+                      onClick={e => { e.stopPropagation(); setDeleteError(""); setModal(c); }}
+                      style={{ padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}
+                    >Edit</button>
+                  </td>
+                </tr>
+              );
+            })}
+            {sorted.length === 0 && (
+              <tr><td colSpan={6} style={{ padding: "32px 14px", textAlign: "center", color: MID, fontSize: 13 }}>{search ? "No clients match your search." : "No clients yet."}</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {modal !== null && (

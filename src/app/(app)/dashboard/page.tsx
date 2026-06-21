@@ -195,6 +195,117 @@ const GradientBar = (props: { x?: number; y?: number; width?: number; height?: n
   );
 };
 
+type HeatCell = { rev: number; cost: number };
+type HeatProduct = { name: string; total: number; months: Record<string, HeatCell> };
+
+function HeatmapCard({ products, months, heatMax, period, fmt, tooltipStyle }: {
+  products: HeatProduct[];
+  months: string[];
+  heatMax: number;
+  period: string;
+  fmt: (n: number) => string;
+  tooltipStyle: React.CSSProperties;
+}) {
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; product: string; month: string; rev: number; margin: number } | null>(null);
+
+  return (
+    <Card style={{ padding: 16, marginTop: 12 }}>
+      <SectionTitle title="Revenue by product mix" sub={`Monthly revenue intensity · ${period} · top ${products.length} products`} />
+      <div data-heatmap="1" style={{ overflowX: "auto", position: "relative" }}>
+        <div style={{ minWidth: 480 }}>
+          {/* Month headers */}
+          <div style={{ display: "grid", gridTemplateColumns: `148px repeat(${months.length}, 1fr)`, gap: 3, marginBottom: 3 }}>
+            <div />
+            {months.map(m => (
+              <div key={m} style={{ fontSize: 9, fontWeight: 600, color: MUTED, textAlign: "center", letterSpacing: "0.04em", textTransform: "uppercase", paddingBottom: 4 }}>{m}</div>
+            ))}
+          </div>
+          {/* Product rows */}
+          {products.map(p => (
+            <div key={p.name} style={{ display: "grid", gridTemplateColumns: `148px repeat(${months.length}, 1fr)`, gap: 3, marginBottom: 3, alignItems: "center" }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: BODY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }} title={p.name}>{p.name}</div>
+              {months.map(m => {
+                const cell = p.months[m];
+                const rev = cell?.rev || 0;
+                const intensity = rev / heatMax;
+                const alpha = intensity < 0.05 ? 0.06 : 0.12 + intensity * 0.78;
+                const margin = cell && cell.rev > 0 ? (cell.rev - cell.cost) / cell.rev : null;
+                return (
+                  <div
+                    key={m}
+                    style={{
+                      height: 28, borderRadius: 5,
+                      background: rev > 0 ? `rgba(79,70,229,${alpha.toFixed(2)})` : "rgba(0,0,0,0.03)",
+                      border: rev > 0 ? `1px solid rgba(79,70,229,${(alpha * 0.4).toFixed(2)})` : "1px solid rgba(0,0,0,0.05)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: rev > 0 ? "pointer" : "default",
+                      position: "relative",
+                    }}
+                    onMouseEnter={e => {
+                      if (rev > 0) {
+                        const el = e.currentTarget as HTMLElement;
+                        const wrapper = el.closest("[data-heatmap]") as HTMLElement | null;
+                        const rect = el.getBoundingClientRect();
+                        const wRect = wrapper?.getBoundingClientRect();
+                        setTooltip({ x: rect.left - (wRect?.left || 0) + rect.width / 2, y: rect.top - (wRect?.top || 0), product: p.name, month: m, rev, margin: margin ?? 0 });
+                      }
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
+                  >
+                    {rev > 0 && intensity > 0.2 && (
+                      <span style={{ fontSize: 8, fontWeight: 700, color: intensity > 0.55 ? WHITE : PRIMARY, letterSpacing: "-0.02em", pointerEvents: "none" }}>
+                        {rev >= 100000 ? (rev / 100000).toFixed(1) + "L" : (rev / 1000).toFixed(0) + "K"}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+          {/* Scale legend */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, justifyContent: "flex-end" }}>
+            <span style={{ fontSize: 9, color: MUTED }}>Low</span>
+            {[0.06, 0.25, 0.45, 0.65, 0.85].map(a => (
+              <div key={a} style={{ width: 18, height: 10, borderRadius: 2, background: `rgba(79,70,229,${a})` }} />
+            ))}
+            <span style={{ fontSize: 9, color: MUTED }}>High</span>
+          </div>
+        </div>
+
+        {/* Hover tooltip */}
+        {tooltip && (
+          <div
+            style={{
+              ...tooltipStyle,
+              position: "absolute",
+              left: tooltip.x,
+              top: tooltip.y - 80,
+              transform: "translateX(-50%)",
+              pointerEvents: "none",
+              zIndex: 50,
+              whiteSpace: "nowrap",
+              minWidth: 140,
+            }}
+          >
+            <div style={{ fontWeight: 700, color: INK, marginBottom: 4, fontSize: 11 }}>{tooltip.product}</div>
+            <div style={{ fontSize: 10, color: MUTED, marginBottom: 4 }}>{tooltip.month}</div>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 16, fontSize: 11 }}>
+              <span style={{ color: MID }}>Revenue</span>
+              <span style={{ fontWeight: 700, color: INK }}>{fmt(tooltip.rev)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 16, fontSize: 11, marginTop: 2 }}>
+              <span style={{ color: MID }}>Margin</span>
+              <span style={{ fontWeight: 700, color: tooltip.margin > 0.25 ? SUCCESS : tooltip.margin >= 0.15 ? WARNING : ERROR }}>
+                {(tooltip.margin * 100).toFixed(1)}%
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const [period, setPeriod] = useState("FY 26-27");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -239,23 +350,30 @@ export default function DashboardPage() {
   });
   const segData = segByClient;
 
-  // Heatmap: top products × months
+  // Heatmap: top products × months (revenue + cost for margin)
   const allMonths = monthlyData.map(m => m.month);
-  const prodMonthMap: Record<string, Record<string, number>> = {};
+  const prodMonthMap: Record<string, Record<string, { rev: number; cost: number }>> = {};
   filtered.forEach(o => {
     const d = analyticsDate(o);
     const month = d.toLocaleDateString("en-IN", { month: "short" }) + " " + String(d.getFullYear()).slice(2);
+    const oCost = orderCost(o);
     parseProductItems(o.product).forEach(item => {
       const name = normalizeProductName(item.name, productNames);
       if (!prodMonthMap[name]) prodMonthMap[name] = {};
-      prodMonthMap[name][month] = (prodMonthMap[name][month] || 0) + o.saleValue * item.weight;
+      if (!prodMonthMap[name][month]) prodMonthMap[name][month] = { rev: 0, cost: 0 };
+      prodMonthMap[name][month].rev += o.saleValue * item.weight;
+      prodMonthMap[name][month].cost += oCost * item.weight;
     });
   });
   const heatProducts = Object.entries(prodMonthMap)
-    .map(([name, months]) => ({ name, total: Object.values(months).reduce((s, v) => s + v, 0), months }))
+    .map(([name, months]) => ({
+      name,
+      total: Object.values(months).reduce((s, v) => s + v.rev, 0),
+      months,
+    }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 10);
-  const heatMax = Math.max(...heatProducts.flatMap(p => Object.values(p.months)), 1);
+  const heatMax = Math.max(...heatProducts.flatMap(p => Object.values(p.months).map(v => v.rev)), 1);
 
   const clientOrderValue: Record<number, number> = {};
   filtered.forEach(o => {
@@ -509,58 +627,14 @@ export default function DashboardPage() {
 
         {/* Product revenue heatmap */}
         {heatProducts.length > 0 && allMonths.length > 0 && (
-          <Card style={{ padding: 16, marginTop: 12 }}>
-            <SectionTitle title="Revenue by product mix" sub={`Monthly revenue intensity · ${period} · top ${heatProducts.length} products`} />
-            <div style={{ overflowX: "auto" }}>
-              <div style={{ minWidth: 480 }}>
-                {/* Month header row */}
-                <div style={{ display: "grid", gridTemplateColumns: `140px repeat(${allMonths.length}, 1fr)`, gap: 3, marginBottom: 3 }}>
-                  <div />
-                  {allMonths.map(m => (
-                    <div key={m} style={{ fontSize: 9, fontWeight: 600, color: MUTED, textAlign: "center", letterSpacing: "0.04em", textTransform: "uppercase", paddingBottom: 4 }}>{m}</div>
-                  ))}
-                </div>
-                {/* Product rows */}
-                {heatProducts.map(p => (
-                  <div key={p.name} style={{ display: "grid", gridTemplateColumns: `140px repeat(${allMonths.length}, 1fr)`, gap: 3, marginBottom: 3, alignItems: "center" }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: BODY, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }} title={p.name}>{p.name}</div>
-                    {allMonths.map(m => {
-                      const val = p.months[m] || 0;
-                      const intensity = val / heatMax;
-                      const alpha = intensity < 0.05 ? 0.06 : 0.12 + intensity * 0.78;
-                      return (
-                        <div
-                          key={m}
-                          title={val > 0 ? `${p.name} · ${m}: ${fmt(val)}` : undefined}
-                          style={{
-                            height: 28, borderRadius: 5,
-                            background: val > 0 ? `rgba(79,70,229,${alpha.toFixed(2)})` : "rgba(0,0,0,0.03)",
-                            border: val > 0 ? `1px solid rgba(79,70,229,${(alpha * 0.4).toFixed(2)})` : `1px solid rgba(0,0,0,0.05)`,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            cursor: val > 0 ? "default" : undefined,
-                          }}
-                        >
-                          {val > 0 && intensity > 0.15 && (
-                            <span style={{ fontSize: 8, fontWeight: 700, color: intensity > 0.55 ? WHITE : PRIMARY, letterSpacing: "-0.02em" }}>
-                              {val >= 100000 ? (val / 100000).toFixed(1) + "L" : (val / 1000).toFixed(0) + "K"}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-                {/* Scale legend */}
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, justifyContent: "flex-end" }}>
-                  <span style={{ fontSize: 9, color: MUTED }}>Low</span>
-                  {[0.06, 0.25, 0.45, 0.65, 0.85].map(a => (
-                    <div key={a} style={{ width: 18, height: 10, borderRadius: 2, background: `rgba(79,70,229,${a})` }} />
-                  ))}
-                  <span style={{ fontSize: 9, color: MUTED }}>High</span>
-                </div>
-              </div>
-            </div>
-          </Card>
+          <HeatmapCard
+            products={heatProducts}
+            months={allMonths}
+            heatMax={heatMax}
+            period={period}
+            fmt={fmt}
+            tooltipStyle={tooltipStyle}
+          />
         )}
       </div>
     </div>

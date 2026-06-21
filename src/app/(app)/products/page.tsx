@@ -5,7 +5,7 @@ import LoadingScreen from "@/components/LoadingScreen";
 import CustomSelect from "@/components/CustomSelect";
 import { createClient } from "@/lib/supabase/client";
 
-import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, MUTED, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
+import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
 const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
@@ -346,65 +346,6 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
   );
 }
 
-function ProductRow({ product, onClick }: { product: Product; onClick: () => void }) {
-  const catColor = CAT_COLORS[product.category] || MID;
-  const variantCount = product.variants?.length ?? 0;
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "24px 2fr 1fr 1fr 1fr 1fr",
-        alignItems: "center",
-        gap: 0,
-        padding: "0 20px 0 12px",
-        borderBottom: `1px solid ${BORDER}`,
-        cursor: "pointer",
-        background: "transparent",
-        transition: "background 100ms ease",
-        minHeight: 44,
-        opacity: product.active ? 1 : 0.5,
-      }}
-      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.04)"}
-      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
-    >
-      {/* Category dot */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{
-          width: 8, height: 8, borderRadius: "50%", background: catColor, flexShrink: 0,
-        }} />
-      </div>
-      {/* Name + meta */}
-      <div style={{ paddingLeft: 8, paddingRight: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: INK, letterSpacing: "-0.01em" }}>{product.name}</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
-          <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: catColor + "18", color: catColor }}>{product.category}</span>
-          {variantCount > 0 && <span style={{ fontSize: 10, color: MID }}>{variantCount}v</span>}
-          {product.decoration && <span style={{ fontSize: 10, color: MID }}>· {product.decoration}</span>}
-        </div>
-      </div>
-      {/* HSN */}
-      <div style={{ fontSize: 11, color: MID, textAlign: "right", paddingRight: 16 }}>{product.hsn || "—"}</div>
-      {/* GST */}
-      <div style={{ fontSize: 11, fontWeight: 600, color: MID, textAlign: "right", paddingRight: 16 }}>{product.gstRate}</div>
-      {/* MOQ */}
-      <div style={{ fontSize: 11, color: MID, textAlign: "right", paddingRight: 16 }}>{product.moq} pcs</div>
-      {/* Price + status */}
-      <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: INK }}>{fmt(product.basePrice)}</div>
-        <span style={{
-          display: "inline-block", marginTop: 2,
-          fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 20,
-          background: product.active ? GREEN + "18" : MID + "15",
-          color: product.active ? GREEN : MID,
-          letterSpacing: "0.04em", textTransform: "uppercase" as const,
-        }}>
-          {product.active ? "Active" : "Off"}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -459,36 +400,61 @@ export default function ProductsPage() {
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products by name, category…"
         style={{ width: "100%", padding: "10px 14px", borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, fontSize: 13, outline: "none", marginBottom: 16, boxSizing: "border-box" }} />
 
-      {/* Column headers */}
-      <div style={{
-        display: "grid", gridTemplateColumns: "24px 2fr 1fr 1fr 1fr 1fr",
-        alignItems: "center", gap: 0, padding: "0 20px 0 12px",
-        background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
-        borderBottom: `1px solid ${BORDER}`, minHeight: 32,
-      }}>
-        <div />
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingLeft: 8 }}>Product</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>HSN</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>GST</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>MOQ</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right" }}>Price</div>
-      </div>
-
-      <div style={{
-        background: "rgba(255,255,255,0.7)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-        border: `1px solid rgba(255,255,255,0.85)`, borderTop: "none",
-        borderRadius: `0 0 ${CARD_RADIUS}px ${CARD_RADIUS}px`,
-        boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05)",
-        overflow: "hidden",
-      }}>
-        {(() => {
-          const filtered = search
-            ? products.filter(p => [p.name, p.category, p.decoration, p.gsm].some(f => f?.toLowerCase().includes(search.toLowerCase())))
-            : products;
-          return filtered.length > 0
-            ? filtered.map(p => <ProductRow key={p.id} product={p} onClick={() => setDetail(p)} />)
-            : <div style={{ padding: 32, textAlign: "center", color: MID, fontSize: 13 }}>{search ? "No products match your search." : "No products yet."}</div>;
-        })()}
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: CARD_RADIUS, overflow: "hidden" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ background: BLACK, color: WHITE }}>
+              {["Product", "Category", "HSN", "GST", "MOQ", "Base Price", "Status", ""].map(h => (
+                <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: WHITE, whiteSpace: "nowrap" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {(() => {
+              const rows = search
+                ? products.filter(p => [p.name, p.category, p.decoration, p.gsm].some(f => f?.toLowerCase().includes(search.toLowerCase())))
+                : products;
+              if (rows.length === 0) return (
+                <tr><td colSpan={8} style={{ padding: "32px 14px", textAlign: "center", color: MID, fontSize: 13 }}>{search ? "No products match your search." : "No products yet."}</td></tr>
+              );
+              return rows.map((p, i) => {
+                const catColor = CAT_COLORS[p.category] || MID;
+                return (
+                  <tr
+                    key={p.id}
+                    style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG, cursor: "pointer", opacity: p.active ? 1 : 0.55 }}
+                    onClick={() => setDetail(p)}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = BLUE + "08"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = i % 2 === 0 ? WHITE : BG; }}
+                  >
+                    <td style={{ padding: "10px 14px" }}>
+                      <div style={{ fontWeight: 600, color: INK }}>{p.name}</div>
+                      {p.decoration && <div style={{ fontSize: 11, color: MID, marginTop: 1 }}>{p.decoration}</div>}
+                    </td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <Badge text={p.category} color={catColor} />
+                    </td>
+                    <td style={{ padding: "10px 14px", color: MID }}>{p.hsn || "—"}</td>
+                    <td style={{ padding: "10px 14px", fontWeight: 600 }}>{p.gstRate}</td>
+                    <td style={{ padding: "10px 14px", color: MID }}>{p.moq} pcs</td>
+                    <td style={{ padding: "10px 14px", fontWeight: 700 }}>{fmt(p.basePrice)}</td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: p.active ? GREEN + "18" : MID + "15", color: p.active ? GREEN : MID }}>
+                        {p.active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "10px 14px" }}>
+                      <button
+                        onClick={e => { e.stopPropagation(); setEditModal(p); }}
+                        style={{ padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}
+                      >Edit</button>
+                    </td>
+                  </tr>
+                );
+              });
+            })()}
+          </tbody>
+        </table>
       </div>
 
       {detail && !editModal && (
