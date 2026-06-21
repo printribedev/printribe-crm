@@ -53,7 +53,7 @@ function PrintribeLogo() {
         priority
       />
       <div style={{ fontSize: 9.5, color: MUTED, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 4, fontWeight: 500, paddingLeft: 2 }}>
-        Operations CRM
+        Custom Quality Delivered
       </div>
     </div>
   );

@@ -400,9 +400,9 @@ export default function DashboardPage() {
               <div style={{ height: 120, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 13 }}>No data</div>
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={120}>
-                  <PieChart>
-                    <Pie data={segData} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" paddingAngle={3}>
+                <ResponsiveContainer width="100%" height={148}>
+                  <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                    <Pie data={segData} cx="50%" cy="50%" innerRadius={36} outerRadius={56} dataKey="value" paddingAngle={3}>
                       {segData.map((e, i) => {
                         const fill = segView === "client" ? (SEG_COLORS[e.name] || MID) : CHART_PALETTE[i % CHART_PALETTE.length];
                         return <Cell key={e.name} fill={fill} />;

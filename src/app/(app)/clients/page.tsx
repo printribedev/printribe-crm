@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
+import CustomSelect from "@/components/CustomSelect";
 
 import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
@@ -74,10 +75,12 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
             <div key={f.key} style={{ gridColumn: f.full ? "1 / -1" : "auto" }}>
               <div style={{ fontSize: 10, color: MID, marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{f.label}</div>
               {f.type === "select" ? (
-                <select value={String(form[f.key as keyof typeof form] ?? "")} onChange={e => set(f.key, e.target.value)}
-                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", background: WHITE }}>
-                  {SEGMENTS.map(s => <option key={s} value={s}>{SEG_LABELS[s]}</option>)}
-                </select>
+                <CustomSelect
+                  value={String(form[f.key as keyof typeof form] ?? "")}
+                  onChange={v => set(f.key, v)}
+                  options={SEGMENTS.map(s => ({ value: s, label: SEG_LABELS[s] }))}
+                  style={{ width: "100%" }}
+                />
               ) : f.textarea ? (
                 <textarea value={String(form[f.key as keyof typeof form] ?? "")} onChange={e => set(f.key, e.target.value)}
                   rows={2} placeholder="e.g. #61, 1st Floor, 5th Main Road, Chamrajpet, Bengaluru, Karnataka, 560018"
@@ -138,7 +141,6 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<number | null>(null);
   const [modal, setModal] = useState<Partial<Client> | null>(null);
   const [deleteError, setDeleteError] = useState("");
 
@@ -195,7 +197,7 @@ export default function ClientsPage() {
 
       {/* Column headers */}
       <div style={{
-        display: "grid", gridTemplateColumns: "32px 1fr 120px 110px 64px 88px 52px",
+        display: "grid", gridTemplateColumns: "36px 1fr 110px 120px 56px 100px",
         alignItems: "center", gap: 0, padding: "0 16px",
         background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
         borderBottom: `1px solid ${BORDER}`, minHeight: 36,
@@ -205,8 +207,7 @@ export default function ClientsPage() {
         <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase" }}>Segment</div>
         <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>Total Value</div>
         <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>Orders</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingRight: 8 }}>Last Order</div>
-        <div />
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingLeft: 8 }}>Last Order</div>
       </div>
 
       <div style={{
@@ -223,23 +224,25 @@ export default function ClientsPage() {
             <div
               key={c.id}
               style={{
-                display: "grid", gridTemplateColumns: "32px 1fr 120px 110px 64px 88px 52px",
+                display: "grid", gridTemplateColumns: "36px 1fr 110px 120px 56px 100px",
                 alignItems: "center", gap: 0, padding: "0 16px",
-                borderBottom: `1px solid ${BORDER}`, minHeight: 52,
-                background: selected === c.id ? "rgba(79,70,229,0.04)" : "transparent",
+                borderBottom: `1px solid ${BORDER}`, minHeight: 56,
+                background: "transparent",
                 transition: "background 100ms ease",
                 cursor: "pointer",
               }}
-              onClick={() => setSelected(selected === c.id ? null : c.id)}
-              onMouseEnter={e => { if (selected !== c.id) (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.03)"; }}
-              onMouseLeave={e => { if (selected !== c.id) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              onClick={() => { setDeleteError(""); setModal(c); }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.04)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
               {/* Avatar */}
               <div style={{
-                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                background: segColor + "22", display: "flex", alignItems: "center", justifyContent: "center",
+                width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                background: `linear-gradient(135deg, ${segColor}30, ${segColor}18)`,
+                border: `1.5px solid ${segColor}35`,
+                display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: segColor }}>{initials}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: segColor }}>{initials}</span>
               </div>
               {/* Name + city */}
               <div style={{ paddingRight: 12 }}>
@@ -253,16 +256,7 @@ export default function ClientsPage() {
               {/* Orders */}
               <div style={{ fontSize: 12, color: MID, textAlign: "right", paddingRight: 16 }}>{c.orderCount}</div>
               {/* Last order */}
-              <div style={{ fontSize: 11, color: MID, paddingRight: 8 }}>{c.lastOrder ? c.lastOrder.slice(0, 10) : "—"}</div>
-              {/* Edit */}
-              <div>
-                <button
-                  onClick={e => { e.stopPropagation(); setDeleteError(""); setModal(c); }}
-                  style={{ fontSize: 11, padding: "3px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, fontWeight: 500 }}
-                >
-                  Edit
-                </button>
-              </div>
+              <div style={{ fontSize: 11, color: MID, paddingLeft: 8 }}>{c.lastOrder ? c.lastOrder.slice(0, 10) : "—"}</div>
             </div>
           );
         })}

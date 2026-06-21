@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
+import CustomSelect from "@/components/CustomSelect";
 
 import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
@@ -73,10 +74,12 @@ function Modal({ vendor, onSave, onClose, onDelete }: {
             <div key={f.key} style={{ gridColumn: f.full ? "1 / -1" : "auto" }}>
               <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>{f.label}</div>
               {f.type === "select" ? (
-                <select value={String(form[f.key] ?? "")} onChange={e => set(f.key, e.target.value)}
-                  style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", background: WHITE }}>
-                  {f.options!.map(o => <option key={o} value={o}>{CAT_LABELS[o] ?? o}</option>)}
-                </select>
+                <CustomSelect
+                  value={String(form[f.key] ?? "")}
+                  onChange={v => set(f.key, v)}
+                  options={f.options!.map(o => ({ value: o, label: CAT_LABELS[o] ?? o }))}
+                  style={{ width: "100%" }}
+                />
               ) : (
                 <input type={f.type === "number" ? "number" : "text"} value={String(form[f.key] ?? "")}
                   onChange={e => set(f.key, f.type === "number" ? parseFloat(e.target.value) || 0 : e.target.value)}

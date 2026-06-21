@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
+import CustomSelect from "@/components/CustomSelect";
 import { createClient } from "@/lib/supabase/client";
 
-import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
+import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, MUTED, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
 const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
@@ -204,15 +205,13 @@ function EditModal({ product, onSave, onClose, onDelete }: {
           </div>
           <div>
             <div style={LBL}>Category</div>
-            <select value={form.category} onChange={e => set("category", e.target.value)} style={INP}>
-              {CATEGORIES.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <CustomSelect value={form.category} onChange={v => set("category", v)}
+              options={CATEGORIES.map(o => ({ value: o, label: o }))} style={{ width: "100%" }} />
           </div>
           <div>
             <div style={LBL}>GST Rate</div>
-            <select value={form.gstRate} onChange={e => set("gstRate", e.target.value)} style={INP}>
-              {GST_RATES.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <CustomSelect value={form.gstRate} onChange={v => set("gstRate", v)}
+              options={GST_RATES.map(o => ({ value: o, label: o }))} style={{ width: "100%" }} />
           </div>
           <div>
             <div style={LBL}>HSN Code</div>
@@ -228,10 +227,8 @@ function EditModal({ product, onSave, onClose, onDelete }: {
           </div>
           <div>
             <div style={LBL}>Status</div>
-            <select value={String(form.active)} onChange={e => set("active", e.target.value === "true")} style={INP}>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
+            <CustomSelect value={String(form.active)} onChange={v => set("active", v === "true")}
+              options={[{ value: "true", label: "Active" }, { value: "false", label: "Inactive" }]} style={{ width: "100%" }} />
           </div>
           <div style={{ gridColumn: "1/-1" }}>
             <div style={LBL}>GSM / Material</div>
@@ -351,52 +348,71 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
 
 function ProductRow({ product, onClick }: { product: Product; onClick: () => void }) {
   const catColor = CAT_COLORS[product.category] || MID;
+  const variantCount = product.variants?.length ?? 0;
   return (
     <div
       onClick={onClick}
       style={{
         display: "grid",
-        gridTemplateColumns: "4px 1fr auto auto auto auto auto",
+        gridTemplateColumns: "48px 1fr 80px 56px 80px 88px",
         alignItems: "center",
         gap: 0,
-        padding: "0 16px",
+        padding: "0 20px 0 12px",
         borderBottom: `1px solid ${BORDER}`,
         cursor: "pointer",
-        background: "rgba(255,255,255,0.6)",
+        background: "transparent",
         transition: "background 100ms ease",
-        minHeight: 48,
-        opacity: product.active ? 1 : 0.55,
+        minHeight: 60,
+        opacity: product.active ? 1 : 0.5,
       }}
       onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.04)"}
-      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.6)"}
+      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
     >
-      {/* Color strip */}
-      <div style={{ width: 4, height: 32, borderRadius: 2, background: catColor, marginRight: 14 }} />
-      {/* Name + category */}
-      <div style={{ paddingRight: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: INK, letterSpacing: "-0.01em" }}>{product.name}</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-          <Badge text={product.category} color={catColor} />
-          {product.variants && product.variants.length > 0 && (
-            <span style={{ fontSize: 10, color: MID }}>{product.variants.length} variant{product.variants.length > 1 ? "s" : ""}</span>
-          )}
+      {/* Category icon circle */}
+      <div style={{
+        width: 36, height: 36, borderRadius: 10,
+        background: `linear-gradient(135deg, ${catColor}28, ${catColor}14)`,
+        border: `1.5px solid ${catColor}30`,
+        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+      }}>
+        <div style={{ width: 10, height: 10, borderRadius: 3, background: catColor }} />
+      </div>
+      {/* Name + meta */}
+      <div style={{ paddingLeft: 12, paddingRight: 16 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: INK, letterSpacing: "-0.01em", lineHeight: 1.3 }}>{product.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, padding: "1.5px 7px", borderRadius: 5, background: catColor + "18", color: catColor }}>{product.category}</span>
+          {product.decoration && <span style={{ fontSize: 10, color: MID }}>{product.decoration}</span>}
+          {variantCount > 0 && <span style={{ fontSize: 10, color: MID }}>· {variantCount} variant{variantCount > 1 ? "s" : ""}</span>}
         </div>
       </div>
       {/* HSN */}
-      <div style={{ fontSize: 11, color: MID, width: 60, textAlign: "right", paddingRight: 20 }}>{product.hsn || "—"}</div>
+      <div style={{ textAlign: "right", paddingRight: 16 }}>
+        <div style={{ fontSize: 10, color: MUTED, marginBottom: 1 }}>HSN</div>
+        <div style={{ fontSize: 12, color: MID, fontWeight: 500 }}>{product.hsn || "—"}</div>
+      </div>
       {/* GST */}
-      <div style={{ fontSize: 11, fontWeight: 600, color: MID, width: 44, textAlign: "right", paddingRight: 20 }}>{product.gstRate}</div>
+      <div style={{ textAlign: "right", paddingRight: 16 }}>
+        <div style={{ fontSize: 10, color: MUTED, marginBottom: 1 }}>GST</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: MID }}>{product.gstRate}</div>
+      </div>
       {/* MOQ */}
-      <div style={{ fontSize: 11, color: MID, width: 56, textAlign: "right", paddingRight: 20 }}>MOQ {product.moq}</div>
-      {/* Price */}
-      <div style={{ fontSize: 13, fontWeight: 700, color: INK, width: 72, textAlign: "right", paddingRight: 20 }}>{fmt(product.basePrice)}</div>
-      {/* Active chip */}
-      <div style={{
-        fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
-        background: product.active ? GREEN + "15" : MID + "15",
-        color: product.active ? GREEN : MID,
-      }}>
-        {product.active ? "Active" : "Inactive"}
+      <div style={{ textAlign: "right", paddingRight: 16 }}>
+        <div style={{ fontSize: 10, color: MUTED, marginBottom: 1 }}>MOQ</div>
+        <div style={{ fontSize: 12, color: MID, fontWeight: 500 }}>{product.moq} pcs</div>
+      </div>
+      {/* Price + status */}
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: INK, letterSpacing: "-0.02em" }}>{fmt(product.basePrice)}</div>
+        <div style={{
+          display: "inline-block", marginTop: 3,
+          fontSize: 9, fontWeight: 700, padding: "1.5px 7px", borderRadius: 20,
+          background: product.active ? GREEN + "18" : MID + "15",
+          color: product.active ? GREEN : MID,
+          letterSpacing: "0.04em", textTransform: "uppercase" as const,
+        }}>
+          {product.active ? "Active" : "Inactive"}
+        </div>
       </div>
     </div>
   );
@@ -453,18 +469,17 @@ export default function ProductsPage() {
 
       {/* Column headers */}
       <div style={{
-        display: "grid", gridTemplateColumns: "4px 1fr auto auto auto auto auto",
-        alignItems: "center", gap: 0, padding: "0 16px",
+        display: "grid", gridTemplateColumns: "48px 1fr 80px 56px 80px 88px",
+        alignItems: "center", gap: 0, padding: "0 20px 0 12px",
         background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
         borderBottom: `1px solid ${BORDER}`, minHeight: 36,
       }}>
         <div />
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingRight: 16 }}>Product</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", width: 60, textAlign: "right", paddingRight: 20 }}>HSN</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", width: 44, textAlign: "right", paddingRight: 20 }}>GST</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", width: 56, textAlign: "right", paddingRight: 20 }}>MOQ</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", width: 72, textAlign: "right", paddingRight: 20 }}>Price</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase" }}>Status</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingLeft: 12 }}>Product</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>HSN</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>GST</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>MOQ</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right" }}>Price / Status</div>
       </div>
 
       <div style={{
