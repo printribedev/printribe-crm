@@ -197,10 +197,10 @@ export default function ClientsPage() {
 
       {/* Column headers */}
       <div style={{
-        display: "grid", gridTemplateColumns: "36px 1fr 110px 120px 56px 100px",
+        display: "grid", gridTemplateColumns: "32px 1fr 110px 120px 56px 100px",
         alignItems: "center", gap: 0, padding: "0 16px",
         background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
-        borderBottom: `1px solid ${BORDER}`, minHeight: 36,
+        borderBottom: `1px solid ${BORDER}`, minHeight: 32,
       }}>
         <div />
         <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase" }}>Client</div>
@@ -224,9 +224,9 @@ export default function ClientsPage() {
             <div
               key={c.id}
               style={{
-                display: "grid", gridTemplateColumns: "36px 1fr 110px 120px 56px 100px",
+                display: "grid", gridTemplateColumns: "32px 1fr 110px 120px 56px 100px",
                 alignItems: "center", gap: 0, padding: "0 16px",
-                borderBottom: `1px solid ${BORDER}`, minHeight: 56,
+                borderBottom: `1px solid ${BORDER}`, minHeight: 44,
                 background: "transparent",
                 transition: "background 100ms ease",
                 cursor: "pointer",
@@ -237,24 +237,24 @@ export default function ClientsPage() {
             >
               {/* Avatar */}
               <div style={{
-                width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
                 background: `linear-gradient(135deg, ${segColor}30, ${segColor}18)`,
                 border: `1.5px solid ${segColor}35`,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: segColor }}>{initials}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: segColor }}>{initials}</span>
               </div>
               {/* Name + city */}
               <div style={{ paddingRight: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: INK, letterSpacing: "-0.01em" }}>{c.name}</div>
-                <div style={{ fontSize: 11, color: MID, marginTop: 1 }}>{c.city || c.type || "—"}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: INK, letterSpacing: "-0.01em" }}>{c.name}</div>
+                <div style={{ fontSize: 10, color: MID, marginTop: 1 }}>{c.city || c.type || "—"}</div>
               </div>
               {/* Segment */}
               <div><Badge text={SEG_LABELS[c.segment] || c.segment} color={segColor} /></div>
               {/* Total value */}
-              <div style={{ fontSize: 13, fontWeight: 700, color: INK, textAlign: "right", paddingRight: 16 }}>{fmt(c.totalValue)}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: INK, textAlign: "right", paddingRight: 16 }}>{fmt(c.totalValue)}</div>
               {/* Orders */}
-              <div style={{ fontSize: 12, color: MID, textAlign: "right", paddingRight: 16 }}>{c.orderCount}</div>
+              <div style={{ fontSize: 11, color: MID, textAlign: "right", paddingRight: 16 }}>{c.orderCount}</div>
               {/* Last order */}
               <div style={{ fontSize: 11, color: MID, paddingLeft: 8 }}>{c.lastOrder ? c.lastOrder.slice(0, 10) : "—"}</div>
             </div>

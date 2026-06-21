@@ -362,57 +362,45 @@ function ProductRow({ product, onClick }: { product: Product; onClick: () => voi
         cursor: "pointer",
         background: "transparent",
         transition: "background 100ms ease",
-        minHeight: 60,
+        minHeight: 44,
         opacity: product.active ? 1 : 0.5,
       }}
       onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.04)"}
       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
     >
-      {/* Category icon circle */}
-      <div style={{
-        width: 36, height: 36, borderRadius: 10,
-        background: `linear-gradient(135deg, ${catColor}28, ${catColor}14)`,
-        border: `1.5px solid ${catColor}30`,
-        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-      }}>
-        <div style={{ width: 10, height: 10, borderRadius: 3, background: catColor }} />
+      {/* Category dot */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{
+          width: 8, height: 8, borderRadius: "50%", background: catColor, flexShrink: 0,
+        }} />
       </div>
       {/* Name + meta */}
-      <div style={{ paddingLeft: 12, paddingRight: 16 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: INK, letterSpacing: "-0.01em", lineHeight: 1.3 }}>{product.name}</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
-          <span style={{ fontSize: 10, fontWeight: 600, padding: "1.5px 7px", borderRadius: 5, background: catColor + "18", color: catColor }}>{product.category}</span>
-          {product.decoration && <span style={{ fontSize: 10, color: MID }}>{product.decoration}</span>}
-          {variantCount > 0 && <span style={{ fontSize: 10, color: MID }}>· {variantCount} variant{variantCount > 1 ? "s" : ""}</span>}
+      <div style={{ paddingLeft: 8, paddingRight: 12 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: INK, letterSpacing: "-0.01em" }}>{product.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: catColor + "18", color: catColor }}>{product.category}</span>
+          {variantCount > 0 && <span style={{ fontSize: 10, color: MID }}>{variantCount}v</span>}
+          {product.decoration && <span style={{ fontSize: 10, color: MID }}>· {product.decoration}</span>}
         </div>
       </div>
       {/* HSN */}
-      <div style={{ textAlign: "right", paddingRight: 16 }}>
-        <div style={{ fontSize: 10, color: MUTED, marginBottom: 1 }}>HSN</div>
-        <div style={{ fontSize: 12, color: MID, fontWeight: 500 }}>{product.hsn || "—"}</div>
-      </div>
+      <div style={{ fontSize: 11, color: MID, textAlign: "right", paddingRight: 16 }}>{product.hsn || "—"}</div>
       {/* GST */}
-      <div style={{ textAlign: "right", paddingRight: 16 }}>
-        <div style={{ fontSize: 10, color: MUTED, marginBottom: 1 }}>GST</div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: MID }}>{product.gstRate}</div>
-      </div>
+      <div style={{ fontSize: 11, fontWeight: 600, color: MID, textAlign: "right", paddingRight: 16 }}>{product.gstRate}</div>
       {/* MOQ */}
-      <div style={{ textAlign: "right", paddingRight: 16 }}>
-        <div style={{ fontSize: 10, color: MUTED, marginBottom: 1 }}>MOQ</div>
-        <div style={{ fontSize: 12, color: MID, fontWeight: 500 }}>{product.moq} pcs</div>
-      </div>
+      <div style={{ fontSize: 11, color: MID, textAlign: "right", paddingRight: 16 }}>{product.moq} pcs</div>
       {/* Price + status */}
       <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: INK, letterSpacing: "-0.02em" }}>{fmt(product.basePrice)}</div>
-        <div style={{
-          display: "inline-block", marginTop: 3,
-          fontSize: 9, fontWeight: 700, padding: "1.5px 7px", borderRadius: 20,
+        <div style={{ fontSize: 12, fontWeight: 700, color: INK }}>{fmt(product.basePrice)}</div>
+        <span style={{
+          display: "inline-block", marginTop: 2,
+          fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 20,
           background: product.active ? GREEN + "18" : MID + "15",
           color: product.active ? GREEN : MID,
           letterSpacing: "0.04em", textTransform: "uppercase" as const,
         }}>
-          {product.active ? "Active" : "Inactive"}
-        </div>
+          {product.active ? "Active" : "Off"}
+        </span>
       </div>
     </div>
   );
@@ -472,14 +460,14 @@ export default function ProductsPage() {
         display: "grid", gridTemplateColumns: "48px 1fr 80px 56px 80px 88px",
         alignItems: "center", gap: 0, padding: "0 20px 0 12px",
         background: "rgba(255,255,255,0.4)", borderRadius: `${CARD_RADIUS}px ${CARD_RADIUS}px 0 0`,
-        borderBottom: `1px solid ${BORDER}`, minHeight: 36,
+        borderBottom: `1px solid ${BORDER}`, minHeight: 32,
       }}>
         <div />
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingLeft: 12 }}>Product</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", paddingLeft: 8 }}>Product</div>
         <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>HSN</div>
         <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>GST</div>
         <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right", paddingRight: 16 }}>MOQ</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right" }}>Price / Status</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.07em", textTransform: "uppercase", textAlign: "right" }}>Price</div>
       </div>
 
       <div style={{
