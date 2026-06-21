@@ -44,7 +44,7 @@ export default function DateFilterBar({
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.08em", textTransform: "uppercase", marginRight: 4 }}>
+        <span className="date-filter-label" style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.08em", textTransform: "uppercase", marginRight: 4 }}>
           Date
         </span>
         {PRESETS.map(p => {
@@ -53,6 +53,7 @@ export default function DateFilterBar({
             <button
               key={p}
               type="button"
+              className="date-filter-btn"
               onClick={() => select(p)}
               style={{
                 fontSize: 11, padding: "5px 12px", borderRadius: 8, cursor: "pointer", fontWeight: 600,
@@ -67,7 +68,7 @@ export default function DateFilterBar({
           );
         })}
         {!showCustom && (
-          <span style={{ fontSize: 11, color: MID, marginLeft: 4 }}>
+          <span className="date-filter-range" style={{ fontSize: 11, color: MID, marginLeft: 4 }}>
             {filter.from} → {filter.to}
           </span>
         )}

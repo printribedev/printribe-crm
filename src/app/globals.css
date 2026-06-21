@@ -179,3 +179,18 @@ input[type="number"] {
 
 /* Sidebar overlay hidden on desktop */
 .sidebar-overlay { display: none; }
+
+/* Date filter bar — compact on mobile */
+@media (max-width: 768px) {
+  .date-filter-btn {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+  }
+  .date-filter-label {
+    font-size: 9px !important;
+  }
+  .date-filter-range {
+    font-size: 10px !important;
+  }
+}
