@@ -102,44 +102,51 @@ function toMonthlyData(orders: Order[]) {
   }).sort((a, b) => a.ts - b.ts);
 }
 
-// KPI card with gradient left accent strip
+// Apple liquid-glass KPI card
 function KpiCard({ label, value, sub, gradient = GRAD_PRIMARY, badge, badgeColor = SUCCESS }: {
   label: string; value: string | number; sub?: string;
   gradient?: string; badge?: string; badgeColor?: string;
 }) {
   return (
     <div style={{
-      background: WHITE, borderRadius: R_MD, padding: "18px 20px",
-      boxShadow: SHADOW_SM, border: `1px solid ${BORDER}`,
-      borderTop: `3px solid transparent`,
-      backgroundImage: `${WHITE}, ${gradient}`,
-      backgroundOrigin: "border-box",
-      backgroundClip: "padding-box, border-box",
+      background: "rgba(255,255,255,0.72)",
+      backdropFilter: "blur(20px) saturate(180%)",
+      WebkitBackdropFilter: "blur(20px) saturate(180%)",
+      borderRadius: 20,
+      border: "1px solid rgba(255,255,255,0.85)",
+      boxShadow: "0 0 0 0.5px rgba(0,0,0,0.07), 0 6px 28px rgba(0,0,0,0.07)",
+      padding: "20px 22px",
       position: "relative", overflow: "hidden",
     }}>
-      {/* Gradient top stripe */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: gradient }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: MID, letterSpacing: "0.06em", textTransform: "uppercase" }}>{label}</div>
-      </div>
-      <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", color: INK, lineHeight: 1.1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: MUTED, marginTop: 5, lineHeight: 1.4 }}>{sub}</div>}
+      {/* Gradient accent line at top */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2.5, background: gradient, borderRadius: "20px 20px 0 0" }} />
+      {/* Subtle inner glow at top */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, transparent 100%)", borderRadius: "20px 20px 0 0", pointerEvents: "none" }} />
+      <div style={{ fontSize: 10, fontWeight: 600, color: MID, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.04em", color: INK, lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: MUTED, marginTop: 6, lineHeight: 1.4 }}>{sub}</div>}
       {badge && (
         <div style={{
-          display: "inline-flex", alignItems: "center", marginTop: 8,
-          fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: R_SM,
-          background: badgeColor + "15", color: badgeColor, letterSpacing: "0.02em",
+          display: "inline-flex", alignItems: "center", marginTop: 10,
+          fontSize: 10, fontWeight: 600, padding: "3px 9px", borderRadius: 20,
+          background: badgeColor + "18", color: badgeColor, letterSpacing: "0.02em",
         }}>{badge}</div>
       )}
     </div>
   );
 }
 
+// Glass chart card
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
-      background: WHITE, borderRadius: R_MD, boxShadow: SHADOW_SM,
-      border: `1px solid ${BORDER}`, ...style,
+      background: "rgba(255,255,255,0.78)",
+      backdropFilter: "blur(16px) saturate(160%)",
+      WebkitBackdropFilter: "blur(16px) saturate(160%)",
+      borderRadius: 18,
+      border: "1px solid rgba(255,255,255,0.85)",
+      boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.06)",
+      ...style,
     }}>
       {children}
     </div>

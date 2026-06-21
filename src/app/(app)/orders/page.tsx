@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import DateFilterBar from "@/components/DateFilterBar";
+import CustomSelect from "@/components/CustomSelect";
 import { DateFilter, applyDateFilter, loadFilter } from "@/lib/dateFilter";
 
 import {
@@ -272,13 +273,15 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
       <div style={{ background: BG, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: BLUE, minWidth: 70 }}>Product {idx + 1}</div>
         <div style={{ flex: 2, minWidth: 160 }}>
-          <select value={line.productId ?? ""} onChange={e => {
-            if (!e.target.value) { onChange("productId", null); onChange("name", ""); onChange("hsn", ""); }
-            else pickProduct(Number(e.target.value));
-          }} style={SINP}>
-            <option value="">— Select product —</option>
-            {catalogProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <CustomSelect
+            value={String(line.productId ?? "")}
+            onChange={val => {
+              if (!val) { onChange("productId", null); onChange("name", ""); onChange("hsn", ""); }
+              else pickProduct(Number(val));
+            }}
+            options={[{ value: "", label: "— Select product —" }, ...catalogProducts.map(p => ({ value: String(p.id), label: p.name }))]}
+            style={SINP}
+          />
         </div>
         <div style={{ width: 70 }}>
           <div style={LBL}>HSN</div>
@@ -311,14 +314,12 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
           {variantDefs.map(vd => (
             <div key={vd.name} style={{ marginBottom: 8 }}>
               <div style={LBL}>{vd.name}</div>
-              <select
+              <CustomSelect
                 value={line.selectedVariants?.[vd.name] ?? ""}
-                onChange={e => setVariant(vd.name, e.target.value)}
+                onChange={val => setVariant(vd.name, val)}
+                options={[{ value: "", label: "— Select —" }, ...vd.values.filter(Boolean).map(val => ({ value: val, label: val }))]}
                 style={{ ...SINP, minWidth: 120 }}
-              >
-                <option value="">— Select —</option>
-                {vd.values.filter(Boolean).map(val => <option key={val} value={val}>{val}</option>)}
-              </select>
+              />
             </div>
           ))}
         </div>
@@ -545,15 +546,21 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
           </div>
           <div>
             <div style={LBL}>Segment</div>
-            <select value={form.segment} onChange={e => setF("segment", e.target.value)} style={{ ...INP }}>
-              {SEGMENTS.map(s => <option key={s} value={s}>{SEG_LABELS[s]}</option>)}
-            </select>
+            <CustomSelect
+              value={form.segment}
+              onChange={val => setF("segment", val)}
+              options={SEGMENTS.map(s => ({ value: s, label: SEG_LABELS[s] }))}
+              style={INP}
+            />
           </div>
           <div>
             <div style={LBL}>Stage</div>
-            <select value={form.stage} onChange={e => setF("stage", e.target.value)} style={{ ...INP }}>
-              {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
+            <CustomSelect
+              value={form.stage}
+              onChange={val => setF("stage", val)}
+              options={STAGES.map(s => ({ value: s.id, label: s.label }))}
+              style={INP}
+            />
           </div>
           <div>
             <div style={LBL}>Date</div>
@@ -573,10 +580,12 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
           </div>
           <div style={{ gridColumn: "1/-1" }}>
             <div style={LBL}>Priority</div>
-            <select value={form.priority} onChange={e => setF("priority", e.target.value)} style={{ ...INP }}>
-              <option value="Normal">Normal</option>
-              <option value="High">High</option>
-            </select>
+            <CustomSelect
+              value={form.priority}
+              onChange={val => setF("priority", val)}
+              options={[{ value: "Normal", label: "Normal" }, { value: "High", label: "High" }]}
+              style={INP}
+            />
           </div>
         </div>
 

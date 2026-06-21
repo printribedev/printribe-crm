@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import {
-  SIDEBAR_BG, SIDEBAR_HOVER, SIDEBAR_BORDER, SIDEBAR_TEXT, SIDEBAR_ACTIVE,
-  PRIMARY, PRIMARY_MID, WHITE,
-  GRAD_PRIMARY, GLASS_DARK_BG, GLASS_DARK_BORDER, GLASS_BLUR_SM,
-} from "@/lib/tokens";
+import { PRIMARY, PRIMARY_LIGHT, BODY, MID, MUTED, WHITE, BORDER, INK, GRAD_PRIMARY } from "@/lib/tokens";
 
 const NAV = [
   {
@@ -44,11 +40,51 @@ const NAV = [
   },
 ];
 
+function PrintribeLogo() {
+  return (
+    <div style={{ padding: "22px 20px 18px" }}>
+      {/* Logo mark + wordmark */}
+      <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+        {/* Mark: layered print sheets icon */}
+        <div style={{ position: "relative", width: 38, height: 38, flexShrink: 0 }}>
+          <svg width={38} height={38} viewBox="0 0 38 38" fill="none">
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#4F46E5" />
+                <stop offset="100%" stopColor="#7C3AED" />
+              </linearGradient>
+            </defs>
+            {/* Background rounded square */}
+            <rect width="38" height="38" rx="10" fill="url(#logoGrad)" />
+            {/* Layered sheets — print press motif */}
+            <rect x="9" y="22" width="16" height="10" rx="2" fill="rgba(255,255,255,0.25)" />
+            <rect x="11" y="19" width="16" height="10" rx="2" fill="rgba(255,255,255,0.4)" />
+            {/* Top sheet / P letterform */}
+            <rect x="13" y="7" width="16" height="13" rx="2.5" fill="white" />
+            {/* P bowl */}
+            <path d="M17 11h3.5a2 2 0 010 4H17" stroke="#4F46E5" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+            <line x1="17" y1="11" x2="17" y2="17" stroke="#4F46E5" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </div>
+        {/* Wordmark */}
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: INK, letterSpacing: "-0.03em", lineHeight: 1.1 }}>
+            Print<span style={{ color: PRIMARY }}>tribe</span>
+          </div>
+          <div style={{ fontSize: 9.5, color: MUTED, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 2, fontWeight: 500 }}>
+            Operations
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NavIcon({ d, active }: { d: string; active: boolean }) {
   return (
-    <svg width={16} height={16} viewBox="0 0 24 24" fill="none"
-      stroke={active ? SIDEBAR_ACTIVE : SIDEBAR_TEXT}
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+    <svg width={15} height={15} viewBox="0 0 24 24" fill="none"
+      stroke={active ? PRIMARY : MID}
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
       style={{ flexShrink: 0 }}>
       <path d={d} />
     </svg>
@@ -68,75 +104,47 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
 
   return (
     <div style={{
-      width: 220,
-      background: SIDEBAR_BG,
+      width: 224,
+      background: "rgba(255,255,255,0.88)",
+      backdropFilter: "blur(20px) saturate(180%)",
+      WebkitBackdropFilter: "blur(20px) saturate(180%)",
       display: "flex",
       flexDirection: "column",
       height: "100vh",
       position: "sticky",
       top: 0,
       flexShrink: 0,
-      borderRight: `1px solid ${SIDEBAR_BORDER}`,
+      borderRight: `1px solid ${BORDER}`,
     }}>
-      {/* Logo */}
-      <div style={{ padding: "20px 16px 16px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: GRAD_PRIMARY, display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 4px 12px rgba(79,70,229,0.4)",
-            flexShrink: 0,
-          }}>
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: WHITE, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-              Printribe
-            </div>
-            <div style={{ fontSize: 10, color: SIDEBAR_TEXT, letterSpacing: "0.06em", textTransform: "uppercase", marginTop: 1 }}>
-              Operations CRM
-            </div>
-          </div>
-        </div>
-      </div>
+      <PrintribeLogo />
 
       {/* Divider */}
-      <div style={{ height: 1, background: SIDEBAR_BORDER, margin: "0 16px" }} />
+      <div style={{ height: 1, background: BORDER, margin: "0 16px 6px" }} />
 
       {/* Nav */}
-      <nav style={{ padding: "10px 8px", flex: 1, overflowY: "auto" }}>
+      <nav style={{ padding: "6px 10px", flex: 1, overflowY: "auto" }}>
         {NAV.map(n => {
           const isActive = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
           const showBadge = n.href === "/production" && activeJobCount > 0;
           return (
             <Link key={n.href} href={n.href} style={{ textDecoration: "none" }}>
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "8px 10px",
-                borderRadius: 7,
-                marginBottom: 2,
-                background: isActive ? GLASS_DARK_BG : "transparent",
-                border: isActive ? `1px solid ${GLASS_DARK_BORDER}` : "1px solid transparent",
-                borderLeft: isActive ? `3px solid ${PRIMARY}` : "3px solid transparent",
-                backdropFilter: isActive ? GLASS_BLUR_SM : undefined,
-                WebkitBackdropFilter: isActive ? GLASS_BLUR_SM : undefined,
-                cursor: "pointer",
-                transition: "background 150ms ease",
-              }}
-                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = SIDEBAR_HOVER; }}
+              <div
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "8px 10px", borderRadius: 9, marginBottom: 1,
+                  background: isActive ? PRIMARY_LIGHT : "transparent",
+                  borderLeft: isActive ? `2.5px solid ${PRIMARY}` : "2.5px solid transparent",
+                  cursor: "pointer",
+                  transition: "background 120ms ease",
+                }}
+                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(79,70,229,0.05)"; }}
                 onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               >
                 <NavIcon d={n.icon} active={isActive} />
                 <span style={{
-                  fontSize: 13,
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive ? SIDEBAR_ACTIVE : SIDEBAR_TEXT,
-                  flex: 1,
-                  letterSpacing: "-0.01em",
+                  fontSize: 13, fontWeight: isActive ? 600 : 400,
+                  color: isActive ? PRIMARY : BODY,
+                  flex: 1, letterSpacing: "-0.01em",
                 }}>
                   {n.label}
                 </span>
@@ -144,8 +152,7 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
                   <span style={{
                     fontSize: 10, fontWeight: 700,
                     background: PRIMARY, color: WHITE,
-                    borderRadius: 10, padding: "1px 6px",
-                    lineHeight: 1.6,
+                    borderRadius: 10, padding: "1px 6px", lineHeight: 1.6,
                   }}>
                     {activeJobCount}
                   </span>
@@ -157,18 +164,17 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
       </nav>
 
       {/* User footer */}
-      <div style={{ padding: "12px 16px 16px", borderTop: `1px solid ${SIDEBAR_BORDER}` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ padding: "12px 16px 16px", borderTop: `1px solid ${BORDER}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10 }}>
           <div style={{
-            width: 30, height: 30, borderRadius: "50%",
-            background: PRIMARY + "33", display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
+            width: 30, height: 30, borderRadius: "50%", background: GRAD_PRIMARY,
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: PRIMARY_MID }}>US</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: WHITE }}>US</span>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: WHITE, lineHeight: 1.3 }}>Usman</div>
-            <div style={{ fontSize: 10, color: SIDEBAR_TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: INK, lineHeight: 1.3 }}>Usman</div>
+            <div style={{ fontSize: 10, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               theprintribe@gmail.com
             </div>
           </div>
@@ -176,13 +182,13 @@ export default function Sidebar({ activeJobCount = 0 }: { activeJobCount?: numbe
         <button
           onClick={handleSignOut}
           style={{
-            marginTop: 10, width: "100%", fontSize: 11, fontWeight: 500,
-            color: SIDEBAR_TEXT, background: "none", border: `1px solid ${SIDEBAR_BORDER}`,
-            borderRadius: 6, padding: "6px 10px", cursor: "pointer", textAlign: "left",
+            width: "100%", fontSize: 11, fontWeight: 500,
+            color: MID, background: "none", border: `1px solid ${BORDER}`,
+            borderRadius: 7, padding: "6px 10px", cursor: "pointer", textAlign: "left",
             letterSpacing: "0.01em",
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = SIDEBAR_HOVER; (e.currentTarget as HTMLElement).style.color = WHITE; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = SIDEBAR_TEXT; }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#FEF2F2"; (e.currentTarget as HTMLElement).style.color = "#DC2626"; (e.currentTarget as HTMLElement).style.borderColor = "#FECACA"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "none"; (e.currentTarget as HTMLElement).style.color = MID; (e.currentTarget as HTMLElement).style.borderColor = BORDER; }}
         >
           Sign out →
         </button>
