@@ -60,6 +60,8 @@ function ProformaContent() {
   const cardRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
   // Scale the proforma to fit the screen width (ratio of screen to card width)
   useEffect(() => {
     function updateZoom() {
@@ -99,6 +101,13 @@ function ProformaContent() {
       : BASE_ZOOM;
     setPrintZoom(zoom);
   }, [data]);
+
+  // On mobile, auto-trigger print (Save as PDF) after proforma loads
+  useEffect(() => {
+    if (!data || !isMobile) return;
+    const t = setTimeout(() => window.print(), 600);
+    return () => clearTimeout(t);
+  }, [data, isMobile]);
 
   // iOS Safari ignores zoom on child elements during print.
   // Apply zoom on <html> root via beforeprint event instead.
