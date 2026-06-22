@@ -213,7 +213,6 @@ function InvoiceContent() {
         */}
         <div ref={cardRef} className="screen-card" style={{
           width: 1062,
-          maxWidth: "100%",
           backgroundColor: "#fff",
           overflow: "hidden",
           display: "flex",
