@@ -8,7 +8,7 @@ const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
 type Client = { id: number; name: string; gstin: string | null; address: string | null; city: string | null; email: string | null; phone: string | null; segment: string };
 type Product = { id: number; name: string; gstRate: string; basePrice: number; hsn: string; category: string; active: boolean };
-type SavedProforma = { id: number; ref: string; date: string; clientName: string; createdAt: string };
+type SavedProforma = { id: number; ref: string; date: string; clientName: string; createdAt: string; orderId: string | null };
 
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 const fmtDec = (n: number) => "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -191,6 +191,17 @@ export default function QuotesPage() {
     await fetch(`/api/proformas/${id}`, { method: "DELETE" });
     setDeleteConfirm(null);
     setSavedProformas(prev => prev.filter(p => p.id !== id));
+  }
+
+  async function convertToOrder(proforma: SavedProforma) {
+    if (proforma.orderId) {
+      window.location.href = `/orders`;
+      return;
+    }
+    const res = await fetch(`/api/proformas/${proforma.id}/convert`, { method: "POST" });
+    if (!res.ok) { alert("Failed to convert proforma to order."); return; }
+    const { orderId } = await res.json();
+    setSavedProformas(prev => prev.map(p => p.id === proforma.id ? { ...p, orderId } : p));
   }
 
   const activeCosts = COST_LINES.filter(l => resolvedCosts(l.key) > 0);
@@ -441,11 +452,11 @@ export default function QuotesPage() {
               <div style={{ textAlign: "right" }}>ACTIONS</div>
             </div>
             {savedProformas.map((p, idx) => (
-              <div key={p.id} style={{ display: "grid", gridTemplateColumns: "140px 1fr 130px 170px", gap: 16, padding: "13px 20px", borderBottom: idx < savedProformas.length - 1 ? `1px solid ${BORDER}` : "none", alignItems: "center", fontSize: 13, minWidth: 500 }}>
+              <div key={p.id} style={{ display: "grid", gridTemplateColumns: "140px 1fr 130px 1fr", gap: 16, padding: "13px 20px", borderBottom: idx < savedProformas.length - 1 ? `1px solid ${BORDER}` : "none", alignItems: "center", fontSize: 13, minWidth: 560 }}>
                 <div style={{ fontWeight: 700, color: BLUE, fontFamily: "monospace", fontSize: 12 }}>{p.ref}</div>
                 <div style={{ fontWeight: 500 }}>{p.clientName}</div>
                 <div style={{ color: MID, fontSize: 12 }}>{new Date(p.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
-                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
                   <button onClick={() => viewProforma(p.id)}
                     style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>
                     View
@@ -454,6 +465,18 @@ export default function QuotesPage() {
                     style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: BLACK, cursor: "pointer", fontWeight: 600 }}>
                     Edit
                   </button>
+                  {p.orderId ? (
+                    <button onClick={() => convertToOrder(p)}
+                      title={`Order ${p.orderId} created`}
+                      style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${GREEN}`, background: "#f0fdf4", color: GREEN, cursor: "pointer", fontWeight: 700 }}>
+                      ✓ Order
+                    </button>
+                  ) : (
+                    <button onClick={() => convertToOrder(p)}
+                      style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${ORANGE}`, background: WHITE, color: ORANGE, cursor: "pointer", fontWeight: 600 }}>
+                      → Order
+                    </button>
+                  )}
                   {deleteConfirm === p.id ? (
                     <>
                       <button onClick={() => deleteProforma(p.id)}

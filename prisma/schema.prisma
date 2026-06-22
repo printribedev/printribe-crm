@@ -201,6 +201,7 @@ model Proforma {
   clientId   Int?     @map("client_id")
   clientName String   @map("client_name")
   data       Json
+  orderId    String?  @map("order_id")
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("proformas")
