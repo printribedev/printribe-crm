@@ -61,6 +61,23 @@ function ProformaContent() {
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
+  // Force desktop viewport so proforma renders at full width on mobile
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    const original = meta.getAttribute("content") ?? "";
+    meta.setAttribute("content", "width=1200");
+    function onBefore() { meta.setAttribute("content", original); }
+    function onAfter()  { meta.setAttribute("content", "width=1200"); }
+    window.addEventListener("beforeprint", onBefore);
+    window.addEventListener("afterprint",  onAfter);
+    return () => {
+      meta.setAttribute("content", original);
+      window.removeEventListener("beforeprint", onBefore);
+      window.removeEventListener("afterprint",  onAfter);
+    };
+  }, []);
+
   useEffect(() => {
     const id = searchParams.get("id");
     if (id) {
