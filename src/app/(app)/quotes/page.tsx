@@ -146,11 +146,7 @@ export default function QuotesPage() {
 
       sessionStorage.setItem("printribe_proforma", JSON.stringify(proformaData));
       await loadProformas();
-      if (window.innerWidth < 768) {
-        window.location.href = `/api/proformas/pdf?id=${saved.id}`;
-      } else {
-        window.open(`/proforma/view?id=${saved.id}`, "_blank");
-      }
+      window.open(`/proforma/view?id=${saved.id}`, "_blank");
     } catch (e) {
       console.error("Proforma generation failed:", e);
       alert("Failed to save proforma. Please try again.");
@@ -160,10 +156,6 @@ export default function QuotesPage() {
   }
 
   async function viewProforma(id: number) {
-    if (window.innerWidth < 768) {
-      window.location.href = `/api/proformas/pdf?id=${id}`;
-      return;
-    }
     const res = await fetch(`/api/proformas/${id}`);
     if (!res.ok) return;
     const p = await res.json();
