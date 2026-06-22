@@ -56,22 +56,10 @@ function ProformaContent() {
   const [data, setData] = useState<ProformaData | null>(null);
   const [error, setError] = useState("");
   const [printZoom, setPrintZoom] = useState(0.75);
-  const [screenZoom, setScreenZoom] = useState(1);
   const cardRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-  // Scale the proforma to fit the screen width on mobile
-  useEffect(() => {
-    function updateZoom() {
-      const ratio = window.innerWidth / 1062;
-      setScreenZoom(ratio < 1 ? ratio : 1);
-    }
-    updateZoom();
-    window.addEventListener("resize", updateZoom);
-    return () => window.removeEventListener("resize", updateZoom);
-  }, []);
 
   useEffect(() => {
     const id = searchParams.get("id");
@@ -168,7 +156,7 @@ function ProformaContent() {
         body { margin: 0; line-height: normal; background: #f0f0f0; font-family: Inter, sans-serif; }
         @page { size: A4 portrait; margin: 0; }
         html, body { overflow-x: auto; }
-        .screen-outer { overflow-x: hidden; }
+        .screen-outer { overflow-x: auto; }
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
@@ -191,7 +179,7 @@ function ProformaContent() {
         </button>
       </div>
 
-      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: isMobile ? screenZoom : printZoom }}>
+      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: printZoom }}>
         <div ref={cardRef} className="screen-card" style={{
           width: 1062, maxWidth: "100%",
           backgroundColor: "#fff",
