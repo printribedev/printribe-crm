@@ -35,8 +35,15 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (!proforma) return NextResponse.json({ error: "Proforma not found" }, { status: 404 });
     if (proforma.orderId) return NextResponse.json({ error: "Already converted", orderId: proforma.orderId }, { status: 409 });
 
-    const allOrders = await prisma.order.findMany({ select: { id: true } });
-    const orderId = nextOrderId(allOrders.map(o => o.id));
+    const [allOrders, allProformas] = await Promise.all([
+      prisma.order.findMany({ select: { id: true } }),
+      prisma.proforma.findMany({ select: { orderId: true } }),
+    ]);
+    const usedIds = [
+      ...allOrders.map(o => o.id),
+      ...allProformas.map(p => p.orderId).filter(Boolean) as string[],
+    ];
+    const orderId = nextOrderId(usedIds);
 
     const data = proforma.data as {
       items: { product: string; hsn: string; qty: number; unitPrice: number; gstPct: number }[];
@@ -50,17 +57,22 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       : null;
 
     const totalQty = data.items.reduce((sum, i) => sum + i.qty, 0);
+
+    const catalogProducts = await prisma.product.findMany({ select: { id: true, name: true } });
     const productJson = JSON.stringify(
-      data.items.map(i => ({
-        productId: null,
-        name: i.product,
-        hsn: i.hsn,
-        qty: i.qty,
-        unitPrice: i.unitPrice,
-        gstPct: i.gstPct,
-        fabric: 0, printing: 0, transport: 0, misc: 0,
-        jobWork: 0, packaging: 0, design: 0, ribCost: 0,
-      }))
+      data.items.map(i => {
+        const match = catalogProducts.find(p => p.name.toLowerCase() === i.product.toLowerCase());
+        return {
+          productId: match?.id ?? null,
+          name: i.product,
+          hsn: i.hsn,
+          qty: i.qty,
+          unitPrice: i.unitPrice,
+          gstPct: i.gstPct,
+          fabric: 0, printing: 0, transport: 0, misc: 0,
+          jobWork: 0, packaging: 0, design: 0, ribCost: 0,
+        };
+      })
     );
 
     const [order] = await prisma.$transaction([
