@@ -190,14 +190,22 @@ export default function QuotesPage() {
       window.location.href = `/orders`;
       return;
     }
-    const res = await fetch(`/api/proformas/${proforma.id}/convert`, { method: "POST" });
-    const json = await res.json();
-    if (!res.ok) {
-      alert(res.status === 409 ? `Order already exists for this proforma (${json.orderId}).` : "Failed to convert proforma to order.");
-      return;
+    try {
+      const res = await fetch(`/api/proformas/${proforma.id}/convert`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(res.status === 409 ? `Order already exists for this proforma (${json.orderId}).` : `Failed to convert: ${json.error ?? "Unknown error"}`);
+        return;
+      }
+      const { orderId } = json;
+      setSavedProformas(prev => prev.map(p => p.id === proforma.id ? { ...p, orderId } : p));
+      if (confirm(`Order ${orderId} created successfully! Go to Orders now?`)) {
+        window.location.href = "/orders";
+      }
+    } catch (e) {
+      console.error("Convert to order failed:", e);
+      alert("Failed to convert proforma to order. Please try again.");
     }
-    const { orderId } = json;
-    setSavedProformas(prev => prev.map(p => p.id === proforma.id ? { ...p, orderId } : p));
   }
 
   const activeCosts = COST_LINES.filter(l => resolvedCosts(l.key) > 0);
