@@ -70,13 +70,15 @@ function InvoiceContent() {
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const safeId = (data?.id ?? "invoice").replace(/\//g, "_");
+      const w = cardRef.current.offsetWidth;
+      const h = cardRef.current.scrollHeight;
       await html2pdf()
         .set({
           margin: 0,
           filename: `Invoice_${safeId}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-          jsPDF: { unit: "px", format: [1062, 1123], orientation: "portrait" },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true, width: w, height: h },
+          jsPDF: { unit: "px", format: [w, h], orientation: "portrait" },
         })
         .from(cardRef.current)
         .save();
