@@ -15,25 +15,34 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params;
   const body = await req.json();
 
-  const client = await prisma.client.update({
-    where: { id: parseInt(id) },
-    data: {
-      name: body.name,
-      gstin: body.gstin || null,
-      type: body.type || null,
-      city: body.city || null,
-      address: body.address || null,
-      contact: body.contact || null,
-      phone: body.phone || null,
-      email: body.email || null,
-      segment: body.segment,
-      lastOrder: body.lastOrder || null,
-      totalValueOverride: body.totalValueOverride !== "" && body.totalValueOverride !== null
-        ? Number(body.totalValueOverride) : null,
-      ordersOverride: body.ordersOverride !== "" && body.ordersOverride !== null
-        ? Number(body.ordersOverride) : null,
-    },
-  });
+  const clientId = parseInt(id);
+
+  const [client] = await prisma.$transaction([
+    prisma.client.update({
+      where: { id: clientId },
+      data: {
+        name: body.name,
+        gstin: body.gstin || null,
+        type: body.type || null,
+        city: body.city || null,
+        address: body.address || null,
+        contact: body.contact || null,
+        phone: body.phone || null,
+        email: body.email || null,
+        segment: body.segment,
+        lastOrder: body.lastOrder || null,
+        totalValueOverride: body.totalValueOverride !== "" && body.totalValueOverride !== null
+          ? Number(body.totalValueOverride) : null,
+        ordersOverride: body.ordersOverride !== "" && body.ordersOverride !== null
+          ? Number(body.ordersOverride) : null,
+      },
+    }),
+    prisma.order.updateMany({
+      where: { clientId },
+      data: { segment: body.segment },
+    }),
+  ]);
+
   return NextResponse.json(client);
 }
 
