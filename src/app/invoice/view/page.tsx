@@ -61,7 +61,29 @@ function InvoiceContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [printZoom, setPrintZoom] = useState(0.75);
+  const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  async function downloadPdf() {
+    if (!cardRef.current) return;
+    setDownloading(true);
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const safeId = (data?.id ?? "invoice").replace(/\//g, "_");
+      await html2pdf()
+        .set({
+          margin: 0,
+          filename: `Invoice_${safeId}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+          jsPDF: { unit: "px", format: [1062, 1123], orientation: "portrait" },
+        })
+        .from(cardRef.current)
+        .save();
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
@@ -104,12 +126,6 @@ function InvoiceContent() {
     setPrintZoom(zoom);
   }, [data]);
 
-  // On mobile, auto-trigger print (Save as PDF) after invoice loads
-  useEffect(() => {
-    if (!data || !isMobile) return;
-    const t = setTimeout(() => window.print(), 600);
-    return () => clearTimeout(t);
-  }, [data, isMobile]);
 
 
   if (loading) return (
@@ -181,11 +197,10 @@ function InvoiceContent() {
           style={{ fontSize: 12, padding: "6px 14px", borderRadius: 6, background: "#333", color: "#fff", border: "none", cursor: "pointer" }}>
           ← Back
         </button>
-        <button onClick={() => window.print()}
-          style={{ fontSize: 12, fontWeight: 700, padding: "6px 18px", borderRadius: 6, background: "#EE3C30", color: "#fff", border: "none", cursor: "pointer" }}>
-          Print / Download PDF
+        <button onClick={downloadPdf} disabled={downloading}
+          style={{ fontSize: 12, fontWeight: 700, padding: "6px 18px", borderRadius: 6, background: "#EE3C30", color: "#fff", border: "none", cursor: downloading ? "wait" : "pointer", opacity: downloading ? 0.7 : 1 }}>
+          {downloading ? "Generating PDF…" : "Download PDF"}
         </button>
-        <span style={{ fontSize: 11, color: "#888", marginLeft: 4 }}>Choose "Save as PDF" · tick "Background graphics"</span>
       </div>
 
       <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)" }}>
