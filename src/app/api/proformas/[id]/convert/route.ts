@@ -11,13 +11,16 @@ async function requireAuth() {
   return user;
 }
 
-function nextOrderId(lastId: string | null): string {
+function nextOrderId(allIds: string[]): string {
   const now = new Date();
   const fy = now.getMonth() >= 3
     ? `${String(now.getFullYear()).slice(2)}-${String(now.getFullYear() + 1).slice(2)}`
     : `${String(now.getFullYear() - 1).slice(2)}-${String(now.getFullYear()).slice(2)}`;
-  const serial = lastId ? (parseInt(lastId.split("/")?.[2] ?? "0") || 0) + 1 : 1;
-  return `PT/PI/${String(serial).padStart(3, "0")}/${fy}`;
+  const maxSerial = allIds.reduce((max, id) => {
+    const serial = parseInt(id.split("/")?.[2] ?? "0") || 0;
+    return Math.max(max, serial);
+  }, 0);
+  return `PT/PI/${String(maxSerial + 1).padStart(3, "0")}/${fy}`;
 }
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -32,8 +35,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     if (!proforma) return NextResponse.json({ error: "Proforma not found" }, { status: 404 });
     if (proforma.orderId) return NextResponse.json({ error: "Already converted", orderId: proforma.orderId }, { status: 409 });
 
-    const lastOrder = await prisma.order.findFirst({ orderBy: { createdAt: "desc" } });
-    const orderId = nextOrderId(lastOrder?.id ?? null);
+    const allOrders = await prisma.order.findMany({ select: { id: true } });
+    const orderId = nextOrderId(allOrders.map(o => o.id));
 
     const data = proforma.data as {
       items: { product: string; hsn: string; qty: number; unitPrice: number; gstPct: number }[];
