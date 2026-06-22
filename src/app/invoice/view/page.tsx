@@ -200,7 +200,7 @@ function InvoiceContent() {
         <span style={{ fontSize: 11, color: "#888", marginLeft: 4 }}>Choose "Save as PDF" · tick "Background graphics"</span>
       </div>
 
-      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: printZoom }}>
+      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)" }}>
         {/*
           Exact Locofy CSS:
           .gstInvoicePrintribe {
