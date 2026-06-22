@@ -39,7 +39,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     }),
     prisma.order.updateMany({
       where: { clientId },
-      data: { segment: body.segment },
+      data: { segment: body.segment, clientName: body.name },
     }),
   ]);
 
