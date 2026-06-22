@@ -115,19 +115,6 @@ function ProformaContent() {
     return () => clearTimeout(t);
   }, [data, isMobile]);
 
-  // iOS Safari ignores zoom on child elements during print.
-  // Apply zoom on <html> root via beforeprint event instead.
-  useEffect(() => {
-    const html = document.documentElement;
-    function onBefore() { html.style.setProperty("zoom", String(printZoom)); }
-    function onAfter() { html.style.removeProperty("zoom"); }
-    window.addEventListener("beforeprint", onBefore);
-    window.addEventListener("afterprint", onAfter);
-    return () => {
-      window.removeEventListener("beforeprint", onBefore);
-      window.removeEventListener("afterprint", onAfter);
-    };
-  }, [printZoom]);
 
   if (error) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", fontFamily: "Inter, sans-serif", color: "#EE3C30" }}>
@@ -178,10 +165,11 @@ function ProformaContent() {
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
-          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 100% !important; overflow: visible !important; }
-          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; overflow: visible !important; min-width: unset !important; zoom: unset !important; }
-          .screen-card { display: block !important; box-shadow: none !important; margin: 0 auto !important; border-radius: 0 !important; width: 1062px !important; max-width: 1062px !important; overflow: visible !important; }
-          .pf-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; margin: 0 !important; }
+          html { zoom: 0.748 !important; -webkit-text-size-adjust: none !important; }
+          body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+          .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; overflow: visible !important; min-width: unset !important; }
+          .screen-card { display: block !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 1062px !important; overflow: visible !important; }
+          .pf-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 1062px !important; margin: 0 !important; }
         }
       `}</style>
 
