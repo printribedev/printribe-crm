@@ -171,6 +171,7 @@ function InvoiceContent() {
           --Neutral-Neutral-50: #f5f7fa;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { -webkit-text-size-adjust: none; text-size-adjust: none; }
         body { margin: 0; line-height: normal; background: #f0f0f0; font-family: Inter, sans-serif; }
         @page { size: A4 portrait; margin: 0; }
         html, body { overflow-x: auto; }
