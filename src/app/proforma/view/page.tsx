@@ -62,10 +62,11 @@ function ProformaContent() {
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-  // Scale the proforma to fit the screen width (ratio of screen to card width)
+  // Scale the proforma to fit the screen width on mobile
   useEffect(() => {
     function updateZoom() {
-      setScreenZoom(Math.min(1, window.innerWidth / 1062));
+      const ratio = window.innerWidth / 1062;
+      setScreenZoom(ratio < 1 ? ratio : 1);
     }
     updateZoom();
     window.addEventListener("resize", updateZoom);
@@ -190,7 +191,7 @@ function ProformaContent() {
         </button>
       </div>
 
-      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: screenZoom }}>
+      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: isMobile ? screenZoom : printZoom }}>
         <div ref={cardRef} className="screen-card" style={{
           width: 1062, maxWidth: "100%",
           backgroundColor: "#fff",
