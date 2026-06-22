@@ -192,19 +192,20 @@ export default function QuotesPage() {
     }
     try {
       const res = await fetch(`/api/proformas/${proforma.id}/convert`, { method: "POST" });
-      const json = await res.json();
+      const text = await res.text();
+      let json: Record<string, unknown> = {};
+      try { json = JSON.parse(text); } catch { /* not json */ }
       if (!res.ok) {
-        alert(res.status === 409 ? `Order already exists for this proforma (${json.orderId}).` : `Failed to convert: ${json.error ?? "Unknown error"}`);
+        alert(`Convert failed (${res.status}): ${json.error ?? text}`);
         return;
       }
-      const { orderId } = json;
+      const { orderId } = json as { orderId: string };
       setSavedProformas(prev => prev.map(p => p.id === proforma.id ? { ...p, orderId } : p));
       if (confirm(`Order ${orderId} created successfully! Go to Orders now?`)) {
         window.location.href = "/orders";
       }
     } catch (e) {
-      console.error("Convert to order failed:", e);
-      alert("Failed to convert proforma to order. Please try again.");
+      alert(`Network error: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
