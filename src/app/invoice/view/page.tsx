@@ -61,14 +61,17 @@ function InvoiceContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [printZoom, setPrintZoom] = useState(0.75);
+  const [screenZoom, setScreenZoom] = useState(1);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Force desktop viewport so the invoice renders identically on mobile and PC
+  // Scale the invoice to fit the screen width (ratio of screen to card width)
   useEffect(() => {
-    const meta = document.querySelector('meta[name="viewport"]');
-    const original = meta?.getAttribute("content") ?? "";
-    meta?.setAttribute("content", "width=1200");
-    return () => { meta?.setAttribute("content", original); };
+    function updateZoom() {
+      setScreenZoom(Math.min(1, window.innerWidth / 1062));
+    }
+    updateZoom();
+    window.addEventListener("resize", updateZoom);
+    return () => window.removeEventListener("resize", updateZoom);
   }, []);
 
   useEffect(() => {
@@ -154,8 +157,8 @@ function InvoiceContent() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { margin: 0; line-height: normal; background: #f0f0f0; font-family: Inter, sans-serif; }
         @page { size: A4 portrait; margin: 0; }
-        html, body { overflow-x: auto; }
-        .screen-outer { overflow-x: auto; min-width: 1100px; }
+        html, body { overflow-x: hidden; }
+        .screen-outer { overflow-x: hidden; }
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
           .no-print { display: none !important; }
@@ -180,7 +183,7 @@ function InvoiceContent() {
         <span style={{ fontSize: 11, color: "#888", marginLeft: 4 }}>Choose "Save as PDF" · tick "Background graphics"</span>
       </div>
 
-      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: printZoom }}>
+      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)", zoom: screenZoom }}>
         {/*
           Exact Locofy CSS:
           .gstInvoicePrintribe {
