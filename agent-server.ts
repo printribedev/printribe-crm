@@ -1,6 +1,4 @@
 import express from "express";
-import { createClient } from "@supabase/supabase-js";
-import ws from "ws";
 import { runAgent } from "./src/lib/agent/runner";
 import { prisma } from "./src/lib/prisma";
 
@@ -15,16 +13,17 @@ app.use((_req, res, next) => {
   next();
 });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { realtime: { transport: ws } }
-);
-
 async function getUserFromJwt(req: express.Request): Promise<string | null> {
   const auth = req.headers.authorization;
   if (!auth?.startsWith("Bearer ")) return null;
-  const { data: { user } } = await supabase.auth.getUser(auth.slice(7));
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      "Authorization": auth,
+      "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    },
+  });
+  if (!res.ok) return null;
+  const user = await res.json();
   return user?.id ?? null;
 }
 
