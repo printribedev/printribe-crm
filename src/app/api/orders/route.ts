@@ -12,7 +12,8 @@ async function requireAuth() {
 
 async function getShowFinancials(userId: string): Promise<boolean> {
   const perm = await prisma.userPermission.findUnique({ where: { userId } });
-  return perm?.showFinancials ?? true;
+  if (!perm || perm.role === "admin") return true;
+  return perm.showFinancials;
 }
 
 const FINANCIAL_ZEROS = {

@@ -17,6 +17,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
+
+  // Admins always have full access — their permissions cannot be changed via UI
+  const target = await prisma.userPermission.findUnique({ where: { userId: id } });
+  if (target?.role === "admin") return NextResponse.json({ error: "Admin permissions cannot be changed" }, { status: 403 });
+
   const body = await req.json();
 
   const updated = await prisma.userPermission.update({
