@@ -169,13 +169,23 @@ export async function get_vendors() {
 }
 
 export async function create_order(data: {
-  clientName: string; product: string; qty: number; saleValue: number; gst: number;
+  clientName: string; product: string; qty: number; saleValue: number; gst?: number;
   fabric?: number; printing?: number; transport?: number; misc?: number;
   jobWork?: number; packaging?: number; design?: number; ribCost?: number;
   segment?: string; priority?: string; date?: string; dueDate?: string;
 }) {
+  // Auto-resolve GST from product catalog if not provided
+  let gst = data.gst;
+  if (gst === undefined || gst === null) {
+    const catalogProduct = await prisma.product.findFirst({
+      where: { name: { contains: data.product, mode: "insensitive" } },
+      select: { gstRate: true },
+    });
+    const gstPct = catalogProduct ? parseFloat(catalogProduct.gstRate) || 5 : 5;
+    gst = Number(data.saleValue) * gstPct / 100;
+  }
   const { createOrder } = await import("@/lib/orders");
-  return createOrder(data);
+  return createOrder({ ...data, gst });
 }
 
 export async function update_order(orderId: string, updates: Record<string, unknown>) {
@@ -272,21 +282,21 @@ export const TOOL_DEFINITIONS: Anthropic.Tool[] = [
   },
   {
     name: "create_order",
-    description: "Create a new order.",
+    description: "Create a new order. GST is auto-resolved from the product catalog — do NOT ask the user for it.",
     input_schema: {
       type: "object" as const,
       properties: {
-        clientName: { type: "string" }, product:  { type: "string" },
+        clientName: { type: "string" }, product:   { type: "string" },
         qty:        { type: "number" }, saleValue: { type: "number" },
-        gst:        { type: "number" }, fabric:    { type: "number" },
-        printing:   { type: "number" }, transport: { type: "number" },
-        misc:       { type: "number" }, jobWork:   { type: "number" },
-        packaging:  { type: "number" }, design:    { type: "number" },
-        ribCost:    { type: "number" }, segment:   { type: "string" },
-        priority:   { type: "string" }, date:      { type: "string" },
-        dueDate:    { type: "string" },
+        gst:        { type: "number", description: "Leave unset — auto-resolved from product catalog" },
+        fabric:     { type: "number" }, printing:  { type: "number" },
+        transport:  { type: "number" }, misc:      { type: "number" },
+        jobWork:    { type: "number" }, packaging: { type: "number" },
+        design:     { type: "number" }, ribCost:   { type: "number" },
+        segment:    { type: "string" }, priority:  { type: "string" },
+        date:       { type: "string" }, dueDate:   { type: "string" },
       },
-      required: ["clientName", "product", "qty", "saleValue", "gst"],
+      required: ["clientName", "product", "qty", "saleValue"],
     },
   },
   {
