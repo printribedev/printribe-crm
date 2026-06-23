@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -35,10 +36,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
-  const { data: { user } } = await (await import("@/lib/supabase/server")).createClient();
-  if (id === user?.id) return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
+  if (id === admin.id) return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 });
 
-  const { supabaseAdmin } = await import("@/lib/supabase/admin");
   await supabaseAdmin.auth.admin.deleteUser(id);
   await prisma.userPermission.delete({ where: { userId: id } });
 
