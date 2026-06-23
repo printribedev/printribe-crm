@@ -73,7 +73,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   const perm = await prisma.userPermission.findUnique({ where: { userId: user.id } });
   const showFinancials = perm?.showFinancials ?? true;
-  const serialized = serializeOrder(order as unknown as Record<string, unknown>);
+  const serialized = serializeOrder(order as unknown as Record<string, unknown>) as Record<string, unknown>;
   if (!showFinancials) {
     const stripped = {
       ...serialized,
