@@ -27,6 +27,24 @@ async function getUserFromJwt(req: express.Request): Promise<string | null> {
   return user?.id ?? null;
 }
 
+async function sendWhatsApp(to: string, text: string) {
+  await fetch(`https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_ID}/messages`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.WHATSAPP_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to,
+      type: "text",
+      text: { body: text },
+    }),
+  });
+}
+
+// ── CRM agent endpoints ────────────────────────────────────────────────────
+
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.post("/agent", async (req, res) => {
@@ -54,6 +72,45 @@ app.delete("/agent", async (req, res) => {
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: "Failed to clear" });
+  }
+});
+
+// ── WhatsApp webhook ───────────────────────────────────────────────────────
+
+// Meta verification handshake
+app.get("/whatsapp", (req, res) => {
+  const mode      = req.query["hub.mode"];
+  const token     = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  if (mode === "subscribe" && token === process.env.WHATSAPP_VERIFY_TOKEN) {
+    console.log("WhatsApp webhook verified");
+    res.status(200).send(challenge);
+  } else {
+    res.sendStatus(403);
+  }
+});
+
+// Incoming messages
+app.post("/whatsapp", async (req, res) => {
+  res.sendStatus(200); // acknowledge immediately
+
+  try {
+    const entry   = req.body?.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const msg     = changes?.value?.messages?.[0];
+
+    if (!msg || msg.type !== "text") return;
+
+    const from = msg.from; // sender's WhatsApp number
+    const text = msg.text.body.trim();
+
+    console.log(`WhatsApp from ${from}: ${text}`);
+
+    const reply = await runAgent(`wa:${from}`, text);
+    await sendWhatsApp(from, reply);
+  } catch (err) {
+    console.error("WhatsApp error:", err);
   }
 });
 
