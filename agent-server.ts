@@ -1,5 +1,6 @@
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 import { runAgent } from "./src/lib/agent/runner";
 import { prisma } from "./src/lib/prisma";
 
@@ -16,7 +17,8 @@ app.use((_req, res, next) => {
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  { realtime: { transport: ws } }
 );
 
 async function getUserFromJwt(req: express.Request): Promise<string | null> {
