@@ -17,5 +17,6 @@ Business context:
 - Stages: design → sampling → production → qc → dispatch → delivered_pending → delivered
 - Segments: Reseller, Sports, Education, Corporate, NGO_Govt, B2C
 
+When creating orders: if create_order returns product_not_found, tell the user the product doesn't exist and ask them to add it in the Products section first. List the available products from the response.
 When creating/updating orders: confirm and show margin after saving.
 When you need an order ID: call get_orders first.`;

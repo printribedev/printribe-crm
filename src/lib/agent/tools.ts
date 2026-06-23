@@ -168,24 +168,42 @@ export async function get_vendors() {
   }));
 }
 
+export async function get_products(search?: string) {
+  const products = await prisma.product.findMany({
+    where: search ? { name: { contains: search, mode: "insensitive" } } : undefined,
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, gstRate: true, basePrice: true, hsn: true },
+  });
+  return products.map(p => ({
+    id: p.id, name: p.name, gstRate: p.gstRate,
+    basePrice: Number(p.basePrice), hsn: p.hsn,
+  }));
+}
+
 export async function create_order(data: {
   clientName: string; product: string; qty: number; saleValue: number; gst?: number;
   fabric?: number; printing?: number; transport?: number; misc?: number;
   jobWork?: number; packaging?: number; design?: number; ribCost?: number;
   segment?: string; priority?: string; date?: string; dueDate?: string;
 }) {
-  // Auto-resolve GST from product catalog if not provided
-  let gst = data.gst;
-  if (gst === undefined || gst === null) {
-    const catalogProduct = await prisma.product.findFirst({
-      where: { name: { contains: data.product, mode: "insensitive" } },
-      select: { gstRate: true },
-    });
-    const gstPct = catalogProduct ? parseFloat(catalogProduct.gstRate) || 5 : 5;
-    gst = Number(data.saleValue) * gstPct / 100;
+  // Resolve product from catalog
+  const catalogProduct = await prisma.product.findFirst({
+    where: { name: { contains: data.product, mode: "insensitive" } },
+    select: { name: true, gstRate: true },
+  });
+
+  if (!catalogProduct) {
+    const available = await prisma.product.findMany({ select: { name: true }, orderBy: { name: "asc" } });
+    return {
+      error: "product_not_found",
+      message: `"${data.product}" isn't in the product catalog. Please create it first in the Products section, or pick from the existing ones.`,
+      availableProducts: available.map(p => p.name),
+    };
   }
+
+  const gst = data.gst ?? (Number(data.saleValue) * (parseFloat(catalogProduct.gstRate) || 5) / 100);
   const { createOrder } = await import("@/lib/orders");
-  return createOrder({ ...data, gst });
+  return createOrder({ ...data, product: catalogProduct.name, gst });
 }
 
 export async function update_order(orderId: string, updates: Record<string, unknown>) {
@@ -281,6 +299,16 @@ export const TOOL_DEFINITIONS: Anthropic.Tool[] = [
     input_schema: { type: "object" as const, properties: {} },
   },
   {
+    name: "get_products",
+    description: "Fetch products from the catalog. Use to check if a product exists before creating an order.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        search: { type: "string", description: "Optional product name search" },
+      },
+    },
+  },
+  {
     name: "create_order",
     description: "Create a new order. GST is auto-resolved from the product catalog — do NOT ask the user for it.",
     input_schema: {
@@ -347,6 +375,7 @@ export async function executeTool(name: string, input: Record<string, unknown>):
     case "get_production_jobs": return get_production_jobs(input as Parameters<typeof get_production_jobs>[0]);
     case "get_financials":      return get_financials(input.period as string);
     case "get_vendors":         return get_vendors();
+    case "get_products":        return get_products(input.search as string | undefined);
     case "create_order":        return create_order(input as Parameters<typeof create_order>[0]);
     case "update_order":        return update_order(input.orderId as string, input.updates as Record<string, unknown>);
     case "update_order_stage":  return update_order_stage(input.orderId as string, input.stage as string);
