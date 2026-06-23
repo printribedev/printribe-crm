@@ -310,6 +310,152 @@ function HeatmapCard({ products, months, heatMax, period, fmt, tooltipStyle }: {
   );
 }
 
+function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: string; fmt: (n: number) => string }) {
+  const totalRev = filtered.reduce((s, o) => s + o.saleValue, 0);
+  if (totalRev === 0) return null;
+
+  const totalCost = filtered.reduce((s, o) => s + orderCost(o), 0);
+  const totalProfit = totalRev - totalCost;
+
+  const segMap: Record<string, number> = {};
+  filtered.forEach(o => { segMap[o.segment] = (segMap[o.segment] || 0) + o.saleValue; });
+  const segs = Object.entries(segMap).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+
+  const costRaw = ([
+    ["Fabric & Rib", filtered.reduce((s, o) => s + o.fabric + (o.ribCost || 0), 0), GOLD],
+    ["Printing",     filtered.reduce((s, o) => s + o.printing, 0), ORANGE],
+    ["Job Work",     filtered.reduce((s, o) => s + o.jobWork, 0), PURPLE],
+    ["Transport",    filtered.reduce((s, o) => s + o.transport, 0), TEAL],
+    ["Packaging",    filtered.reduce((s, o) => s + o.packaging, 0), PRIMARY_LIGHT],
+    ["Design",       filtered.reduce((s, o) => s + o.design, 0), PINK],
+    ["Misc",         filtered.reduce((s, o) => s + o.misc, 0), MID],
+  ] as [string, number, string][]).filter(([, v]) => v > 0);
+  const hasCosts = costRaw.length > 0 && totalCost > 0;
+
+  // SVG layout
+  const SVG_W = 720, SVG_H = 320;
+  const ML = 90, MR = 108, MT = 30, MB = 10;
+  const W = SVG_W - ML - MR;
+  const H = SVG_H - MT - MB;
+  const NW = 12;
+  const GAP = 5;
+
+  // Global scale — account for max node-gaps in any column
+  const maxGaps = Math.max(segs.length, 2, hasCosts ? costRaw.length : 0) - 1;
+  const usableH = H - maxGaps * GAP;
+  const sc = (v: number) => Math.max((v / totalRev) * usableH, 2);
+
+  // Column x positions
+  const colX = hasCosts
+    ? [0, Math.round(W * 0.33), Math.round(W * 0.64), W]
+    : [0, Math.round(W * 0.45), W];
+
+  type SNode = { id: string; val: number; color: string; x: number; y: number; h: number };
+
+  function placeCol(items: [string, number, string][], ci: number, startY?: number): SNode[] {
+    const nodes: SNode[] = [];
+    const totalH = items.reduce((s, [, v]) => s + sc(v), 0) + (items.length - 1) * GAP;
+    let y = startY !== undefined ? startY : (H - totalH) / 2;
+    for (const [id, val, color] of items) {
+      const h = sc(val);
+      nodes.push({ id, val, color, x: colX[ci], y, h });
+      y += h + GAP;
+    }
+    return nodes;
+  }
+
+  const col0 = placeCol(segs.map(([s, v]) => [s, v, SEG_COLORS[s] || MID] as [string, number, string]), 0);
+  const revH = sc(totalRev);
+  const col1: SNode[] = [{ id: "revenue", val: totalRev, color: PRIMARY, x: colX[1], y: (H - revH) / 2, h: revH }];
+
+  const profH = totalProfit > 0 ? sc(totalProfit) : 0;
+  const cosH  = totalCost > 0  ? sc(totalCost)  : 0;
+  const c2H   = profH + (profH > 0 && cosH > 0 ? GAP : 0) + cosH;
+  const c2Y   = (H - c2H) / 2;
+  const col2: SNode[] = [
+    ...(totalProfit > 0 ? [{ id: "profit", val: totalProfit, color: SUCCESS, x: colX[2], y: c2Y, h: profH }] : []),
+    ...(totalCost  > 0 ? [{ id: "cost",   val: totalCost,   color: ERROR,   x: colX[2], y: c2Y + profH + (profH > 0 ? GAP : 0), h: cosH }] : []),
+  ];
+
+  const costNode = col2.find(n => n.id === "cost");
+  const col3 = hasCosts && costNode ? placeCol(costRaw, 3, costNode.y) : [];
+
+  const all = [...col0, ...col1, ...col2, ...col3];
+  const cur: Record<string, { out: number; in: number }> = {};
+  all.forEach(n => { cur[n.id] = { out: n.y, in: n.y }; });
+
+  const flows: { d: string; color: string }[] = [];
+  function addFlow(srcId: string, tgtId: string, val: number, color: string) {
+    if (val <= 0) return;
+    const src = all.find(n => n.id === srcId);
+    const tgt = all.find(n => n.id === tgtId);
+    if (!src || !tgt) return;
+    const h = sc(val);
+    const mx = (src.x + NW + tgt.x) / 2;
+    const [ot, it] = [cur[srcId].out, cur[tgtId].in];
+    flows.push({ color, d: `M${src.x+NW},${ot} C${mx},${ot} ${mx},${it} ${tgt.x},${it} L${tgt.x},${it+h} C${mx},${it+h} ${mx},${ot+h} ${src.x+NW},${ot+h} Z` });
+    cur[srcId].out += h;
+    cur[tgtId].in  += h;
+  }
+
+  col0.forEach(n => addFlow(n.id, "revenue", n.val, n.color));
+  if (totalProfit > 0) addFlow("revenue", "profit", totalProfit, SUCCESS);
+  if (totalCost  > 0) addFlow("revenue", "cost",   totalCost,   ERROR);
+  col3.forEach(n => addFlow("cost", n.id, n.val, n.color));
+
+  const LBL = { dominantBaseline: "middle" as const };
+
+  return (
+    <Card style={{ padding: 16, marginTop: 12 }}>
+      <SectionTitle title="Revenue flow" sub={`Segment sources → gross profit & cost breakdown · ${period}`} />
+      <div style={{ overflowX: "auto" }}>
+        <svg width={SVG_W} height={SVG_H} style={{ display: "block", minWidth: 480, overflow: "visible" }}>
+          <g transform={`translate(${ML},${MT})`}>
+            {/* Flows */}
+            {flows.map((f, i) => <path key={i} d={f.d} fill={f.color} opacity={0.28} />)}
+            {/* Nodes */}
+            {all.map(n => <rect key={n.id} x={n.x} y={n.y} width={NW} height={n.h} fill={n.color} rx={2} />)}
+
+            {/* Col 0 — segment labels left */}
+            {col0.map(n => (
+              <g key={`l0${n.id}`}>
+                <text x={n.x - 7} y={n.y + n.h / 2 - (n.h > 22 ? 5 : 0)} textAnchor="end" fontSize={10} fontWeight={600} fill={INK} {...LBL}>
+                  {SEG_LABELS[n.id] || n.id}
+                </text>
+                {n.h > 22 && <text x={n.x - 7} y={n.y + n.h / 2 + 8} textAnchor="end" fontSize={9} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
+              </g>
+            ))}
+
+            {/* Col 1 — revenue label above */}
+            <text x={col1[0].x + NW / 2} y={col1[0].y - 16} textAnchor="middle" fontSize={11} fontWeight={700} fill={PRIMARY}>Revenue</text>
+            <text x={col1[0].x + NW / 2} y={col1[0].y - 5}  textAnchor="middle" fontSize={9}  fill={MUTED}>{fmt(totalRev)}</text>
+
+            {/* Col 2 — profit/cost labels right of node */}
+            {col2.map(n => (
+              <g key={`l2${n.id}`}>
+                <text x={n.x + NW + 7} y={n.y + n.h / 2 - (n.h > 22 ? 5 : 0)} fontSize={10} fontWeight={700} fill={n.color} {...LBL}>
+                  {n.id === "profit" ? "Gross Profit" : "Total Cost"}
+                </text>
+                {n.h > 22 && <text x={n.x + NW + 7} y={n.y + n.h / 2 + 8} fontSize={9} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
+              </g>
+            ))}
+
+            {/* Col 3 — cost item labels right */}
+            {col3.map(n => (
+              <g key={`l3${n.id}`}>
+                <text x={n.x + NW + 7} y={n.y + n.h / 2 - (n.h > 20 ? 5 : 0)} fontSize={10} fontWeight={600} fill={INK} {...LBL}>
+                  {n.id}
+                </text>
+                {n.h > 20 && <text x={n.x + NW + 7} y={n.y + n.h / 2 + 8} fontSize={9} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
+              </g>
+            ))}
+          </g>
+        </svg>
+      </div>
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const { showFinancials } = usePermissions();
   const [period, setPeriod] = useState("FY 26-27");
