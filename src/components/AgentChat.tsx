@@ -79,18 +79,50 @@ export default function AgentChat() {
         aria-label="Open AI assistant"
         style={{
           position: "fixed", bottom: 24, right: 24, zIndex: 1000,
-          width: 52, height: 52, borderRadius: "50%",
-          background: BRAND, border: "none", cursor: "pointer",
-          boxShadow: SHADOW_MD, display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "transform 0.15s ease",
+          width: 56, height: 56, borderRadius: "50%",
+          background: "linear-gradient(135deg, #FF5C3A 0%, #EE3C30 45%, #C41E3A 100%)",
+          border: "none", cursor: "pointer",
+          boxShadow: "0 4px 20px rgba(238,60,48,0.45), 0 2px 8px rgba(0,0,0,0.18)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s ease",
         }}
-        onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.08)")}
-        onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+        onMouseEnter={e => {
+          e.currentTarget.style.transform = "scale(1.1)";
+          e.currentTarget.style.boxShadow = "0 6px 28px rgba(238,60,48,0.6), 0 2px 10px rgba(0,0,0,0.2)";
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.transform = "scale(1)";
+          e.currentTarget.style.boxShadow = "0 4px 20px rgba(238,60,48,0.45), 0 2px 8px rgba(0,0,0,0.18)";
+        }}
+        onMouseDown={e => (e.currentTarget.style.transform = "scale(0.95)")}
+        onMouseUp={e => (e.currentTarget.style.transform = "scale(1.1)")}
       >
-        {open
-          ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        }
+        {/* Outer glow ring */}
+        {!open && (
+          <span style={{
+            position: "absolute", inset: -3, borderRadius: "50%",
+            border: "1.5px solid rgba(238,60,48,0.35)",
+            animation: "ring-pulse 2.4s ease-out infinite",
+            pointerEvents: "none",
+          }} />
+        )}
+
+        {open ? (
+          /* Close X */
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth="2.5" strokeLinecap="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        ) : (
+          /* AI Spark icon */
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            {/* Central star/spark */}
+            <path d="M12 2 L13.5 9 L20 10.5 L13.5 12 L12 19 L10.5 12 L4 10.5 L10.5 9 Z"
+              fill={WHITE} opacity="0.95"/>
+            {/* Small accent spark top-right */}
+            <path d="M19 3 L19.8 5.8 L22 6.5 L19.8 7.2 L19 10 L18.2 7.2 L16 6.5 L18.2 5.8 Z"
+              fill={WHITE} opacity="0.65" transform="scale(0.7) translate(10, 0)"/>
+          </svg>
+        )}
       </button>
 
       {/* Chat panel */}
@@ -195,6 +227,11 @@ export default function AgentChat() {
         @keyframes bounce {
           0%, 80%, 100% { transform: translateY(0); }
           40% { transform: translateY(-6px); }
+        }
+        @keyframes ring-pulse {
+          0% { transform: scale(1); opacity: 0.7; }
+          70% { transform: scale(1.55); opacity: 0; }
+          100% { transform: scale(1.55); opacity: 0; }
         }
       `}</style>
     </>
