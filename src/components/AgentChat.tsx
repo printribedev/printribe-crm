@@ -13,7 +13,7 @@ export default function AgentChat() {
     return localStorage.getItem("agent_open") === "true";
   });
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", text: "Hi! I'm your Printribe assistant. Ask me about orders, clients, revenue, production — or tell me to create/update something." },
+    { role: "assistant", text: "Hey! Harvey here 👋 Your Printribe business brain. Ask me anything — orders, clients, revenue, what's overdue, what's killing your margins. Or just tell me what to create or update and I'll handle it." },
   ]);
   const [input, setInput]     = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,7 +64,7 @@ export default function AgentChat() {
 
   async function clearChat() {
     await fetch("/api/agent", { method: "DELETE" });
-    setMessages([{ role: "assistant", text: "Chat cleared. What would you like to know?" }]);
+    setMessages([{ role: "assistant", text: "Fresh start. What do you need?" }]);
   }
 
   function onKey(e: React.KeyboardEvent) {
@@ -80,19 +80,19 @@ export default function AgentChat() {
         style={{
           position: "fixed", bottom: 24, right: 24, zIndex: 1000,
           width: 56, height: 56, borderRadius: "50%",
-          background: "linear-gradient(135deg, #FF5C3A 0%, #EE3C30 45%, #C41E3A 100%)",
+          background: "linear-gradient(135deg, #a259ff 0%, #7c3aed 40%, #4f46e5 100%)",
           border: "none", cursor: "pointer",
-          boxShadow: "0 4px 20px rgba(238,60,48,0.45), 0 2px 8px rgba(0,0,0,0.18)",
+          boxShadow: "0 4px 22px rgba(124,58,237,0.55), 0 2px 8px rgba(0,0,0,0.2)",
           display: "flex", alignItems: "center", justifyContent: "center",
           transition: "transform 0.18s cubic-bezier(.34,1.56,.64,1), box-shadow 0.18s ease",
         }}
         onMouseEnter={e => {
           e.currentTarget.style.transform = "scale(1.1)";
-          e.currentTarget.style.boxShadow = "0 6px 28px rgba(238,60,48,0.6), 0 2px 10px rgba(0,0,0,0.2)";
+          e.currentTarget.style.boxShadow = "0 6px 32px rgba(124,58,237,0.7), 0 2px 10px rgba(0,0,0,0.22)";
         }}
         onMouseLeave={e => {
           e.currentTarget.style.transform = "scale(1)";
-          e.currentTarget.style.boxShadow = "0 4px 20px rgba(238,60,48,0.45), 0 2px 8px rgba(0,0,0,0.18)";
+          e.currentTarget.style.boxShadow = "0 4px 22px rgba(124,58,237,0.55), 0 2px 8px rgba(0,0,0,0.2)";
         }}
         onMouseDown={e => (e.currentTarget.style.transform = "scale(0.95)")}
         onMouseUp={e => (e.currentTarget.style.transform = "scale(1.1)")}
@@ -101,7 +101,7 @@ export default function AgentChat() {
         {!open && (
           <span style={{
             position: "absolute", inset: -3, borderRadius: "50%",
-            border: "1.5px solid rgba(238,60,48,0.35)",
+            border: "1.5px solid rgba(124,58,237,0.4)",
             animation: "ring-pulse 2.4s ease-out infinite",
             pointerEvents: "none",
           }} />
@@ -113,14 +113,15 @@ export default function AgentChat() {
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         ) : (
-          /* AI Spark icon */
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            {/* Central star/spark */}
-            <path d="M12 2 L13.5 9 L20 10.5 L13.5 12 L12 19 L10.5 12 L4 10.5 L10.5 9 Z"
-              fill={WHITE} opacity="0.95"/>
-            {/* Small accent spark top-right */}
-            <path d="M19 3 L19.8 5.8 L22 6.5 L19.8 7.2 L19 10 L18.2 7.2 L16 6.5 L18.2 5.8 Z"
-              fill={WHITE} opacity="0.65" transform="scale(0.7) translate(10, 0)"/>
+          /* Futuristic AI icon */
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+            {/* Orbit ring */}
+            <ellipse cx="13" cy="13" rx="11" ry="5.5" stroke={WHITE} strokeWidth="1" opacity="0.3" transform="rotate(-30 13 13)"/>
+            <ellipse cx="13" cy="13" rx="11" ry="5.5" stroke={WHITE} strokeWidth="1" opacity="0.2" transform="rotate(30 13 13)"/>
+            {/* Central 4-point star */}
+            <path d="M13 5 L14.2 11 L20 12 L14.2 13 L13 19 L11.8 13 L6 12 L11.8 11 Z" fill={WHITE} opacity="0.95"/>
+            {/* Accent dot top-right */}
+            <circle cx="20" cy="6" r="1.5" fill={WHITE} opacity="0.6"/>
           </svg>
         )}
       </button>
@@ -138,15 +139,15 @@ export default function AgentChat() {
           <div style={{
             padding: "12px 16px", borderBottom: `1px solid ${BORDER}`,
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            background: BRAND,
+            background: "linear-gradient(135deg, #a259ff 0%, #7c3aed 60%, #4f46e5 100%)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: WHITE }}>Printribe AI</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)" }}>Powered by Claude</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: WHITE }}>Harvey</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)" }}>Your Printribe AI</div>
               </div>
             </div>
             <button onClick={clearChat} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: R_SM, padding: "4px 10px", color: WHITE, fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
@@ -162,7 +163,7 @@ export default function AgentChat() {
                   maxWidth: "82%",
                   padding: "9px 13px",
                   borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                  background: m.role === "user" ? BRAND : SURFACE,
+                  background: m.role === "user" ? "#7c3aed" : SURFACE,
                   color: m.role === "user" ? WHITE : INK,
                   fontSize: 13,
                   lineHeight: 1.55,
@@ -211,7 +212,7 @@ export default function AgentChat() {
               disabled={loading || !input.trim()}
               style={{
                 width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-                background: loading || !input.trim() ? BORDER : BRAND,
+                background: loading || !input.trim() ? BORDER : "#7c3aed",
                 border: "none", cursor: loading || !input.trim() ? "default" : "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "background 0.15s",
