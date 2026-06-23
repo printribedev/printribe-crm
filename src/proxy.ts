@@ -27,8 +27,8 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // If not logged in and not on /login, redirect to /login
-  if (!user && !request.nextUrl.pathname.startsWith("/login")) {
+  // If not logged in and not on /login or seed, redirect to /login
+  if (!user && !request.nextUrl.pathname.startsWith("/login") && !request.nextUrl.pathname.startsWith("/api/admin/seed")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
