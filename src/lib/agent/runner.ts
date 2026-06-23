@@ -39,8 +39,8 @@ export async function runAgent(sessionKey: string, userMessage: string): Promise
   // Agentic loop — keep calling Claude until it stops using tools
   while (true) {
     response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 600,
       system: SYSTEM_PROMPT,
       tools: TOOL_DEFINITIONS,
       messages: apiMessages,

@@ -54,7 +54,7 @@ export default function AgentChat() {
       setMessages(prev => [...prev, {
         role: "assistant",
         text: isTimeout
-          ? "This query took too long (Vercel's 10s limit). Try asking something simpler, or break it into smaller questions."
+          ? "That one took too long. Try asking something more specific — e.g. 'top 3 orders by margin this month' instead of a broad analysis."
           : "Network error. Please try again.",
       }]);
     } finally {
