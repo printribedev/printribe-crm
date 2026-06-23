@@ -373,6 +373,17 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
     </div>
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const LinkTooltip = ({ link }: { link: any }) => (
+    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", fontSize: 12, boxShadow: SHADOW_MD, display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ width: 10, height: 10, borderRadius: 2, background: nodeColorMap[link.source.id] ?? MID, flexShrink: 0 }} />
+      <span style={{ fontWeight: 600, color: INK }}>{link.source.id}</span>
+      <span style={{ color: MUTED }}>→</span>
+      <span style={{ fontWeight: 600, color: INK }}>{link.target.id}</span>
+      <span style={{ color: MUTED, marginLeft: 4 }}>{fmt(link.value)}</span>
+    </div>
+  );
+
   return (
     <Card style={{ padding: 20, marginTop: 12 }}>
       <SectionTitle title="Revenue flow" sub={`Segment sources → gross profit & cost breakdown · ${period}`} />
@@ -398,6 +409,8 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
           labelTextColor={INK}
           label={node => `${node.id} · ${pct(nodeValueMap[node.id] ?? node.value)}`}
           nodeTooltip={NodeTooltip}
+          linkTooltip={LinkTooltip}
+          theme={{ labels: { text: { fontSize: 11, fontFamily: "inherit" } } }}
         />
       </div>
     </Card>
