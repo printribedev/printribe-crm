@@ -21,7 +21,7 @@ type UserPerm = {
 const INP: React.CSSProperties = { width: "100%", padding: "9px 12px", border: `1px solid ${BORDER}`, borderRadius: R_SM, fontSize: 13, outline: "none", background: WHITE, boxSizing: "border-box" };
 
 export default function AdminPage() {
-  const { role, loading } = usePermissions();
+  const { role, loading, refresh } = usePermissions();
   const router = useRouter();
 
   const [users, setUsers] = useState<UserPerm[]>([]);
@@ -71,6 +71,7 @@ export default function AdminPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sections }),
     });
+    refresh();
   }
 
   async function toggleFinancials(userId: string, value: boolean) {
@@ -80,6 +81,7 @@ export default function AdminPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ showFinancials: value }),
     });
+    refresh();
   }
 
   async function resetUserPassword(userId: string) {

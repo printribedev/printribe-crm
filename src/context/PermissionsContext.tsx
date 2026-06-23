@@ -10,6 +10,7 @@ type Permissions = {
   sections: Sections;
   showFinancials: boolean;
   loading: boolean;
+  refresh: () => void;
 };
 
 const defaults: Permissions = {
@@ -21,6 +22,7 @@ const defaults: Permissions = {
   },
   showFinancials: true,
   loading: true,
+  refresh: () => {},
 };
 
 const PermissionsContext = createContext<Permissions>(defaults);
@@ -28,18 +30,20 @@ const PermissionsContext = createContext<Permissions>(defaults);
 export function PermissionsProvider({ children }: { children: React.ReactNode }) {
   const [perms, setPerms] = useState<Permissions>(defaults);
 
-  useEffect(() => {
+  function fetchPerms() {
     fetch("/api/me/permissions")
       .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data) setPerms({ ...data, loading: false });
+        if (data) setPerms(p => ({ ...p, ...data, loading: false, refresh: fetchPerms }));
         else setPerms(p => ({ ...p, loading: false }));
       })
       .catch(() => setPerms(p => ({ ...p, loading: false })));
-  }, []);
+  }
+
+  useEffect(() => { fetchPerms(); }, []);
 
   return (
-    <PermissionsContext.Provider value={perms}>
+    <PermissionsContext.Provider value={{ ...perms, refresh: fetchPerms }}>
       {children}
     </PermissionsContext.Provider>
   );
