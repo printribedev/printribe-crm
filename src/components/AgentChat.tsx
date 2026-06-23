@@ -35,16 +35,28 @@ export default function AgentChat() {
     setInput("");
     setMessages(prev => [...prev, { role: "user", text }]);
     setLoading(true);
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), 9000)
+    );
     try {
-      const res = await fetch("/api/agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
+      const res = await Promise.race([
+        fetch("/api/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        }),
+        timeout,
+      ]);
       const data = await res.json();
       setMessages(prev => [...prev, { role: "assistant", text: data.reply ?? "Sorry, no response." }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", text: "Network error. Please try again." }]);
+    } catch (err) {
+      const isTimeout = err instanceof Error && err.message === "timeout";
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        text: isTimeout
+          ? "This query took too long (Vercel's 10s limit). Try asking something simpler, or break it into smaller questions."
+          : "Network error. Please try again.",
+      }]);
     } finally {
       setLoading(false);
     }
