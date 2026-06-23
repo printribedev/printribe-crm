@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
+import { usePermissions } from "@/context/PermissionsContext";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, PieChart, Pie, Cell, LabelList,
@@ -310,6 +311,7 @@ function HeatmapCard({ products, months, heatMax, period, fmt, tooltipStyle }: {
 }
 
 export default function DashboardPage() {
+  const { showFinancials } = usePermissions();
   const [period, setPeriod] = useState("FY 26-27");
   const [orders, setOrders] = useState<Order[]>([]);
   const [clients, setClients] = useState<ClientStat[]>([]);
@@ -438,15 +440,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI rows — 8 cards in 2 rows of 4, tight 8pt gaps */}
+      {/* KPI rows */}
       <div className="kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 8 }}>
-        <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} gradient={GRAD_PRIMARY} />
-        <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" gradient={GRAD_TEAL} badge="Tax" badgeColor={TEAL} />
-        <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" gradient={GRAD_GOLD} />
-        <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period"
+        {showFinancials && <KpiCard label="Revenue (excl. GST)" value={fmt(totalRevenue)} sub={`${filtered.length} orders`} gradient={GRAD_PRIMARY} />}
+        {showFinancials && <KpiCard label="GST Collected" value={fmt(totalGst)} sub="Incl. in invoices" gradient={GRAD_TEAL} badge="Tax" badgeColor={TEAL} />}
+        {showFinancials && <KpiCard label="Avg Order Value" value={fmt(avgOrderValue)} sub="Per invoice" gradient={GRAD_GOLD} />}
+        {showFinancials && <KpiCard label="Avg Gross Margin" value={pct(avgMargin)} sub="All orders in period"
           gradient={avgMargin > 0.25 ? GRAD_SUCCESS : avgMargin >= 0.15 ? GRAD_WARNING : GRAD_DANGER}
           badge={avgMargin > 0.25 ? "Healthy" : avgMargin >= 0.15 ? "Watch" : "Below target"}
-          badgeColor={avgMargin > 0.25 ? SUCCESS : avgMargin >= 0.15 ? WARNING : ERROR} />
+          badgeColor={avgMargin > 0.25 ? SUCCESS : avgMargin >= 0.15 ? WARNING : ERROR} />}
       </div>
       <div className="kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
         <KpiCard label="Active Jobs" value={activeJobs} sub="Not yet delivered" gradient={GRAD_WARNING} badge="Live" badgeColor={ORANGE} />
@@ -463,7 +465,7 @@ export default function DashboardPage() {
       {/* Charts below */}
       <div>
         {/* Revenue trend + Segment mix */}
-        <div className="chart-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+        {showFinancials && <div className="chart-row" style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
           <Card style={{ padding: 16 }}>
             <SectionTitle title="Revenue trend" sub={`Monthly sale value (excl. GST) · ${period}`} />
             {monthlyData.length === 0 ? (
@@ -550,10 +552,10 @@ export default function DashboardPage() {
               </>
             )}
           </Card>
-        </div>
+        </div>}
 
         {/* Margin per client + Top clients */}
-        <div className="chart-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {showFinancials && <div className="chart-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Card style={{ padding: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
               <SectionTitle title="Avg margin per client" sub={period} />
@@ -626,10 +628,10 @@ export default function DashboardPage() {
               </div>
             )}
           </Card>
-        </div>
+        </div>}
 
         {/* Product revenue heatmap */}
-        {heatProducts.length > 0 && allMonths.length > 0 && (
+        {showFinancials && heatProducts.length > 0 && allMonths.length > 0 && (
           <HeatmapCard
             products={heatProducts}
             months={allMonths}

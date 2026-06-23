@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
+import { usePermissions } from "@/context/PermissionsContext";
 import DateFilterBar from "@/components/DateFilterBar";
 import CustomSelect from "@/components/CustomSelect";
 import DatePicker from "@/components/DatePicker";
@@ -711,6 +712,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
 }
 
 export default function OrdersPage() {
+  const { showFinancials } = usePermissions();
   const [orders, setOrders] = useState<Order[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([]);
@@ -818,8 +820,9 @@ export default function OrdersPage() {
               <th style={{ padding: "10px 8px", width: 32 }} />
               {([
                 ["Invoice", "id"], ["Client", "client"], ["Product", "product"],
-                ["Segment", "segment"], ["Qty", "qty"], ["Sale Value", "value"],
-                ["Margin", "margin"], ["Stage", "stage"], ["", ""],
+                ["Segment", "segment"], ["Qty", "qty"],
+                ...(showFinancials ? [["Sale Value", "value"], ["Margin", "margin"]] as [string,string][] : []),
+                ["Stage", "stage"], ["", ""],
               ] as [string, string][]).map(([label, col]) => {
                 const active = sort.col === col;
                 const icon = !col ? "" : active ? (sort.dir === "asc" ? " ▲" : " ▼") : " ⇅";
@@ -861,16 +864,16 @@ export default function OrdersPage() {
                   <td style={{ ...TD, color: MID }}>{getProductDisplay(o.product)}</td>
                   <td style={TD}><Badge text={SEG_LABELS[o.segment] || o.segment} color={SEG_COLORS[o.segment] || MID} /></td>
                   <td style={{ ...TD, fontWeight: 600 }}>{o.qty.toLocaleString()}</td>
-                  <td style={{ ...TD, fontWeight: 700 }}>{fmt(o.saleValue)}</td>
-                  <td style={TD}>
+                  {showFinancials && <td style={{ ...TD, fontWeight: 700 }}>{fmt(o.saleValue)}</td>}
+                  {showFinancials && <td style={TD}>
                     <span style={{ fontWeight: 700, color: mc, background: mc + "18", padding: "2px 7px", borderRadius: 20, fontSize: 11 }}>{pct(marginPct)}</span>
-                  </td>
+                  </td>}
                   <td style={TD}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: stage.color, background: stage.color + "15", padding: "2px 7px", borderRadius: 20 }}>{stage.label}</span>
                   </td>
                   <td style={{ ...TD, overflow: "visible" }}>
                     <div style={{ display: "flex", gap: 4 }}>
-                      <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>
+                      {showFinancials && <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>}
                       <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>
                       <button title="View invoice" onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
                     </div>

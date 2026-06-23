@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
+import { usePermissions } from "@/context/PermissionsContext";
 import CustomSelect from "@/components/CustomSelect";
 
 import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
@@ -138,6 +139,7 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
 }
 
 export default function ClientsPage() {
+  const { showFinancials } = usePermissions();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -200,7 +202,7 @@ export default function ClientsPage() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: BLACK, color: WHITE }}>
-              {["Client", "Segment", "Total Value", "Orders", "Last Order", ""].map(h => (
+              {["Client", "Segment", ...(showFinancials ? ["Total Value"] : []), "Orders", "Last Order", ""].map(h => (
                 <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: WHITE }}>{h}</th>
               ))}
             </tr>
@@ -235,7 +237,7 @@ export default function ClientsPage() {
                   <td style={{ padding: "10px 14px" }}>
                     <Badge text={SEG_LABELS[c.segment] || c.segment} color={segColor} />
                   </td>
-                  <td style={{ padding: "10px 14px", fontWeight: 700 }}>{fmt(c.totalValue)}</td>
+                  {showFinancials && <td style={{ padding: "10px 14px", fontWeight: 700 }}>{fmt(c.totalValue)}</td>}
                   <td style={{ padding: "10px 14px", color: MID }}>{c.orderCount}</td>
                   <td style={{ padding: "10px 14px", color: MID, fontSize: 11 }}>{c.lastOrder ? c.lastOrder.slice(0, 10) : "—"}</td>
                   <td style={{ padding: "10px 14px" }}>
