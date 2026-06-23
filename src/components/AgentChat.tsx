@@ -34,7 +34,7 @@ export default function AgentChat() {
     setMessages(prev => [...prev, { role: "user", text }]);
     setLoading(true);
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("timeout")), 9000)
+      setTimeout(() => reject(new Error("timeout")), 55000)
     );
     try {
       const res = await Promise.race([
