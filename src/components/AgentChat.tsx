@@ -2,6 +2,23 @@
 
 import { useEffect, useRef, useState } from "react";
 import { WHITE } from "@/lib/tokens";
+import { createClient } from "@/lib/supabase/client";
+
+const RAILWAY = process.env.NEXT_PUBLIC_RAILWAY_AGENT_URL;
+
+async function agentFetch(path: string, options: RequestInit) {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const url = RAILWAY ? `${RAILWAY}${path}` : `/api/agent`;
+  return fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(RAILWAY && session ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+      ...(options.headers ?? {}),
+    },
+  });
+}
 
 type Message = { role: "user" | "assistant"; text: string };
 
@@ -38,9 +55,8 @@ export default function AgentChat() {
     );
     try {
       const res = await Promise.race([
-        fetch("/api/agent", {
+        agentFetch("/agent", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text }),
         }),
         timeout,
@@ -61,7 +77,7 @@ export default function AgentChat() {
   }
 
   async function clearChat() {
-    await fetch("/api/agent", { method: "DELETE" });
+    await agentFetch("/agent", { method: "DELETE", body: "{}" });
     setMessages([{ role: "assistant", text: "Fresh start. What do you need?" }]);
   }
 
