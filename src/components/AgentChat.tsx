@@ -22,6 +22,21 @@ async function agentFetch(path: string, options: RequestInit) {
 
 type Message = { role: "user" | "assistant"; text: string };
 
+const URL_RE = /(https?:\/\/[^\s]+)/g;
+
+function renderText(text: string, isUser: boolean) {
+  const parts = text.split(URL_RE);
+  return parts.map((part, i) =>
+    URL_RE.test(part) ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer" style={{
+        color: isUser ? "rgba(255,255,255,0.9)" : "#7c3aed",
+        textDecoration: "underline",
+        wordBreak: "break-all",
+      }}>{part}</a>
+    ) : part
+  );
+}
+
 export default function AgentChat() {
   const [open, setOpen] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -237,7 +252,7 @@ export default function AgentChat() {
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}>
-                  {m.text}
+                  {renderText(m.text, m.role === "user")}
                 </div>
               </div>
             ))}
