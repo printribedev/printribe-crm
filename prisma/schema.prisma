@@ -223,6 +223,16 @@ model Asset {
   @@map("assets")
 }
 
+model AgentSession {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  messages  Json     @default("[]")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("agent_sessions")
+}
+
 model UserPermission {
   id             Int      @id @default(autoincrement())
   userId         String   @unique @map("user_id")

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Sidebar from "@/components/Sidebar";
+import AgentChat from "@/components/AgentChat";
 import { BORDER, PRIMARY } from "@/lib/tokens";
 import { PermissionsProvider } from "@/context/PermissionsContext";
 
@@ -60,6 +61,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </div>
+
+      <AgentChat />
     </div>
     </PermissionsProvider>
   );
