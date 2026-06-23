@@ -3,12 +3,22 @@ import { Stage, Segment, Priority } from "@prisma/client";
 
 const STAGES: Stage[] = ["design", "sampling", "production", "qc", "dispatch", "delivered", "delivered_pending"];
 
-function genOrderId() {
+async function genOrderId(): Promise<string> {
   const now = new Date();
   const fy = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
-  const fyShort = `${String(fy).slice(2)}${String(fy + 1).slice(2)}`;
-  const rand = Math.floor(Math.random() * 9000) + 1000;
-  return `ORD/${fyShort}/${rand}`;
+  const fyShort = `${String(fy).slice(2)}-${String(fy + 1).slice(2)}`;
+
+  // Find highest serial across all orders matching PT/PI/XXX/{fyShort}
+  const orders = await prisma.order.findMany({
+    where: { id: { contains: `/${fyShort}` } },
+    select: { id: true },
+  });
+  const maxSerial = orders.reduce((max, o) => {
+    const serial = parseInt(o.id?.split("/")?.[2] ?? "0") || 0;
+    return serial > max ? serial : max;
+  }, 0);
+
+  return `PT/PI/${String(maxSerial + 1).padStart(3, "0")}/${fyShort}`;
 }
 
 export async function createOrder(data: {
@@ -33,7 +43,7 @@ export async function createOrder(data: {
 
   const order = await prisma.order.create({
     data: {
-      id: data.id ?? genOrderId(),
+      id: data.id ?? await genOrderId(),
       clientId,
       clientName: data.clientName,
       product: data.product,
