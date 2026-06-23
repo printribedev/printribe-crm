@@ -332,23 +332,22 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
   ] as [string, number, string][]).filter(([, v]) => v > 0);
   const hasCosts = costRaw.length > 0 && totalCost > 0;
 
-  // SVG layout
-  const SVG_W = 720, SVG_H = 320;
-  const ML = 90, MR = 108, MT = 30, MB = 10;
+  const SVG_W = 760, SVG_H = 420;
+  const ML = 104, MR = 12, MT = 38, MB = 16;
   const W = SVG_W - ML - MR;
   const H = SVG_H - MT - MB;
-  const NW = 12;
-  const GAP = 5;
+  const NW = 14;
+  const GAP = 8;
+  // right-side label budget (px available to the right of col3 node)
+  const RLABEL = 136;
 
-  // Global scale — account for max node-gaps in any column
   const maxGaps = Math.max(segs.length, 2, hasCosts ? costRaw.length : 0) - 1;
   const usableH = H - maxGaps * GAP;
-  const sc = (v: number) => Math.max((v / totalRev) * usableH, 2);
+  const sc = (v: number) => Math.max((v / totalRev) * usableH, 3);
 
-  // Column x positions
   const colX = hasCosts
-    ? [0, Math.round(W * 0.33), Math.round(W * 0.64), W]
-    : [0, Math.round(W * 0.45), W];
+    ? [0, Math.round(W * 0.32), Math.round(W * 0.62), W - RLABEL]
+    : [0, Math.round(W * 0.44), W - RLABEL];
 
   type SNode = { id: string; val: number; color: string; x: number; y: number; h: number };
 
@@ -378,7 +377,7 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
   ];
 
   const costNode = col2.find(n => n.id === "cost");
-  const col3 = hasCosts && costNode ? placeCol(costRaw, 3, costNode.y) : [];
+  const col3 = hasCosts && costNode ? placeCol(costRaw, hasCosts ? 3 : 2, costNode.y) : [];
 
   const all = [...col0, ...col1, ...col2, ...col3];
   const cur: Record<string, { out: number; in: number }> = {};
@@ -403,54 +402,73 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
   if (totalCost  > 0) addFlow("revenue", "cost",   totalCost,   ERROR);
   col3.forEach(n => addFlow("cost", n.id, n.val, n.color));
 
+  // Nodes tall enough to show inline labels vs. too small → legend below
+  const INLINE_MIN = 30;
+  const VALUE_MIN  = 46;
+  const col3Inline = col3.filter(n => n.h >= INLINE_MIN);
+  const col3Legend = col3.filter(n => n.h < INLINE_MIN);
+
   const LBL = { dominantBaseline: "middle" as const };
 
   return (
-    <Card style={{ padding: 16, marginTop: 12 }}>
+    <Card style={{ padding: 20, marginTop: 12 }}>
       <SectionTitle title="Revenue flow" sub={`Segment sources → gross profit & cost breakdown · ${period}`} />
       <div style={{ overflowX: "auto" }}>
-        <svg width={SVG_W} height={SVG_H} style={{ display: "block", minWidth: 480, overflow: "visible" }}>
+        <svg width={SVG_W} height={SVG_H} style={{ display: "block", minWidth: 520, overflow: "visible" }}>
           <g transform={`translate(${ML},${MT})`}>
             {/* Flows */}
-            {flows.map((f, i) => <path key={i} d={f.d} fill={f.color} opacity={0.28} />)}
+            {flows.map((f, i) => <path key={i} d={f.d} fill={f.color} opacity={0.25} />)}
             {/* Nodes */}
-            {all.map(n => <rect key={n.id} x={n.x} y={n.y} width={NW} height={n.h} fill={n.color} rx={2} />)}
+            {all.map(n => <rect key={n.id} x={n.x} y={n.y} width={NW} height={n.h} fill={n.color} rx={3} />)}
 
             {/* Col 0 — segment labels left */}
             {col0.map(n => (
               <g key={`l0${n.id}`}>
-                <text x={n.x - 7} y={n.y + n.h / 2 - (n.h > 22 ? 5 : 0)} textAnchor="end" fontSize={10} fontWeight={600} fill={INK} {...LBL}>
+                <text x={n.x - 10} y={n.y + n.h / 2 - (n.h >= VALUE_MIN ? 6 : 0)} textAnchor="end" fontSize={11} fontWeight={600} fill={INK} {...LBL}>
                   {SEG_LABELS[n.id] || n.id}
                 </text>
-                {n.h > 22 && <text x={n.x - 7} y={n.y + n.h / 2 + 8} textAnchor="end" fontSize={9} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
+                {n.h >= VALUE_MIN && <text x={n.x - 10} y={n.y + n.h / 2 + 8} textAnchor="end" fontSize={10} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
               </g>
             ))}
 
-            {/* Col 1 — revenue label above */}
-            <text x={col1[0].x + NW / 2} y={col1[0].y - 16} textAnchor="middle" fontSize={11} fontWeight={700} fill={PRIMARY}>Revenue</text>
-            <text x={col1[0].x + NW / 2} y={col1[0].y - 5}  textAnchor="middle" fontSize={9}  fill={MUTED}>{fmt(totalRev)}</text>
+            {/* Col 1 — revenue label above node */}
+            <text x={col1[0].x + NW / 2} y={col1[0].y - 20} textAnchor="middle" fontSize={12} fontWeight={700} fill={PRIMARY}>Revenue</text>
+            <text x={col1[0].x + NW / 2} y={col1[0].y - 7}  textAnchor="middle" fontSize={10} fill={MUTED}>{fmt(totalRev)}</text>
 
-            {/* Col 2 — profit/cost labels right of node */}
+            {/* Col 2 — profit / cost labels */}
             {col2.map(n => (
               <g key={`l2${n.id}`}>
-                <text x={n.x + NW + 7} y={n.y + n.h / 2 - (n.h > 22 ? 5 : 0)} fontSize={10} fontWeight={700} fill={n.color} {...LBL}>
+                <text x={n.x + NW + 10} y={n.y + n.h / 2 - (n.h >= VALUE_MIN ? 6 : 0)} fontSize={11} fontWeight={700} fill={n.color} {...LBL}>
                   {n.id === "profit" ? "Gross Profit" : "Total Cost"}
                 </text>
-                {n.h > 22 && <text x={n.x + NW + 7} y={n.y + n.h / 2 + 8} fontSize={9} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
+                {n.h >= VALUE_MIN && <text x={n.x + NW + 10} y={n.y + n.h / 2 + 8} fontSize={10} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
               </g>
             ))}
 
-            {/* Col 3 — cost item labels right */}
-            {col3.map(n => (
+            {/* Col 3 — inline labels only for bands tall enough */}
+            {col3Inline.map(n => (
               <g key={`l3${n.id}`}>
-                <text x={n.x + NW + 7} y={n.y + n.h / 2 - (n.h > 20 ? 5 : 0)} fontSize={10} fontWeight={600} fill={INK} {...LBL}>
+                <text x={n.x + NW + 10} y={n.y + n.h / 2 - (n.h >= VALUE_MIN ? 6 : 0)} fontSize={11} fontWeight={600} fill={INK} {...LBL}>
                   {n.id}
                 </text>
-                {n.h > 20 && <text x={n.x + NW + 7} y={n.y + n.h / 2 + 8} fontSize={9} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
+                {n.h >= VALUE_MIN && <text x={n.x + NW + 10} y={n.y + n.h / 2 + 8} fontSize={10} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
               </g>
             ))}
           </g>
         </svg>
+
+        {/* Legend row for cost items too small to label inline */}
+        {col3Legend.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 18px", marginTop: 8, paddingLeft: ML }}>
+            {col3Legend.map(n => (
+              <div key={n.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: n.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, color: INK, fontWeight: 600 }}>{n.id}</span>
+                <span style={{ fontSize: 11, color: MUTED }}>{fmt(n.val)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </Card>
   );
