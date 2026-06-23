@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import { usePermissions } from "@/context/PermissionsContext";
+import { ResponsiveSankey } from "@nivo/sankey";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, PieChart, Pie, Cell, LabelList,
@@ -319,9 +320,9 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
 
   const segMap: Record<string, number> = {};
   filtered.forEach(o => { segMap[o.segment] = (segMap[o.segment] || 0) + o.saleValue; });
-  const segs = Object.entries(segMap).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const segs = Object.entries(segMap).filter(([, v]) => v > 0);
 
-  const costRaw = ([
+  const costItems: [string, number, string][] = ([
     ["Fabric & Rib", filtered.reduce((s, o) => s + o.fabric + (o.ribCost || 0), 0), GOLD],
     ["Printing",     filtered.reduce((s, o) => s + o.printing, 0), ORANGE],
     ["Job Work",     filtered.reduce((s, o) => s + o.jobWork, 0), PURPLE],
@@ -330,152 +331,64 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
     ["Design",       filtered.reduce((s, o) => s + o.design, 0), PINK],
     ["Misc",         filtered.reduce((s, o) => s + o.misc, 0), MID],
   ] as [string, number, string][]).filter(([, v]) => v > 0);
-  const hasCosts = costRaw.length > 0 && totalCost > 0;
 
-  // Full-width SVG — fills the card; right margin reserved for col3 labels
-  const SVG_W = 960, SVG_H = 420;
-  const ML = 104, MR = 160, MT = 38, MB = 16;
-  const W = SVG_W - ML - MR;
-  const H = SVG_H - MT - MB;
-  const NW = 14;
-  const GAP = 8;
+  // Build nivo sankey data
+  const nodeColorMap: Record<string, string> = {
+    Revenue: PRIMARY,
+    "Gross Profit": SUCCESS,
+    "Total Cost": ERROR,
+  };
+  segs.forEach(([s]) => { nodeColorMap[s] = SEG_COLORS[s] || MID; });
+  costItems.forEach(([id,, c]) => { nodeColorMap[id] = c; });
 
-  const maxGaps = Math.max(segs.length, 2, hasCosts ? costRaw.length : 0) - 1;
-  const usableH = H - maxGaps * GAP;
-  const sc = (v: number) => Math.max((v / totalRev) * usableH, 3);
-
-  const colX = hasCosts
-    ? [0, Math.round(W * 0.30), Math.round(W * 0.58), W]
-    : [0, Math.round(W * 0.42), W];
-
-  type SNode = { id: string; val: number; color: string; x: number; y: number; h: number };
-
-  function placeCol(items: [string, number, string][], ci: number, startY?: number): SNode[] {
-    const nodes: SNode[] = [];
-    const totalH = items.reduce((s, [, v]) => s + sc(v), 0) + (items.length - 1) * GAP;
-    let y = startY !== undefined ? startY : (H - totalH) / 2;
-    for (const [id, val, color] of items) {
-      const h = sc(val);
-      nodes.push({ id, val, color, x: colX[ci], y, h });
-      y += h + GAP;
-    }
-    return nodes;
-  }
-
-  const col0 = placeCol(segs.map(([s, v]) => [s, v, SEG_COLORS[s] || MID] as [string, number, string]), 0);
-  const revH = sc(totalRev);
-  const col1: SNode[] = [{ id: "revenue", val: totalRev, color: PRIMARY, x: colX[1], y: (H - revH) / 2, h: revH }];
-
-  const profH = totalProfit > 0 ? sc(totalProfit) : 0;
-  const cosH  = totalCost > 0  ? sc(totalCost)  : 0;
-  const c2H   = profH + (profH > 0 && cosH > 0 ? GAP : 0) + cosH;
-  const c2Y   = (H - c2H) / 2;
-  const col2: SNode[] = [
-    ...(totalProfit > 0 ? [{ id: "profit", val: totalProfit, color: SUCCESS, x: colX[2], y: c2Y, h: profH }] : []),
-    ...(totalCost  > 0 ? [{ id: "cost",   val: totalCost,   color: ERROR,   x: colX[2], y: c2Y + profH + (profH > 0 ? GAP : 0), h: cosH }] : []),
+  const nodes = [
+    ...segs.map(([s]) => ({ id: s })),
+    { id: "Revenue" },
+    ...(totalProfit > 0 ? [{ id: "Gross Profit" }] : []),
+    ...(totalCost   > 0 ? [{ id: "Total Cost" }]   : []),
+    ...costItems.map(([id]) => ({ id })),
   ];
 
-  const costNode = col2.find(n => n.id === "cost");
-  const col3 = hasCosts && costNode ? placeCol(costRaw, 3, costNode.y) : [];
-
-  const all = [...col0, ...col1, ...col2, ...col3];
-  const cur: Record<string, { out: number; in: number }> = {};
-  all.forEach(n => { cur[n.id] = { out: n.y, in: n.y }; });
-
-  const flows: { d: string; color: string }[] = [];
-  function addFlow(srcId: string, tgtId: string, val: number, color: string) {
-    if (val <= 0) return;
-    const src = all.find(n => n.id === srcId);
-    const tgt = all.find(n => n.id === tgtId);
-    if (!src || !tgt) return;
-    const h = sc(val);
-    const mx = (src.x + NW + tgt.x) / 2;
-    const [ot, it] = [cur[srcId].out, cur[tgtId].in];
-    flows.push({ color, d: `M${src.x+NW},${ot} C${mx},${ot} ${mx},${it} ${tgt.x},${it} L${tgt.x},${it+h} C${mx},${it+h} ${mx},${ot+h} ${src.x+NW},${ot+h} Z` });
-    cur[srcId].out += h;
-    cur[tgtId].in  += h;
-  }
-
-  col0.forEach(n => addFlow(n.id, "revenue", n.val, n.color));
-  if (totalProfit > 0) addFlow("revenue", "profit", totalProfit, SUCCESS);
-  if (totalCost  > 0) addFlow("revenue", "cost",   totalCost,   ERROR);
-  col3.forEach(n => addFlow("cost", n.id, n.val, n.color));
-
-  // Build non-overlapping label positions for ALL col3 nodes
-  const MIN_LABEL_STEP = 16;
-  const col3LabelY: number[] = [];
-  let lastY = -999;
-  for (const n of col3) {
-    const ideal = n.y + n.h / 2;
-    const placed = Math.max(ideal, lastY + MIN_LABEL_STEP);
-    col3LabelY.push(placed);
-    lastY = placed;
-  }
-
-  const VALUE_MIN = 46;
-  const LBL = { dominantBaseline: "middle" as const };
+  const links = [
+    ...segs.map(([s, v]) => ({ source: s, target: "Revenue", value: Math.round(v) })),
+    ...(totalProfit > 0 ? [{ source: "Revenue", target: "Gross Profit", value: Math.round(totalProfit) }] : []),
+    ...(totalCost   > 0 ? [{ source: "Revenue", target: "Total Cost",   value: Math.round(totalCost)   }] : []),
+    ...costItems.map(([id, v]) => ({ source: "Total Cost", target: id, value: Math.round(v) })),
+  ];
 
   return (
     <Card style={{ padding: 20, marginTop: 12 }}>
       <SectionTitle title="Revenue flow" sub={`Segment sources → gross profit & cost breakdown · ${period}`} />
-      <div style={{ overflowX: "auto" }}>
-        <svg width="100%" viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ display: "block", minWidth: 560 }}>
-          <g transform={`translate(${ML},${MT})`}>
-            {/* Flows */}
-            {flows.map((f, i) => <path key={i} d={f.d} fill={f.color} opacity={0.25} />)}
-            {/* Nodes */}
-            {all.map(n => <rect key={n.id} x={n.x} y={n.y} width={NW} height={n.h} fill={n.color} rx={3} />)}
-
-            {/* Col 0 — segment labels left */}
-            {col0.map(n => (
-              <g key={`l0${n.id}`}>
-                <text x={n.x - 10} y={n.y + n.h / 2 - (n.h >= VALUE_MIN ? 6 : 0)} textAnchor="end" fontSize={11} fontWeight={600} fill={INK} {...LBL}>
-                  {SEG_LABELS[n.id] || n.id}
-                </text>
-                {n.h >= VALUE_MIN && <text x={n.x - 10} y={n.y + n.h / 2 + 8} textAnchor="end" fontSize={10} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
-              </g>
-            ))}
-
-            {/* Col 1 — revenue label above node */}
-            <text x={col1[0].x + NW / 2} y={col1[0].y - 20} textAnchor="middle" fontSize={12} fontWeight={700} fill={PRIMARY}>Revenue</text>
-            <text x={col1[0].x + NW / 2} y={col1[0].y - 7}  textAnchor="middle" fontSize={10} fill={MUTED}>{fmt(totalRev)}</text>
-
-            {/* Col 2 — profit / cost labels */}
-            {col2.map(n => (
-              <g key={`l2${n.id}`}>
-                <text x={n.x + NW + 10} y={n.y + n.h / 2 - (n.h >= VALUE_MIN ? 6 : 0)} fontSize={11} fontWeight={700} fill={n.color} {...LBL}>
-                  {n.id === "profit" ? "Gross Profit" : "Total Cost"}
-                </text>
-                {n.h >= VALUE_MIN && <text x={n.x + NW + 10} y={n.y + n.h / 2 + 8} fontSize={10} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
-              </g>
-            ))}
-
-            {/* Col 3 — all cost items with staggered labels + leader lines for tiny nodes */}
-            {col3.map((n, i) => {
-              const lx = n.x + NW + 10;
-              const nodeCenter = n.y + n.h / 2;
-              const ly = col3LabelY[i];
-              const needsLeader = Math.abs(ly - nodeCenter) > 4;
-              return (
-                <g key={`l3${n.id}`}>
-                  {needsLeader && (
-                    <line
-                      x1={n.x + NW + 4} y1={nodeCenter}
-                      x2={lx - 2}        y2={ly}
-                      stroke={BORDER} strokeWidth={0.8}
-                    />
-                  )}
-                  <text x={lx} y={ly - (n.h >= VALUE_MIN ? 6 : 0)} fontSize={11} fontWeight={600} fill={INK} {...LBL}>
-                    {n.id}
-                  </text>
-                  <text x={lx} y={ly + (n.h >= VALUE_MIN ? 8 : 12)} fontSize={10} fill={MUTED} {...LBL}>
-                    {fmt(n.val)}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        </svg>
+      <div style={{ height: 420 }}>
+        <ResponsiveSankey
+          data={{ nodes, links }}
+          margin={{ top: 10, right: 180, bottom: 10, left: 180 }}
+          align="justify"
+          colors={node => nodeColorMap[node.id] ?? MID}
+          nodeOpacity={1}
+          nodeThickness={14}
+          nodeInnerPadding={3}
+          nodeSpacing={10}
+          nodeBorderWidth={0}
+          nodeBorderRadius={3}
+          linkOpacity={0.25}
+          linkHoverOpacity={0.5}
+          linkContract={2}
+          enableLinkGradient
+          labelPosition="outside"
+          labelOrientation="horizontal"
+          labelPadding={14}
+          labelTextColor={INK}
+          tooltip={({ node }) => (
+            <div style={{
+              background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8,
+              padding: "8px 12px", fontSize: 12, boxShadow: SHADOW_MD,
+            }}>
+              <span style={{ fontWeight: 700, color: nodeColorMap[node.id] ?? INK }}>{node.id}</span>
+              <span style={{ color: MUTED, marginLeft: 8 }}>{fmt(node.value)}</span>
+            </div>
+          )}
+        />
       </div>
     </Card>
   );
