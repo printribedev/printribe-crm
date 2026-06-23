@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePermissions } from "@/context/PermissionsContext";
 
 import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
@@ -32,6 +33,7 @@ type LineItem = { productId: number | ""; qty: number; unitPrice: number };
 const BLANK_LINE: LineItem = { productId: "", qty: 0, unitPrice: 0 };
 
 export default function QuotesPage() {
+  const { canDo } = usePermissions();
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [clientId, setClientId] = useState<number | "">("");
@@ -224,12 +226,14 @@ export default function QuotesPage() {
           <button onClick={reset} style={{ fontSize: 12, padding: "7px 14px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>
             Reset
           </button>
-          <button
-            disabled={!selectedClient || totalSaleValue === 0 || generating}
-            onClick={generateProforma}
-            style={{ fontSize: 12, padding: "7px 16px", borderRadius: BTN_RADIUS, border: "none", background: (!selectedClient || totalSaleValue === 0) ? BORDER : BLUE, color: WHITE, cursor: (!selectedClient || totalSaleValue === 0) ? "default" : "pointer", fontWeight: 700 }}>
-            {generating ? "Saving…" : "Generate Proforma →"}
-          </button>
+          {canDo("quotes", "create") && (
+            <button
+              disabled={!selectedClient || totalSaleValue === 0 || generating}
+              onClick={generateProforma}
+              style={{ fontSize: 12, padding: "7px 16px", borderRadius: BTN_RADIUS, border: "none", background: (!selectedClient || totalSaleValue === 0) ? BORDER : BLUE, color: WHITE, cursor: (!selectedClient || totalSaleValue === 0) ? "default" : "pointer", fontWeight: 700 }}>
+              {generating ? "Saving…" : "Generate Proforma →"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -466,10 +470,12 @@ export default function QuotesPage() {
                     style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>
                     View
                   </button>
-                  <button onClick={() => editProforma(p)}
-                    style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: BLACK, cursor: "pointer", fontWeight: 600 }}>
-                    Edit
-                  </button>
+                  {canDo("quotes", "edit") && (
+                    <button onClick={() => editProforma(p)}
+                      style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: BLACK, cursor: "pointer", fontWeight: 600 }}>
+                      Edit
+                    </button>
+                  )}
                   {p.orderId ? (
                     <button onClick={() => convertToOrder(p)}
                       title={`Order ${p.orderId} created`}
@@ -482,7 +488,7 @@ export default function QuotesPage() {
                       → Order
                     </button>
                   )}
-                  {deleteConfirm === p.id ? (
+                  {canDo("quotes", "delete") && (deleteConfirm === p.id ? (
                     <>
                       <button onClick={() => deleteProforma(p.id)}
                         style={{ fontSize: 11, padding: "5px 10px", borderRadius: BTN_RADIUS, border: "none", background: R, color: WHITE, cursor: "pointer", fontWeight: 700 }}>
@@ -498,7 +504,7 @@ export default function QuotesPage() {
                       style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>
                       Delete
                     </button>
-                  )}
+                  ))}
                 </div>
               </div>
             ))}

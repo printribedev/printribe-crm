@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import { createClient } from "@/lib/supabase/client";
+import { usePermissions } from "@/context/PermissionsContext";
 
 import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
@@ -213,6 +214,7 @@ function EditModal({ asset, onClose, onSaved }: { asset: Asset; onClose: () => v
 type ProductWithImage = { id: number; name: string; category: string; imagePath: string | null };
 
 export default function AssetsPage() {
+  const { canDo } = usePermissions();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [products, setProducts] = useState<ProductWithImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -280,7 +282,7 @@ export default function AssetsPage() {
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Asset Library</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{assets.length} files · {productsWithImages.length} product images</div>
         </div>
-        {tab === "assets" && (
+        {tab === "assets" && canDo("assets", "create") && (
           <button onClick={() => setShowUpload(true)} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
             + Add asset
           </button>
@@ -378,14 +380,18 @@ export default function AssetsPage() {
                   {downloading === a.id ? "Opening…" : "↓ Download"}
                 </button>
               )}
-              <button onClick={() => setEditAsset(a)}
-                style={{ fontSize: 11, fontWeight: 600, padding: "7px 14px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
-                Edit
-              </button>
-              <button onClick={() => handleDelete(a)}
-                style={{ fontSize: 11, fontWeight: 600, padding: "7px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: R, cursor: "pointer" }}>
-                ✕
-              </button>
+              {canDo("assets", "edit") && (
+                <button onClick={() => setEditAsset(a)}
+                  style={{ fontSize: 11, fontWeight: 600, padding: "7px 14px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
+                  Edit
+                </button>
+              )}
+              {canDo("assets", "delete") && (
+                <button onClick={() => handleDelete(a)}
+                  style={{ fontSize: 11, fontWeight: 600, padding: "7px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: R, cursor: "pointer" }}>
+                  ✕
+                </button>
+              )}
             </div>
           </div>
         ))}

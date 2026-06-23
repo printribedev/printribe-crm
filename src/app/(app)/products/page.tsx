@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import CustomSelect from "@/components/CustomSelect";
 import { createClient } from "@/lib/supabase/client";
+import { usePermissions } from "@/context/PermissionsContext";
 
 import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
@@ -348,6 +349,7 @@ function DetailPopup({ product, onEdit, onClose }: { product: Product; onEdit: (
 
 
 export default function ProductsPage() {
+  const { canDo } = usePermissions();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -392,9 +394,11 @@ export default function ProductsPage() {
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Products</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{products.length} products in catalog</div>
         </div>
-        <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
-          + Add product
-        </button>
+        {canDo("products", "create") && (
+          <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
+            + Add product
+          </button>
+        )}
       </div>
 
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products by name, category…"
@@ -445,10 +449,12 @@ export default function ProductsPage() {
                       </span>
                     </td>
                     <td style={{ padding: "10px 14px" }}>
-                      <button
-                        onClick={e => { e.stopPropagation(); setEditModal(p); }}
-                        style={{ padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}
-                      >Edit</button>
+                      {canDo("products", "edit") && (
+                        <button
+                          onClick={e => { e.stopPropagation(); setEditModal(p); }}
+                          style={{ padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}
+                        >Edit</button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -473,7 +479,7 @@ export default function ProductsPage() {
           product={editModal}
           onSave={handleSave}
           onClose={() => setEditModal(null)}
-          onDelete={editModal.id ? () => handleDelete(editModal.id!) : undefined}
+          onDelete={editModal.id && canDo("products", "delete") ? () => handleDelete(editModal.id!) : undefined}
         />
       )}
     </div>

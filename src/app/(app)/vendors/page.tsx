@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import CustomSelect from "@/components/CustomSelect";
+import { usePermissions } from "@/context/PermissionsContext";
 
 import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
@@ -109,6 +110,7 @@ function Modal({ vendor, onSave, onClose, onDelete }: {
 }
 
 export default function VendorsPage() {
+  const { canDo } = usePermissions();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<Partial<Vendor> | null>(null);
@@ -155,9 +157,11 @@ export default function VendorsPage() {
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK, letterSpacing: "-0.01em" }}>Vendors</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{vendors.length} suppliers · {fmt(total)} total purchased</div>
         </div>
-        <button onClick={() => setModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
-          + Add vendor
-        </button>
+        {canDo("vendors", "create") && (
+          <button onClick={() => setModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
+            + Add vendor
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -188,9 +192,11 @@ export default function VendorsPage() {
                   <span style={{ fontSize: 11, fontWeight: 600, color: REL_COLOR[v.reliability] }}>{v.reliability}</span>
                 </td>
                 <td style={{ padding: "12px 14px" }}>
-                  <button onClick={() => setModal(v)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}>
-                    Edit
-                  </button>
+                  {canDo("vendors", "edit") && (
+                    <button onClick={() => setModal(v)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}>
+                      Edit
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -226,7 +232,7 @@ export default function VendorsPage() {
           vendor={modal}
           onSave={handleSave}
           onClose={() => setModal(null)}
-          onDelete={modal.id ? () => handleDelete(modal.id!) : undefined}
+          onDelete={modal.id && canDo("vendors", "delete") ? () => handleDelete(modal.id!) : undefined}
         />
       )}
       {saving && (

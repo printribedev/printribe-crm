@@ -139,7 +139,7 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
 }
 
 export default function ClientsPage() {
-  const { showFinancials } = usePermissions();
+  const { showFinancials, canDo } = usePermissions();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -189,9 +189,11 @@ export default function ClientsPage() {
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK, letterSpacing: "-0.01em" }}>Clients</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{clients.length} clients · Click a card to expand details</div>
         </div>
-        <button onClick={() => { setDeleteError(""); setModal({}); }} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
-          + Add client
-        </button>
+        {canDo("clients", "create") && (
+          <button onClick={() => { setDeleteError(""); setModal({}); }} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
+            + Add client
+          </button>
+        )}
       </div>
 
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search clients by name, segment, city…"
@@ -241,10 +243,12 @@ export default function ClientsPage() {
                   <td style={{ padding: "10px 14px", color: MID }}>{c.orderCount}</td>
                   <td style={{ padding: "10px 14px", color: MID, fontSize: 11 }}>{c.lastOrder ? c.lastOrder.slice(0, 10) : "—"}</td>
                   <td style={{ padding: "10px 14px" }}>
-                    <button
-                      onClick={e => { e.stopPropagation(); setDeleteError(""); setModal(c); }}
-                      style={{ padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}
-                    >Edit</button>
+                    {canDo("clients", "edit") && (
+                      <button
+                        onClick={e => { e.stopPropagation(); setDeleteError(""); setModal(c); }}
+                        style={{ padding: "4px 10px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", fontSize: 11, color: MID }}
+                      >Edit</button>
+                    )}
                   </td>
                 </tr>
               );
@@ -263,7 +267,7 @@ export default function ClientsPage() {
           client={modal}
           onSave={handleSave}
           onClose={() => setModal(null)}
-          onDelete={modal.id ? () => handleDelete(modal.id!) : undefined}
+          onDelete={modal.id && canDo("clients", "delete") ? () => handleDelete(modal.id!) : undefined}
           deleteError={deleteError}
         />
       )}

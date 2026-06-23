@@ -719,7 +719,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
 }
 
 export default function OrdersPage() {
-  const { showFinancials } = usePermissions();
+  const { showFinancials, canDo } = usePermissions();
   const [orders, setOrders] = useState<Order[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [catalogProducts, setCatalogProducts] = useState<CatalogProduct[]>([]);
@@ -809,9 +809,11 @@ export default function OrdersPage() {
           <div style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em", color: BLACK }}>Orders</div>
           <div style={{ fontSize: 12, color: MID, marginTop: 3 }}>{orders.length} orders · Click Cost to see job costing</div>
         </div>
-        <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
-          + New order
-        </button>
+        {canDo("orders", "create") && (
+          <button onClick={() => setEditModal({})} style={{ fontSize: 12, fontWeight: 600, padding: "8px 16px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer" }}>
+            + New order
+          </button>
+        )}
       </div>
 
       <DateFilterBar filter={dateFilter} onChange={setDateFilter} />
@@ -881,7 +883,7 @@ export default function OrdersPage() {
                   <td style={{ ...TD, overflow: "visible" }}>
                     <div style={{ display: "flex", gap: 4 }}>
                       {showFinancials && <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>}
-                      <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>
+                      {canDo("orders", "edit") && <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>}
                       <button title="View invoice" onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
                     </div>
                   </td>
@@ -907,7 +909,7 @@ export default function OrdersPage() {
           allOrders={orders}
           onSave={handleSave}
           onClose={() => setEditModal(null)}
-          onDelete={editModal.id ? () => handleDelete(editModal.id!) : undefined}
+          onDelete={editModal.id && canDo("orders", "delete") ? () => handleDelete(editModal.id!) : undefined}
         />
       )}
     </div>

@@ -7,7 +7,11 @@ import { PRIMARY, BORDER, SURFACE, WHITE, INK, MID, SUCCESS, ERROR, R_MD, R_SM, 
 
 const SECTION_KEYS = ["dashboard", "orders", "production", "products", "clients", "vendors", "assets", "quotes"] as const;
 type SectionKey = typeof SECTION_KEYS[number];
-type Sections = Record<SectionKey, boolean>;
+type Sections = Record<string, boolean>;
+
+const CRUD_SECTIONS = ["orders", "clients", "products", "vendors", "assets", "quotes"] as const;
+type CrudSection = typeof CRUD_SECTIONS[number];
+const CRUD_ACTIONS = ["create", "edit", "delete"] as const;
 
 type UserPerm = {
   id: number;
@@ -61,7 +65,7 @@ export default function AdminPage() {
     setCreating(false);
   }
 
-  async function toggleSection(userId: string, key: SectionKey, value: boolean) {
+  async function toggleSection(userId: string, key: string, value: boolean) {
     const user = users.find(u => u.userId === userId);
     if (!user) return;
     const sections = { ...user.sections, [key]: value };
@@ -175,21 +179,42 @@ export default function AdminPage() {
 
                 {/* Sections */}
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 10, color: MUTED, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Sections</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  <div style={{ fontSize: 10, color: MUTED, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Sections & Permissions</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     {SECTION_KEYS.map(key => {
                       const enabled = u.sections?.[key] !== false;
+                      const hasCrud = (CRUD_SECTIONS as readonly string[]).includes(key);
                       return (
-                        <button key={key} onClick={() => toggleSection(u.userId, key, !enabled)}
-                          style={{
-                            fontSize: 11, padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontWeight: 600,
-                            border: `1px solid ${enabled ? PRIMARY : BORDER}`,
-                            background: enabled ? PRIMARY + "15" : SURFACE,
-                            color: enabled ? PRIMARY : MID,
-                            textTransform: "capitalize",
-                          }}>
-                          {enabled ? "✓ " : ""}{key}
-                        </button>
+                        <div key={key} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          {/* View toggle */}
+                          <button onClick={() => toggleSection(u.userId, key, !enabled)}
+                            style={{
+                              fontSize: 11, padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontWeight: 600,
+                              border: `1px solid ${enabled ? PRIMARY : BORDER}`,
+                              background: enabled ? PRIMARY + "15" : SURFACE,
+                              color: enabled ? PRIMARY : MID,
+                              textTransform: "capitalize", minWidth: 90,
+                            }}>
+                            {enabled ? "✓ " : ""}{key === "quotes" ? "Quotes" : key.charAt(0).toUpperCase() + key.slice(1)}
+                          </button>
+                          {/* C/E/D sub-toggles — only shown when view is enabled */}
+                          {hasCrud && enabled && CRUD_ACTIONS.map(action => {
+                            const crudKey = `${key}.${action}`;
+                            const crudEnabled = u.sections?.[crudKey] !== false;
+                            return (
+                              <button key={action} onClick={() => toggleSection(u.userId, crudKey, !crudEnabled)}
+                                style={{
+                                  fontSize: 10, padding: "3px 8px", borderRadius: 20, cursor: "pointer", fontWeight: 600,
+                                  border: `1px solid ${crudEnabled ? SUCCESS : BORDER}`,
+                                  background: crudEnabled ? SUCCESS + "15" : SURFACE,
+                                  color: crudEnabled ? SUCCESS : MID,
+                                  textTransform: "capitalize",
+                                }}>
+                                {crudEnabled ? "✓ " : ""}{action}
+                              </button>
+                            );
+                          })}
+                        </div>
                       );
                     })}
                   </div>

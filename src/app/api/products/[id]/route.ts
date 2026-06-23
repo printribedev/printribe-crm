@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { checkPerm } from "@/lib/permissions";
 
 async function requireAuth() {
   const supabase = await createClient();
@@ -11,6 +12,7 @@ async function requireAuth() {
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await checkPerm(user.id, "products", "edit")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   const body = await req.json();
@@ -38,6 +40,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await checkPerm(user.id, "products", "delete")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   await prisma.product.delete({ where: { id: parseInt(id) } });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { AssetType, ClientType, AssetFormat } from "@prisma/client";
+import { checkPerm } from "@/lib/permissions";
 
 async function requireAuth() {
   const supabase = await createClient();
@@ -20,6 +21,7 @@ export async function GET() {
 export async function POST(req: Request) {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!await checkPerm(user.id, "assets", "create")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
   const asset = await prisma.asset.create({
