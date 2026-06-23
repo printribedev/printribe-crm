@@ -379,15 +379,6 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
           labelOrientation="horizontal"
           labelPadding={14}
           labelTextColor={INK}
-          tooltip={({ node }) => (
-            <div style={{
-              background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8,
-              padding: "8px 12px", fontSize: 12, boxShadow: SHADOW_MD,
-            }}>
-              <span style={{ fontWeight: 700, color: nodeColorMap[node.id] ?? INK }}>{node.id}</span>
-              <span style={{ color: MUTED, marginLeft: 8 }}>{fmt(node.value)}</span>
-            </div>
-          )}
         />
       </div>
     </Card>
