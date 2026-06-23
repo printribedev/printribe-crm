@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PRIMARY, WHITE, BORDER, INK, MUTED, MID, SURFACE, SHADOW_MD, R_MD, R_SM } from "@/lib/tokens";
+import { WHITE } from "@/lib/tokens";
 
 type Message = { role: "user" | "assistant"; text: string };
 
-const BRAND = "#EE3C30";
-
 export default function AgentChat() {
-  const [open, setOpen]       = useState(() => {
+  const [open, setOpen] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem("agent_open") === "true";
   });
@@ -71,12 +69,14 @@ export default function AgentChat() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   }
 
+  const isWelcome = messages.length === 1 && messages[0].role === "assistant";
+
   return (
     <>
       {/* Floating button */}
       <button
         onClick={() => setOpen(o => !o)}
-        aria-label="Open AI assistant"
+        aria-label="Open Harvey AI assistant"
         style={{
           position: "fixed", bottom: 24, right: 24, zIndex: 1000,
           width: 56, height: 56, borderRadius: "50%",
@@ -97,7 +97,6 @@ export default function AgentChat() {
         onMouseDown={e => (e.currentTarget.style.transform = "scale(0.95)")}
         onMouseUp={e => (e.currentTarget.style.transform = "scale(1.1)")}
       >
-        {/* Outer glow ring */}
         {!open && (
           <span style={{
             position: "absolute", inset: -3, borderRadius: "50%",
@@ -106,21 +105,15 @@ export default function AgentChat() {
             pointerEvents: "none",
           }} />
         )}
-
         {open ? (
-          /* Close X */
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth="2.5" strokeLinecap="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         ) : (
-          /* Futuristic AI icon */
           <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-            {/* Orbit ring */}
             <ellipse cx="13" cy="13" rx="11" ry="5.5" stroke={WHITE} strokeWidth="1" opacity="0.3" transform="rotate(-30 13 13)"/>
             <ellipse cx="13" cy="13" rx="11" ry="5.5" stroke={WHITE} strokeWidth="1" opacity="0.2" transform="rotate(30 13 13)"/>
-            {/* Central 4-point star */}
             <path d="M13 5 L14.2 11 L20 12 L14.2 13 L13 19 L11.8 13 L6 12 L11.8 11 Z" fill={WHITE} opacity="0.95"/>
-            {/* Accent dot top-right */}
             <circle cx="20" cy="6" r="1.5" fill={WHITE} opacity="0.6"/>
           </svg>
         )}
@@ -130,43 +123,101 @@ export default function AgentChat() {
       {open && (
         <div style={{
           position: "fixed", bottom: 88, right: 24, zIndex: 999,
-          width: 380, height: 520,
-          background: WHITE, borderRadius: R_MD,
-          border: `1px solid ${BORDER}`, boxShadow: SHADOW_MD,
+          width: 380, height: 580,
+          background: "rgba(255, 255, 255, 0.72)",
+          backdropFilter: "blur(28px)",
+          WebkitBackdropFilter: "blur(28px)",
+          borderRadius: 28,
+          border: "1px solid rgba(255, 255, 255, 0.65)",
+          boxShadow: "0 8px 48px rgba(124,58,237,0.18), 0 2px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
           display: "flex", flexDirection: "column", overflow: "hidden",
         }}>
+
           {/* Header */}
           <div style={{
-            padding: "12px 16px", borderBottom: `1px solid ${BORDER}`,
+            padding: "14px 16px 12px",
+            borderBottom: "1px solid rgba(124,58,237,0.08)",
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            background: "linear-gradient(135deg, #a259ff 0%, #7c3aed 60%, #4f46e5 100%)",
+            background: "rgba(255,255,255,0.45)",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 38, height: 38, borderRadius: "50%",
+                background: "linear-gradient(135deg, #c084fc 0%, #7c3aed 50%, #4f46e5 100%)",
+                boxShadow: "0 2px 14px rgba(124,58,237,0.45)",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
+                <svg width="16" height="16" viewBox="0 0 26 26" fill="none">
+                  <path d="M13 5 L14.2 11 L20 12 L14.2 13 L13 19 L11.8 13 L6 12 L11.8 11 Z" fill={WHITE} opacity="0.95"/>
+                </svg>
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: WHITE }}>Harvey</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)" }}>Your Printribe AI</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#3b1fa8", letterSpacing: "-0.01em" }}>Harvey</div>
+                <div style={{ fontSize: 10, color: "#7c3aed", opacity: 0.65, marginTop: 1 }}>Your Printribe AI</div>
               </div>
             </div>
-            <button onClick={clearChat} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: R_SM, padding: "4px 10px", color: WHITE, fontSize: 11, cursor: "pointer", fontWeight: 600 }}>
+            <button onClick={clearChat} style={{
+              background: "rgba(124,58,237,0.07)",
+              border: "1px solid rgba(124,58,237,0.15)",
+              borderRadius: 20, padding: "5px 13px",
+              color: "#7c3aed", fontSize: 11, cursor: "pointer", fontWeight: 600,
+              transition: "background 0.15s",
+            }}>
               Clear
             </button>
           </div>
 
           {/* Messages */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
-            {messages.map((m, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+
+            {/* Welcome / empty state */}
+            {isWelcome && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, padding: "8px 16px 16px" }}>
                 <div style={{
-                  maxWidth: "82%",
-                  padding: "9px 13px",
-                  borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                  background: m.role === "user" ? "#7c3aed" : SURFACE,
-                  color: m.role === "user" ? WHITE : INK,
+                  width: 88, height: 88, borderRadius: "50%",
+                  background: "radial-gradient(circle at 38% 32%, #c084fc 0%, #7c3aed 55%, #4338ca 100%)",
+                  boxShadow: "0 0 0 12px rgba(124,58,237,0.07), 0 0 48px rgba(124,58,237,0.35), 0 0 90px rgba(162,89,255,0.18)",
+                  animation: "orb-float 3.5s ease-in-out infinite",
+                  marginBottom: 24,
+                  flexShrink: 0,
+                }} />
+                <p style={{ fontSize: 13, color: "#4c1d95", textAlign: "center", lineHeight: 1.7, margin: 0, opacity: 0.85 }}>
+                  {messages[0].text}
+                </p>
+              </div>
+            )}
+
+            {/* Conversation messages */}
+            {!isWelcome && messages.map((m, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 8 }}>
+                {m.role === "assistant" && (
+                  <div style={{
+                    width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+                    background: "linear-gradient(135deg, #c084fc, #4f46e5)",
+                    boxShadow: "0 2px 8px rgba(124,58,237,0.3)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <svg width="10" height="10" viewBox="0 0 26 26" fill="none">
+                      <path d="M13 5 L14.2 11 L20 12 L14.2 13 L13 19 L11.8 13 L6 12 L11.8 11 Z" fill={WHITE}/>
+                    </svg>
+                  </div>
+                )}
+                <div style={{
+                  maxWidth: "74%",
+                  padding: "10px 14px",
+                  borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                  background: m.role === "user"
+                    ? "linear-gradient(135deg, #a259ff 0%, #7c3aed 100%)"
+                    : "rgba(255,255,255,0.82)",
+                  backdropFilter: m.role === "assistant" ? "blur(8px)" : "none",
+                  WebkitBackdropFilter: m.role === "assistant" ? "blur(8px)" : "none",
+                  border: m.role === "assistant" ? "1px solid rgba(124,58,237,0.1)" : "none",
+                  boxShadow: m.role === "user"
+                    ? "0 3px 14px rgba(124,58,237,0.35)"
+                    : "0 2px 8px rgba(0,0,0,0.05)",
+                  color: m.role === "user" ? WHITE : "#1e1b4b",
                   fontSize: 13,
-                  lineHeight: 1.55,
+                  lineHeight: 1.6,
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}>
@@ -177,11 +228,28 @@ export default function AgentChat() {
 
             {/* Typing indicator */}
             {loading && (
-              <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                <div style={{ padding: "10px 14px", borderRadius: "16px 16px 16px 4px", background: SURFACE, display: "flex", gap: 5, alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+                  background: "linear-gradient(135deg, #c084fc, #4f46e5)",
+                  boxShadow: "0 2px 8px rgba(124,58,237,0.3)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <svg width="10" height="10" viewBox="0 0 26 26" fill="none">
+                    <path d="M13 5 L14.2 11 L20 12 L14.2 13 L13 19 L11.8 13 L6 12 L11.8 11 Z" fill={WHITE}/>
+                  </svg>
+                </div>
+                <div style={{
+                  padding: "11px 16px", borderRadius: "18px 18px 18px 4px",
+                  background: "rgba(255,255,255,0.82)",
+                  border: "1px solid rgba(124,58,237,0.1)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                  display: "flex", gap: 5, alignItems: "center",
+                }}>
                   {[0, 1, 2].map(i => (
                     <div key={i} style={{
-                      width: 7, height: 7, borderRadius: "50%", background: MID,
+                      width: 6, height: 6, borderRadius: "50%",
+                      background: "linear-gradient(135deg, #a259ff, #7c3aed)",
                       animation: "bounce 1.2s ease-in-out infinite",
                       animationDelay: `${i * 0.2}s`,
                     }} />
@@ -193,33 +261,55 @@ export default function AgentChat() {
           </div>
 
           {/* Input */}
-          <div style={{ padding: "10px 12px", borderTop: `1px solid ${BORDER}`, display: "flex", gap: 8 }}>
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={onKey}
-              placeholder="Ask anything about your business…"
-              disabled={loading}
-              style={{
-                flex: 1, padding: "9px 12px", borderRadius: 20,
-                border: `1px solid ${BORDER}`, fontSize: 13, outline: "none",
-                background: loading ? SURFACE : WHITE, color: INK,
-              }}
-            />
-            <button
-              onClick={send}
-              disabled={loading || !input.trim()}
-              style={{
-                width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-                background: loading || !input.trim() ? BORDER : "#7c3aed",
-                border: "none", cursor: loading || !input.trim() ? "default" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "background 0.15s",
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
+          <div style={{
+            padding: "10px 14px 18px",
+            background: "rgba(255,255,255,0.4)",
+            borderTop: "1px solid rgba(124,58,237,0.07)",
+          }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: "rgba(255,255,255,0.88)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(124,58,237,0.18)",
+              borderRadius: 30,
+              padding: "6px 6px 6px 16px",
+              boxShadow: "0 2px 14px rgba(124,58,237,0.1), inset 0 1px 0 rgba(255,255,255,0.9)",
+            }}>
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={onKey}
+                placeholder="Ask Harvey anything…"
+                disabled={loading}
+                style={{
+                  flex: 1, border: "none", outline: "none",
+                  fontSize: 13, background: "transparent",
+                  color: "#1e1b4b", padding: "5px 0",
+                }}
+              />
+              <button
+                onClick={send}
+                disabled={loading || !input.trim()}
+                style={{
+                  width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                  background: loading || !input.trim()
+                    ? "rgba(124,58,237,0.12)"
+                    : "linear-gradient(135deg, #a259ff 0%, #7c3aed 100%)",
+                  border: "none",
+                  cursor: loading || !input.trim() ? "default" : "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.15s",
+                  boxShadow: loading || !input.trim() ? "none" : "0 2px 10px rgba(124,58,237,0.45)",
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={WHITE} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -227,12 +317,16 @@ export default function AgentChat() {
       <style>{`
         @keyframes bounce {
           0%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-6px); }
+          40% { transform: translateY(-5px); }
         }
         @keyframes ring-pulse {
           0% { transform: scale(1); opacity: 0.7; }
           70% { transform: scale(1.55); opacity: 0; }
           100% { transform: scale(1.55); opacity: 0; }
+        }
+        @keyframes orb-float {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-10px) scale(1.04); }
         }
       `}</style>
     </>
