@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "Invoice Template"]
+  "exclude": ["node_modules", "Invoice Template", "agent-server.ts"]
 }
