@@ -787,6 +787,11 @@ export default function DashboardPage() {
             tooltipStyle={tooltipStyle}
           />
         )}
+
+        {/* Sankey revenue flow */}
+        {showFinancials && filtered.length > 0 && (
+          <SankeyCard filtered={filtered} period={period} fmt={fmt} />
+        )}
       </div>
     </div>
   );
