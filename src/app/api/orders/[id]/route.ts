@@ -9,6 +9,29 @@ async function requireAuth() {
   return user;
 }
 
+function serializeOrder(o: Record<string, unknown>) {
+  return {
+    ...o,
+    saleValue: Number(o.saleValue), gst: Number(o.gst),
+    fabric: Number(o.fabric), printing: Number(o.printing),
+    transport: Number(o.transport), misc: Number(o.misc),
+    jobWork: Number(o.jobWork), packaging: Number(o.packaging),
+    design: Number(o.design), ribCost: Number(o.ribCost ?? 0),
+    fabricWeightPerPc: o.fabricWeightPerPc != null ? Number(o.fabricWeightPerPc) : null,
+    fabricPricePerKg: o.fabricPricePerKg != null ? Number(o.fabricPricePerKg) : null,
+    ribWeightPerPc: o.ribWeightPerPc != null ? Number(o.ribWeightPerPc) : null,
+    ribPricePerKg: o.ribPricePerKg != null ? Number(o.ribPricePerKg) : null,
+  };
+}
+
+function stripLineFinancials(product: string): string {
+  try {
+    const lines = JSON.parse(product);
+    if (!Array.isArray(lines)) return product;
+    return JSON.stringify(lines.map((l: Record<string, unknown>) => ({ ...l, unitPrice: 0 })));
+  } catch { return product; }
+}
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,19 +71,21 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     include: { notes: true, timeline: true },
   });
 
-  const o = order as unknown as Record<string, unknown>;
-  return NextResponse.json({
-    ...o,
-    saleValue: Number(o.saleValue), gst: Number(o.gst),
-    fabric: Number(o.fabric), printing: Number(o.printing),
-    transport: Number(o.transport), misc: Number(o.misc),
-    jobWork: Number(o.jobWork), packaging: Number(o.packaging),
-    design: Number(o.design), ribCost: Number(o.ribCost ?? 0),
-    fabricWeightPerPc: o.fabricWeightPerPc != null ? Number(o.fabricWeightPerPc) : null,
-    fabricPricePerKg: o.fabricPricePerKg != null ? Number(o.fabricPricePerKg) : null,
-    ribWeightPerPc: o.ribWeightPerPc != null ? Number(o.ribWeightPerPc) : null,
-    ribPricePerKg: o.ribPricePerKg != null ? Number(o.ribPricePerKg) : null,
-  });
+  const perm = await prisma.userPermission.findUnique({ where: { userId: user.id } });
+  const showFinancials = perm?.showFinancials ?? true;
+  const serialized = serializeOrder(order as unknown as Record<string, unknown>);
+  if (!showFinancials) {
+    const stripped = {
+      ...serialized,
+      saleValue: 0, gst: 0, fabric: 0, printing: 0, transport: 0,
+      misc: 0, jobWork: 0, packaging: 0, design: 0, ribCost: 0,
+      fabricWeightPerPc: null, fabricPricePerKg: null,
+      ribWeightPerPc: null, ribPricePerKg: null,
+      product: typeof serialized.product === "string" ? stripLineFinancials(serialized.product) : serialized.product,
+    };
+    return NextResponse.json(stripped);
+  }
+  return NextResponse.json(serialized);
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {

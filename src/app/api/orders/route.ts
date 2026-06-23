@@ -9,6 +9,34 @@ async function requireAuth() {
   return user;
 }
 
+async function getShowFinancials(userId: string): Promise<boolean> {
+  const perm = await prisma.userPermission.findUnique({ where: { userId } });
+  return perm?.showFinancials ?? true;
+}
+
+const FINANCIAL_ZEROS = {
+  saleValue: 0, gst: 0, fabric: 0, printing: 0, transport: 0,
+  misc: 0, jobWork: 0, packaging: 0, design: 0, ribCost: 0,
+  fabricWeightPerPc: null, fabricPricePerKg: null,
+  ribWeightPerPc: null, ribPricePerKg: null,
+};
+
+function stripLineFinancials(product: string): string {
+  try {
+    const lines = JSON.parse(product);
+    if (!Array.isArray(lines)) return product;
+    return JSON.stringify(lines.map((l: Record<string, unknown>) => ({ ...l, unitPrice: 0 })));
+  } catch { return product; }
+}
+
+function stripFinancials(o: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...o,
+    ...FINANCIAL_ZEROS,
+    product: typeof o.product === "string" ? stripLineFinancials(o.product) : o.product,
+  };
+}
+
 const STAGES: Stage[] = ["design", "sampling", "production", "qc", "dispatch", "delivered", "delivered_pending"];
 
 function serializeOrder(o: Record<string, unknown>) {
@@ -31,11 +59,15 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const showFinancials = await getShowFinancials(user.id);
     const orders = await prisma.order.findMany({
       orderBy: { date: "desc" },
       include: { notes: { orderBy: { ts: "asc" } }, timeline: { orderBy: { id: "asc" } } },
     });
-    return NextResponse.json(orders.map(o => serializeOrder(o as unknown as Record<string, unknown>)));
+    return NextResponse.json(orders.map(o => {
+      const serialized = serializeOrder(o as unknown as Record<string, unknown>);
+      return showFinancials ? serialized : stripFinancials(serialized);
+    }));
   } catch (e) {
     console.error("Orders GET error:", e);
     return NextResponse.json({ error: String(e) }, { status: 500 });

@@ -298,12 +298,13 @@ const INP = { width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`,
 const LBL = { fontSize: 10, color: MID, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.06em" };
 const SINP = { ...INP, padding: "7px 8px", fontSize: 12 };
 
-function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, canRemove }: {
+function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, canRemove, showFinancials }: {
   line: ProductLine; idx: number;
   catalogProducts: CatalogProduct[];
   onChange: (k: keyof ProductLine, v: unknown) => void;
   onRemove: () => void;
   canRemove: boolean;
+  showFinancials: boolean;
 }) {
   const fabricTotal = lineFabric(line);
   const ribTotal = lineRib(line);
@@ -370,18 +371,22 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
           <div style={LBL}>Qty</div>
           <input type="number" onWheel={noWheel} value={line.qty || ""} placeholder="0" onChange={e => onChange("qty", parseInt(e.target.value) || 0)} style={SINP} />
         </div>
-        <div style={{ width: 95 }}>
-          <div style={LBL}>Unit Price ₹</div>
-          <input type="number" onWheel={noWheel} value={line.unitPrice || ""} placeholder="0" onChange={e => onChange("unitPrice", parseFloat(e.target.value) || 0)} style={SINP} />
-        </div>
+        {showFinancials && (
+          <div style={{ width: 95 }}>
+            <div style={LBL}>Unit Price ₹</div>
+            <input type="number" onWheel={noWheel} value={line.unitPrice || ""} placeholder="0" onChange={e => onChange("unitPrice", parseFloat(e.target.value) || 0)} style={SINP} />
+          </div>
+        )}
         <div style={{ width: 55 }}>
           <div style={LBL}>GST %</div>
           <input type="number" onWheel={noWheel} value={line.gstPct || ""} placeholder="5" onChange={e => onChange("gstPct", parseFloat(e.target.value) || 0)} style={SINP} />
         </div>
-        <div style={{ textAlign: "right", minWidth: 80, flex: 1 }}>
-          <div style={LBL}>Line Total</div>
-          <div style={{ fontSize: 13, fontWeight: 700, paddingTop: 4 }}>{fmt(lineTotal)}</div>
-        </div>
+        {showFinancials && (
+          <div style={{ textAlign: "right", minWidth: 80, flex: 1 }}>
+            <div style={LBL}>Line Total</div>
+            <div style={{ fontSize: 13, fontWeight: 700, paddingTop: 4 }}>{fmt(lineTotal)}</div>
+          </div>
+        )}
         {canRemove && (
           <button type="button" onClick={onRemove} style={{ border: "none", background: "none", color: MID, cursor: "pointer", fontSize: 16, padding: "0 4px", alignSelf: "flex-end", marginBottom: 2 }}>✕</button>
         )}
@@ -405,7 +410,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
       )}
 
       {/* Cost section */}
-      <div style={{ padding: "12px 14px" }}>
+      {showFinancials && <div style={{ padding: "12px 14px" }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: MID, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>
           Costs for Product {idx + 1}
           {totalCostLine > 0 && <span style={{ marginLeft: 8, color: BLUE }}>Total cost: {fmt(totalCostLine)}{line.qty > 0 ? ` · ${fmt(totalCostLine / line.qty)}/pc` : ""}</span>}
@@ -512,7 +517,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
           {renderCostField("design", "designPerPc", "Design / Artwork")}
           {renderCostField("misc", "miscPerPc", "Miscellaneous")}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
@@ -526,6 +531,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
   onClose: () => void;
   onDelete?: () => void;
 }) {
+  const { showFinancials } = usePermissions();
   const today = new Date().toISOString().slice(0, 10);
   const isNew = !order.id;
 
@@ -679,6 +685,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
             onChange={(k, v) => updateLine(i, k, v)}
             onRemove={() => setLines(ls => ls.filter((_, idx) => idx !== i))}
             canRemove={lines.length > 1}
+            showFinancials={showFinancials}
           />
         ))}
         <button type="button" onClick={() => setLines(ls => [...ls, { ...BLANK_LINE }])}
@@ -687,10 +694,10 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
         </button>
 
         {/* Revenue summary */}
-        <div style={{ background: BG, borderRadius: 8, padding: "10px 14px", marginTop: 12, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontSize: 12 }}>
+        <div style={{ background: BG, borderRadius: 8, padding: "10px 14px", marginTop: 12, display: "grid", gridTemplateColumns: showFinancials ? "1fr 1fr 1fr" : "1fr", gap: 8, fontSize: 12 }}>
           <div><span style={{ color: MID }}>Total Qty: </span><strong>{totalQty.toLocaleString()} pcs</strong></div>
-          <div><span style={{ color: MID }}>Sale Value: </span><strong>{fmt(totalSale)}</strong></div>
-          <div><span style={{ color: MID }}>GST: </span><strong>{fmt(totalGst)}</strong></div>
+          {showFinancials && <div><span style={{ color: MID }}>Sale Value: </span><strong>{fmt(totalSale)}</strong></div>}
+          {showFinancials && <div><span style={{ color: MID }}>GST: </span><strong>{fmt(totalGst)}</strong></div>}
         </div>
 
         <div style={{ display: "flex", gap: 8, marginTop: 24, justifyContent: "space-between" }}>
