@@ -18,7 +18,8 @@ app.use((_req, res, next) => {
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  { realtime: { transport: ws } }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  { realtime: { transport: ws as any } }
 );
 
 async function getUserFromJwt(req: express.Request): Promise<string | null> {
