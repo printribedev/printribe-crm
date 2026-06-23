@@ -332,22 +332,21 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
   ] as [string, number, string][]).filter(([, v]) => v > 0);
   const hasCosts = costRaw.length > 0 && totalCost > 0;
 
-  const SVG_W = 760, SVG_H = 420;
-  const ML = 104, MR = 12, MT = 38, MB = 16;
+  // Full-width SVG — fills the card; right margin reserved for col3 labels
+  const SVG_W = 960, SVG_H = 420;
+  const ML = 104, MR = 160, MT = 38, MB = 16;
   const W = SVG_W - ML - MR;
   const H = SVG_H - MT - MB;
   const NW = 14;
   const GAP = 8;
-  // right-side label budget (px available to the right of col3 node)
-  const RLABEL = 136;
 
   const maxGaps = Math.max(segs.length, 2, hasCosts ? costRaw.length : 0) - 1;
   const usableH = H - maxGaps * GAP;
   const sc = (v: number) => Math.max((v / totalRev) * usableH, 3);
 
   const colX = hasCosts
-    ? [0, Math.round(W * 0.32), Math.round(W * 0.62), W - RLABEL]
-    : [0, Math.round(W * 0.44), W - RLABEL];
+    ? [0, Math.round(W * 0.30), Math.round(W * 0.58), W]
+    : [0, Math.round(W * 0.42), W];
 
   type SNode = { id: string; val: number; color: string; x: number; y: number; h: number };
 
@@ -377,7 +376,7 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
   ];
 
   const costNode = col2.find(n => n.id === "cost");
-  const col3 = hasCosts && costNode ? placeCol(costRaw, hasCosts ? 3 : 2, costNode.y) : [];
+  const col3 = hasCosts && costNode ? placeCol(costRaw, 3, costNode.y) : [];
 
   const all = [...col0, ...col1, ...col2, ...col3];
   const cur: Record<string, { out: number; in: number }> = {};
@@ -402,19 +401,25 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
   if (totalCost  > 0) addFlow("revenue", "cost",   totalCost,   ERROR);
   col3.forEach(n => addFlow("cost", n.id, n.val, n.color));
 
-  // Nodes tall enough to show inline labels vs. too small → legend below
-  const INLINE_MIN = 30;
-  const VALUE_MIN  = 46;
-  const col3Inline = col3.filter(n => n.h >= INLINE_MIN);
-  const col3Legend = col3.filter(n => n.h < INLINE_MIN);
+  // Build non-overlapping label positions for ALL col3 nodes
+  const MIN_LABEL_STEP = 16;
+  const col3LabelY: number[] = [];
+  let lastY = -999;
+  for (const n of col3) {
+    const ideal = n.y + n.h / 2;
+    const placed = Math.max(ideal, lastY + MIN_LABEL_STEP);
+    col3LabelY.push(placed);
+    lastY = placed;
+  }
 
+  const VALUE_MIN = 46;
   const LBL = { dominantBaseline: "middle" as const };
 
   return (
     <Card style={{ padding: 20, marginTop: 12 }}>
       <SectionTitle title="Revenue flow" sub={`Segment sources → gross profit & cost breakdown · ${period}`} />
       <div style={{ overflowX: "auto" }}>
-        <svg width={SVG_W} height={SVG_H} style={{ display: "block", minWidth: 520, overflow: "visible" }}>
+        <svg width="100%" viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ display: "block", minWidth: 560 }}>
           <g transform={`translate(${ML},${MT})`}>
             {/* Flows */}
             {flows.map((f, i) => <path key={i} d={f.d} fill={f.color} opacity={0.25} />)}
@@ -445,30 +450,32 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
               </g>
             ))}
 
-            {/* Col 3 — inline labels only for bands tall enough */}
-            {col3Inline.map(n => (
-              <g key={`l3${n.id}`}>
-                <text x={n.x + NW + 10} y={n.y + n.h / 2 - (n.h >= VALUE_MIN ? 6 : 0)} fontSize={11} fontWeight={600} fill={INK} {...LBL}>
-                  {n.id}
-                </text>
-                {n.h >= VALUE_MIN && <text x={n.x + NW + 10} y={n.y + n.h / 2 + 8} fontSize={10} fill={MUTED} {...LBL}>{fmt(n.val)}</text>}
-              </g>
-            ))}
+            {/* Col 3 — all cost items with staggered labels + leader lines for tiny nodes */}
+            {col3.map((n, i) => {
+              const lx = n.x + NW + 10;
+              const nodeCenter = n.y + n.h / 2;
+              const ly = col3LabelY[i];
+              const needsLeader = Math.abs(ly - nodeCenter) > 4;
+              return (
+                <g key={`l3${n.id}`}>
+                  {needsLeader && (
+                    <line
+                      x1={n.x + NW + 4} y1={nodeCenter}
+                      x2={lx - 2}        y2={ly}
+                      stroke={BORDER} strokeWidth={0.8}
+                    />
+                  )}
+                  <text x={lx} y={ly - (n.h >= VALUE_MIN ? 6 : 0)} fontSize={11} fontWeight={600} fill={INK} {...LBL}>
+                    {n.id}
+                  </text>
+                  <text x={lx} y={ly + (n.h >= VALUE_MIN ? 8 : 12)} fontSize={10} fill={MUTED} {...LBL}>
+                    {fmt(n.val)}
+                  </text>
+                </g>
+              );
+            })}
           </g>
         </svg>
-
-        {/* Legend row for cost items too small to label inline */}
-        {col3Legend.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 18px", marginTop: 8, paddingLeft: ML }}>
-            {col3Legend.map(n => (
-              <div key={n.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: n.color, flexShrink: 0 }} />
-                <span style={{ fontSize: 11, color: INK, fontWeight: 600 }}>{n.id}</span>
-                <span style={{ fontSize: 11, color: MUTED }}>{fmt(n.val)}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </Card>
   );
