@@ -240,6 +240,7 @@ model UserPermission {
   role           String   @default("user")
   sections       Json     @default("{\"dashboard\":true,\"orders\":true,\"clients\":true,\"vendors\":true,\"products\":true,\"assets\":true,\"quotes\":true,\"production\":true}")
   showFinancials Boolean  @default(true) @map("show_financials")
+  showHarvey     Boolean  @default(true) @map("show_harvey")
   createdAt      DateTime @default(now()) @map("created_at")
 
   @@map("user_permissions")

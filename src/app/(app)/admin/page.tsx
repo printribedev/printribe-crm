@@ -20,6 +20,7 @@ type UserPerm = {
   role: string;
   sections: Sections;
   showFinancials: boolean;
+  showHarvey: boolean;
 };
 
 const INP: React.CSSProperties = { width: "100%", padding: "9px 12px", border: `1px solid ${BORDER}`, borderRadius: R_SM, fontSize: 13, outline: "none", background: WHITE, boxSizing: "border-box" };
@@ -84,6 +85,16 @@ export default function AdminPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ showFinancials: value }),
+    });
+    refresh();
+  }
+
+  async function toggleHarvey(userId: string, value: boolean) {
+    setUsers(prev => prev.map(u => u.userId === userId ? { ...u, showHarvey: value } : u));
+    await fetch(`/api/admin/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ showHarvey: value }),
     });
     refresh();
   }
@@ -228,18 +239,32 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* Financials toggle */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ fontSize: 10, color: MUTED, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Show Financials</div>
-                      <button onClick={() => toggleFinancials(u.userId, !u.showFinancials)}
-                        style={{
-                          fontSize: 11, padding: "4px 12px", borderRadius: 20, cursor: "pointer", fontWeight: 600,
-                          border: `1px solid ${u.showFinancials ? SUCCESS : BORDER}`,
-                          background: u.showFinancials ? SUCCESS + "15" : SURFACE,
-                          color: u.showFinancials ? SUCCESS : MID,
-                        }}>
-                        {u.showFinancials ? "✓ Visible" : "Hidden"}
-                      </button>
+                    {/* Financials + Harvey toggles */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ fontSize: 10, color: MUTED, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Show Financials</div>
+                        <button onClick={() => toggleFinancials(u.userId, !u.showFinancials)}
+                          style={{
+                            fontSize: 11, padding: "4px 12px", borderRadius: 20, cursor: "pointer", fontWeight: 600,
+                            border: `1px solid ${u.showFinancials ? SUCCESS : BORDER}`,
+                            background: u.showFinancials ? SUCCESS + "15" : SURFACE,
+                            color: u.showFinancials ? SUCCESS : MID,
+                          }}>
+                          {u.showFinancials ? "✓ Visible" : "Hidden"}
+                        </button>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ fontSize: 10, color: MUTED, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>Harvey AI</div>
+                        <button onClick={() => toggleHarvey(u.userId, !u.showHarvey)}
+                          style={{
+                            fontSize: 11, padding: "4px 12px", borderRadius: 20, cursor: "pointer", fontWeight: 600,
+                            border: `1px solid ${u.showHarvey ? "#7c3aed" : BORDER}`,
+                            background: u.showHarvey ? "#7c3aed18" : SURFACE,
+                            color: u.showHarvey ? "#7c3aed" : MID,
+                          }}>
+                          {u.showHarvey ? "✓ On" : "Off"}
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}

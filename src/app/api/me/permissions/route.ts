@@ -14,7 +14,7 @@ export async function GET() {
 
   const perm = await prisma.userPermission.findUnique({ where: { userId: user.id } });
   if (!perm) {
-    return NextResponse.json({ role: "user", sections: DEFAULT_SECTIONS, showFinancials: true });
+    return NextResponse.json({ role: "user", sections: DEFAULT_SECTIONS, showFinancials: true, showHarvey: true });
   }
 
   return NextResponse.json({
@@ -22,5 +22,6 @@ export async function GET() {
     email: perm.email,
     sections: perm.sections,
     showFinancials: perm.showFinancials,
+    showHarvey: perm.showHarvey,
   });
 }

@@ -9,6 +9,7 @@ type Permissions = {
   email: string;
   sections: Sections;
   showFinancials: boolean;
+  showHarvey: boolean;
   loading: boolean;
   refresh: () => void;
   canDo: (section: string, action: "create" | "edit" | "delete") => boolean;
@@ -35,6 +36,7 @@ const defaults: Permissions = {
   email: "",
   sections: DEFAULT_SECTIONS,
   showFinancials: true,
+  showHarvey: true,
   loading: true,
   refresh: () => {},
   canDo: () => true,

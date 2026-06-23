@@ -29,6 +29,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data: {
       ...(body.sections !== undefined && { sections: body.sections }),
       ...(body.showFinancials !== undefined && { showFinancials: body.showFinancials }),
+      ...(body.showHarvey !== undefined && { showHarvey: body.showHarvey }),
       ...(body.role !== undefined && { role: body.role }),
     },
   });
