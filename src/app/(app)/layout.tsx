@@ -4,11 +4,13 @@ import { useState } from "react";
 import Image from "next/image";
 import Sidebar from "@/components/Sidebar";
 import { BORDER, PRIMARY } from "@/lib/tokens";
+import { PermissionsProvider } from "@/context/PermissionsContext";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
+    <PermissionsProvider>
     <div style={{
       display: "flex", minHeight: "100vh",
       background: "linear-gradient(145deg, #eef0fb 0%, #f4f6ff 25%, #f8fafc 60%, #f0fdf8 100%)",
@@ -59,5 +61,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
     </div>
+    </PermissionsProvider>
   );
 }
