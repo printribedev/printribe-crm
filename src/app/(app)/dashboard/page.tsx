@@ -341,6 +341,13 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
   segs.forEach(([s]) => { nodeColorMap[s] = SEG_COLORS[s] || MID; });
   costItems.forEach(([id,, c]) => { nodeColorMap[id] = c; });
 
+  // Value each node represents relative to totalRev for % labels
+  const nodeValueMap: Record<string, number> = { Revenue: totalRev, "Gross Profit": totalProfit, "Total Cost": totalCost };
+  segs.forEach(([s, v]) => { nodeValueMap[s] = v; });
+  costItems.forEach(([id, v]) => { nodeValueMap[id] = v; });
+
+  const pct = (v: number) => `${Math.round((v / totalRev) * 100)}%`;
+
   const nodes = [
     ...segs.map(([s]) => ({ id: s })),
     { id: "Revenue" },
@@ -355,6 +362,16 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
     ...(totalCost   > 0 ? [{ source: "Revenue", target: "Total Cost",   value: Math.round(totalCost)   }] : []),
     ...costItems.map(([id, v]) => ({ source: "Total Cost", target: id, value: Math.round(v) })),
   ];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const NodeTooltip = ({ node }: { node: any }) => (
+    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "8px 12px", fontSize: 12, boxShadow: SHADOW_MD, display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ width: 10, height: 10, borderRadius: 2, background: nodeColorMap[node.id] ?? MID, flexShrink: 0 }} />
+      <span style={{ fontWeight: 700, color: INK }}>{node.id}</span>
+      <span style={{ color: MUTED }}>{fmt(nodeValueMap[node.id] ?? node.value)}</span>
+      <span style={{ color: MID, fontSize: 11 }}>{pct(nodeValueMap[node.id] ?? node.value)}</span>
+    </div>
+  );
 
   return (
     <Card style={{ padding: 20, marginTop: 12 }}>
@@ -379,6 +396,8 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
           labelOrientation="horizontal"
           labelPadding={14}
           labelTextColor={INK}
+          label={node => `${node.id} · ${pct(nodeValueMap[node.id] ?? node.value)}`}
+          nodeTooltip={NodeTooltip}
         />
       </div>
     </Card>
