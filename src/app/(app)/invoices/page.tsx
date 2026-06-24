@@ -1,8 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type InvoiceData = {
@@ -15,6 +13,10 @@ type InvoiceData = {
 };
 
 export default function InvoicePage() {
+  return <Suspense fallback={<div style={{ padding: 40, color: "#666" }}>Loading…</div>}><InvoiceContent /></Suspense>;
+}
+
+function InvoiceContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [invoice, setInvoice] = useState<InvoiceData | null>(null);
