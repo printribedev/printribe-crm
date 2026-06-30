@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import { usePermissions } from "@/context/PermissionsContext";
 import { ResponsiveSankey } from "@nivo/sankey";
@@ -384,34 +384,113 @@ function SankeyCard({ filtered, period, fmt }: { filtered: Order[]; period: stri
     </div>
   );
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [cardWidth, setCardWidth] = useState(800);
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver(entries => setCardWidth(entries[0].contentRect.width));
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const isMobile = cardWidth < 500;
+
+  // Mobile: vertical flow summary — segments → revenue → profit/cost breakdown
+  const MobileFlow = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+      {/* Segment sources */}
+      <div>
+        <div style={{ fontSize: 10, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>By Segment</div>
+        {segs.map(([s, v]) => (
+          <div key={s} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: SEG_COLORS[s] || MID, flexShrink: 0 }} />
+            <span style={{ fontSize: 12, color: BODY, flex: 1 }}>{s}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: INK }}>{fmt(v)}</span>
+            <span style={{ fontSize: 11, color: MUTED, width: 36, textAlign: "right" }}>{pct(v)}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ height: 1, background: BORDER }} />
+
+      {/* Revenue total */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ width: 8, height: 8, borderRadius: 2, background: PRIMARY, flexShrink: 0 }} />
+        <span style={{ fontSize: 13, fontWeight: 700, color: INK, flex: 1 }}>Total Revenue</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: INK }}>{fmt(totalRev)}</span>
+      </div>
+
+      <div style={{ height: 1, background: BORDER }} />
+
+      {/* Profit + cost split */}
+      <div style={{ display: "flex", gap: 10 }}>
+        {totalProfit > 0 && (
+          <div style={{ flex: 1, background: `${SUCCESS}15`, borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: SUCCESS, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Gross Profit</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: SUCCESS }}>{fmt(totalProfit)}</div>
+            <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{pct(totalProfit)}</div>
+          </div>
+        )}
+        {totalCost > 0 && (
+          <div style={{ flex: 1, background: `${ERROR}15`, borderRadius: 8, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, fontWeight: 600, color: ERROR, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Total Cost</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: ERROR }}>{fmt(totalCost)}</div>
+            <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{pct(totalCost)}</div>
+          </div>
+        )}
+      </div>
+
+      {/* Cost breakdown */}
+      {costItems.length > 0 && (
+        <>
+          <div style={{ fontSize: 10, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginTop: 4 }}>Cost Breakdown</div>
+          {costItems.map(([id, v, c]) => (
+            <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <div style={{ width: 8, height: 8, borderRadius: 2, background: c, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: BODY, flex: 1 }}>{id}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: INK }}>{fmt(v)}</span>
+              <span style={{ fontSize: 11, color: MUTED, width: 36, textAlign: "right" }}>{pct(v)}</span>
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+
   return (
     <Card style={{ padding: 20, marginTop: 12 }}>
-      <SectionTitle title="Revenue flow" sub={`Segment sources → gross profit & cost breakdown · ${period}`} />
-      <div style={{ height: 420 }}>
-        <ResponsiveSankey
-          data={{ nodes, links }}
-          margin={{ top: 10, right: 180, bottom: 10, left: 180 }}
-          align="justify"
-          colors={node => nodeColorMap[node.id] ?? MID}
-          nodeOpacity={1}
-          nodeThickness={14}
-          nodeInnerPadding={3}
-          nodeSpacing={10}
-          nodeBorderWidth={0}
-          nodeBorderRadius={3}
-          linkOpacity={0.25}
-          linkHoverOpacity={0.5}
-          linkContract={2}
-          enableLinkGradient
-          labelPosition="outside"
-          labelOrientation="horizontal"
-          labelPadding={14}
-          labelTextColor={INK}
-          label={node => `${node.id} · ${pct(nodeValueMap[node.id] ?? node.value)}`}
-          nodeTooltip={NodeTooltip}
-          linkTooltip={LinkTooltip}
-          theme={{ labels: { text: { fontSize: 11, fontFamily: "inherit" } } }}
-        />
+      <div ref={containerRef}>
+        <SectionTitle title="Revenue flow" sub={`Segment sources → gross profit & cost breakdown · ${period}`} />
+        {isMobile ? (
+          <MobileFlow />
+        ) : (
+          <div style={{ height: 420 }}>
+            <ResponsiveSankey
+              data={{ nodes, links }}
+              margin={{ top: 10, right: 180, bottom: 10, left: 180 }}
+              align="justify"
+              colors={node => nodeColorMap[node.id] ?? MID}
+              nodeOpacity={1}
+              nodeThickness={14}
+              nodeInnerPadding={3}
+              nodeSpacing={10}
+              nodeBorderWidth={0}
+              nodeBorderRadius={3}
+              linkOpacity={0.25}
+              linkHoverOpacity={0.5}
+              linkContract={2}
+              enableLinkGradient
+              labelPosition="outside"
+              labelOrientation="horizontal"
+              labelPadding={14}
+              labelTextColor={INK}
+              label={node => `${node.id} · ${pct(nodeValueMap[node.id] ?? node.value)}`}
+              nodeTooltip={NodeTooltip}
+              linkTooltip={LinkTooltip}
+              theme={{ labels: { text: { fontSize: 11, fontFamily: "inherit" } } }}
+            />
+          </div>
+        )}
       </div>
     </Card>
   );

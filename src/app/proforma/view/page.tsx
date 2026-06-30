@@ -353,7 +353,7 @@ function ProformaContent() {
                   <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, minWidth: 44 }}>{item.hsn || "6109"}</div>
                   <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, minWidth: 44 }}>Nos.</div>
                   <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, minWidth: 44 }}>{item.qty}</div>
-                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, minWidth: 44 }}>{item.unitPrice.toFixed(2)}</div>
+                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, minWidth: 44 }}>{item.unitPrice.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   <div style={{ width: 129, display: "flex", alignItems: "flex-start", textAlign: "right" }}>
                     <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600 }}>{fmtAmt(item.qty * item.unitPrice)}</div>
                   </div>

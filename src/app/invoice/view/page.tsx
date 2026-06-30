@@ -388,7 +388,7 @@ function InvoiceContent() {
                   <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{item.hsn}</div>
                   <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>Nos.</div>
                   <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{item.qty}</div>
-                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{(item.qty > 0 ? item.saleValue / item.qty : 0).toFixed(2)}</div>
+                  <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{(item.qty > 0 ? item.saleValue / item.qty : 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   <div style={{ width: 129, display: "flex", alignItems: "flex-start", textAlign: "right" }}>
                     <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600 }}>{fmtAmt(item.saleValue)}</div>
                   </div>
