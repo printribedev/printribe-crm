@@ -294,9 +294,9 @@ function CostModal({ order, onClose }: { order: Order; onClose: () => void }) {
   );
 }
 
-const INP = { width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", background: WHITE, boxSizing: "border-box" as const };
-const LBL = { fontSize: 10, color: MID, marginBottom: 3, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.06em" };
-const SINP = { ...INP, padding: "7px 8px", fontSize: 12 };
+const INP = { width: "100%", padding: "10px 12px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 16, outline: "none", background: WHITE, boxSizing: "border-box" as const, minHeight: 44, touchAction: "manipulation" };
+const LBL = { fontSize: 12, color: MID, marginBottom: 4, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.06em" };
+const SINP = { ...INP };
 
 function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, canRemove, showFinancials }: {
   line: ProductLine; idx: number;
@@ -334,15 +334,15 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
     const total = lineVal(val, isPerPc, line.qty);
     return (
       <div>
-        <div style={LBL}>{label}</div>
-        <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-          <input type="number" onWheel={noWheel} value={val || ""} placeholder="0"
-            onChange={e => onChange(field, parseFloat(e.target.value) || 0)} style={SINP} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+          <div style={LBL}>{label}</div>
           <ToggleBtn active={isPerPc} onClick={() => onChange(perPcField, !isPerPc)}>
             {isPerPc ? "₹/pc" : "Total"}
           </ToggleBtn>
         </div>
-        {isPerPc && line.qty > 0 && <div style={{ fontSize: 10, color: MID, marginTop: 2 }}>{fmt(total)}</div>}
+        <input type="number" onWheel={noWheel} value={val || ""} placeholder="0"
+          onChange={e => onChange(field, parseFloat(e.target.value) || 0)} style={SINP} />
+        {isPerPc && line.qty > 0 && <div style={{ fontSize: 11, color: MID, marginTop: 3 }}>= {fmt(total)}</div>}
       </div>
     );
   };
@@ -426,7 +426,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
             </div>
           </div>
           {line.fabricMode === "weight" ? (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
               <div>
                 <div style={LBL}>Total weight (kg)</div>
                 <input type="number" onWheel={noWheel} value={line.fabricWeightPerPc || ""} placeholder="0.000"
@@ -472,7 +472,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
             </div>
           </div>
           {line.ribMode === "weight" ? (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
               <div>
                 <div style={LBL}>Total rib weight (kg)</div>
                 <input type="number" onWheel={noWheel} value={line.ribWeightPerPc || ""} placeholder="0.000"
@@ -509,7 +509,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
         </div>
 
         {/* Other costs */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
           {renderCostField("printing", "printingPerPc", "Printing & Decoration")}
           {renderCostField("jobWork", "jobWorkPerPc", "Job Work")}
           {renderCostField("packaging", "packagingPerPc", "Packaging")}
