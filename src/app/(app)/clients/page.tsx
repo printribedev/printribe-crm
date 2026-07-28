@@ -20,7 +20,7 @@ const SEGMENTS = ["Reseller", "Sports", "Education", "Corporate", "NGO_Govt", "B
 
 type Client = {
   id: number; name: string; gstin: string | null; type: string | null;
-  city: string | null; address: string | null; contact: string | null; phone: string | null; email: string | null;
+  city: string | null; state: string | null; address: string | null; contact: string | null; phone: string | null; email: string | null;
   segment: string; lastOrder: string | null;
   orderCount: number; totalValue: number;
   totalValueOverride: number | null; ordersOverride: number | null;
@@ -29,7 +29,7 @@ type Client = {
 const fmt = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 
 const BLANK: Omit<Client, "id" | "orderCount" | "totalValue"> = {
-  name: "", gstin: "", type: "", city: "", address: "", contact: "", phone: "", email: "",
+  name: "", gstin: "", type: "", city: "", state: "", address: "", contact: "", phone: "", email: "",
   segment: "Corporate", lastOrder: "", totalValueOverride: null, ordersOverride: null,
 };
 
@@ -66,6 +66,7 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
             { key: "segment", label: "Segment", type: "select" },
             { key: "type", label: "Type" },
             { key: "city", label: "City" },
+            { key: "state", label: "State (for GST)" },
             { key: "address", label: "Full Address", full: true, textarea: true },
             { key: "contact", label: "Contact Person" },
             { key: "phone", label: "Phone" },

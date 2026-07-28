@@ -7,7 +7,7 @@ import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFAC
 const R = ERROR, BLUE = PRIMARY, GREEN = SUCCESS, BG = SURFACE, BLACK = INK;
 const CARD_RADIUS = R_MD, BTN_RADIUS = R_SM;
 
-type Client = { id: number; name: string; gstin: string | null; address: string | null; city: string | null; email: string | null; phone: string | null; segment: string };
+type Client = { id: number; name: string; gstin: string | null; address: string | null; city: string | null; state: string | null; email: string | null; phone: string | null; segment: string };
 type Product = { id: number; name: string; gstRate: string; basePrice: number; hsn: string; category: string; active: boolean };
 type SavedProforma = { id: number; ref: string; date: string; clientName: string; createdAt: string; orderId: string | null };
 
@@ -132,6 +132,7 @@ export default function QuotesPage() {
           gstin: selectedClient.gstin,
           address: selectedClient.address,
           city: selectedClient.city,
+          state: selectedClient.state,
           email: selectedClient.email,
           phone: selectedClient.phone,
         },

@@ -60,11 +60,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       gstin: order.client.gstin,
       address: order.client.address,
       city: order.client.city,
+      state: order.client.state,
       email: order.client.email,
       phone: order.client.phone,
     } : {
       name: order.clientName,
-      gstin: null, address: null, city: null, email: null, phone: null,
+      gstin: null, address: null, city: null, state: null, email: null, phone: null,
     },
   });
 }

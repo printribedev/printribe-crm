@@ -47,6 +47,7 @@ export type ProformaData = {
     gstin: string | null;
     address: string | null;
     city: string | null;
+    state: string | null;
     email: string | null;
     phone: string | null;
   };
@@ -160,14 +161,17 @@ function ProformaContent() {
 
   const { items, totalSaleValue, totalGst, client } = data;
 
+  // Printribe is Karnataka-registered. Intra-state → CGST+SGST; inter-state → IGST.
+  const isIntraState = (client.state ?? "").trim().toLowerCase() === "karnataka";
+
   // GST breakdown by rate
-  const gstGroups: { rate: number; cgst: number; sgst: number }[] = [];
+  const gstGroups: { rate: number; cgst: number; sgst: number; igst: number }[] = [];
   items.forEach(item => {
     const itemSale = item.qty * item.unitPrice;
     const itemGst = itemSale * (item.gstPct / 100);
     const existing = gstGroups.find(g => g.rate === item.gstPct);
-    if (existing) { existing.cgst += itemGst / 2; existing.sgst += itemGst / 2; }
-    else gstGroups.push({ rate: item.gstPct, cgst: itemGst / 2, sgst: itemGst / 2 });
+    if (existing) { existing.cgst += itemGst / 2; existing.sgst += itemGst / 2; existing.igst += itemGst; }
+    else gstGroups.push({ rate: item.gstPct, cgst: itemGst / 2, sgst: itemGst / 2, igst: itemGst });
   });
   gstGroups.sort((a, b) => a.rate - b.rate);
 
@@ -459,20 +463,24 @@ function ProformaContent() {
                   {/* Labels */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 108 }}>
                     <div style={{ lineHeight: "24px", fontWeight: 500 }}>Sub Total</div>
-                    {gstGroups.map(g => (<>
+                    {isIntraState ? gstGroups.map(g => (<>
                       <div key={`cl-${g.rate}`} style={{ lineHeight: "24px", fontWeight: 500 }}>Output CGST({g.rate / 2}%)</div>
                       <div key={`sl-${g.rate}`} style={{ lineHeight: "24px", fontWeight: 500 }}>Output SGST({g.rate / 2}%)</div>
-                    </>))}
+                    </>)) : gstGroups.map(g => (
+                      <div key={`il-${g.rate}`} style={{ lineHeight: "24px", fontWeight: 500 }}>Output IGST({g.rate}%)</div>
+                    ))}
                     <div style={{ lineHeight: "24px", fontWeight: 500 }}>Total Tax(GST)</div>
                     <div style={{ lineHeight: "24px", fontWeight: 500 }}>Round Off</div>
                   </div>
                   {/* Values */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 16, minWidth: 108, textAlign: "right", color: "#000" }}>
                     <div style={{ lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalSaleValue)}</div>
-                    {gstGroups.map(g => (<>
+                    {isIntraState ? gstGroups.map(g => (<>
                       <div key={`cv-${g.rate}`} style={{ lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(g.cgst)}</div>
                       <div key={`sv-${g.rate}`} style={{ lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(g.sgst)}</div>
-                    </>))}
+                    </>)) : gstGroups.map(g => (
+                      <div key={`iv-${g.rate}`} style={{ lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(g.igst)}</div>
+                    ))}
                     <div style={{ lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalGst)}</div>
                     <div style={{ lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(roundOff)}</div>
                   </div>

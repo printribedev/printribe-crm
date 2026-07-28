@@ -49,6 +49,7 @@ type InvoiceData = {
     gstin: string | null;
     address: string | null;
     city: string | null;
+    state: string | null;
     email: string | null;
     phone: string | null;
   };
@@ -156,16 +157,21 @@ function InvoiceContent() {
 
   const { items, totalSaleValue, totalGst, client } = data;
 
-  // Group items by GST rate so we render one CGST+SGST pair per rate
-  const gstGroups: { rate: number; cgst: number; sgst: number }[] = [];
+  // Printribe is Karnataka-registered (GSTIN 29ABAFP5040J1Z6).
+  // Intra-state (Karnataka client) → CGST + SGST; inter-state → IGST.
+  const isIntraState = (client.state ?? "").trim().toLowerCase() === "karnataka";
+
+  // Group items by GST rate
+  const gstGroups: { rate: number; cgst: number; sgst: number; igst: number }[] = [];
   items.forEach(item => {
     const rate = item.saleValue > 0 ? Math.round((item.gst / item.saleValue) * 100) : 0;
     const existing = gstGroups.find(g => g.rate === rate);
     if (existing) {
       existing.cgst += item.gst / 2;
       existing.sgst += item.gst / 2;
+      existing.igst += item.gst;
     } else {
-      gstGroups.push({ rate, cgst: item.gst / 2, sgst: item.gst / 2 });
+      gstGroups.push({ rate, cgst: item.gst / 2, sgst: item.gst / 2, igst: item.gst });
     }
   });
   gstGroups.sort((a, b) => a.rate - b.rate);
@@ -509,11 +515,13 @@ function InvoiceContent() {
                   {/* Labels */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 16, minWidth: 108 }}>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Sub Total</div>
-                    {gstGroups.map(g => (
+                    {isIntraState ? gstGroups.map(g => (
                       <>
                         <div key={`cgst-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Output CGST({g.rate / 2}%)</div>
                         <div key={`sgst-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Output SGST({g.rate / 2}%)</div>
                       </>
+                    )) : gstGroups.map(g => (
+                      <div key={`igst-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Output IGST({g.rate}%)</div>
                     ))}
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Total Tax(GST)</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 500 }}>Round Off</div>
@@ -521,11 +529,13 @@ function InvoiceContent() {
                   {/* Values */}
                   <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 16, minWidth: 108, textAlign: "right", color: "#000" }}>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalSaleValue)}</div>
-                    {gstGroups.map(g => (
+                    {isIntraState ? gstGroups.map(g => (
                       <>
                         <div key={`cgst-val-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(g.cgst)}</div>
                         <div key={`sgst-val-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(g.sgst)}</div>
                       </>
+                    )) : gstGroups.map(g => (
+                      <div key={`igst-val-${g.rate}`} style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(g.igst)}</div>
                     ))}
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(totalGst)}</div>
                     <div style={{ alignSelf: "stretch", lineHeight: "24px", fontWeight: 600 }}>{fmtAmt(roundOff)}</div>
