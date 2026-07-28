@@ -49,8 +49,35 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
   deleteError?: string;
 }) {
   const [form, setForm] = useState({ ...BLANK, ...client });
+  const [pinStatus, setPinStatus] = useState<"" | "loading" | "found" | "notfound">("");
   const set = (k: string, v: string | number | null) => setForm(p => ({ ...p, [k]: v }));
   const isNew = !client.id;
+
+  async function lookupPin(address: string) {
+    const match = address.match(/\b(\d{6})\b/);
+    if (!match) return;
+    const pin = match[1];
+    setPinStatus("loading");
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const data = await res.json();
+      const po = data?.[0];
+      if (po?.Status === "Success" && po.PostOffice?.length > 0) {
+        const { State, District } = po.PostOffice[0];
+        setForm(prev => ({
+          ...prev,
+          state: prev.state || State || prev.state,
+          city: prev.city || District || prev.city,
+        }));
+        setPinStatus("found");
+      } else {
+        setPinStatus("notfound");
+      }
+    } catch {
+      setPinStatus("notfound");
+    }
+    setTimeout(() => setPinStatus(""), 3000);
+  }
 
   return (
     <div className="modal-overlay" style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
@@ -75,7 +102,12 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
             { key: "lastOrder", label: "Last Order (e.g. Jun 2026)" },
           ].map((f: { key: string; label: string; type?: string; full?: boolean; textarea?: boolean }) => (
             <div key={f.key} style={{ gridColumn: f.full ? "1 / -1" : "auto" }}>
-              <div style={{ fontSize: 10, color: MID, marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>{f.label}</div>
+              <div style={{ fontSize: 10, color: MID, marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: 6 }}>
+                {f.label}
+                {f.key === "state" && pinStatus === "loading" && <span style={{ fontSize: 9, color: MID, fontWeight: 400 }}>looking up PIN…</span>}
+                {f.key === "state" && pinStatus === "found" && <span style={{ fontSize: 9, color: GREEN, fontWeight: 600 }}>auto-filled</span>}
+                {f.key === "state" && pinStatus === "notfound" && <span style={{ fontSize: 9, color: R, fontWeight: 400 }}>PIN not found</span>}
+              </div>
               {f.type === "select" ? (
                 <CustomSelect
                   value={String(form[f.key as keyof typeof form] ?? "")}
@@ -84,7 +116,9 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
                   style={{ width: "100%" }}
                 />
               ) : f.textarea ? (
-                <textarea value={String(form[f.key as keyof typeof form] ?? "")} onChange={e => set(f.key, e.target.value)}
+                <textarea value={String(form[f.key as keyof typeof form] ?? "")}
+                  onChange={e => set(f.key, e.target.value)}
+                  onBlur={e => lookupPin(e.target.value)}
                   rows={2} placeholder="e.g. #61, 1st Floor, 5th Main Road, Chamrajpet, Bengaluru, Karnataka, 560018"
                   style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", resize: "vertical", fontFamily: "inherit" }} />
               ) : (
