@@ -46,6 +46,7 @@ export default function QuotesPage() {
   const [savedProformas, setSavedProformas] = useState<SavedProforma[]>([]);
   const [generating, setGenerating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     fetch("/api/clients").then(r => r.json()).then(setClients);
@@ -183,7 +184,13 @@ export default function QuotesPage() {
   }
 
   async function deleteProforma(id: number) {
-    await fetch(`/api/proformas/${id}`, { method: "DELETE" });
+    setDeleteError("");
+    const res = await fetch(`/api/proformas/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setDeleteError(body.error ?? "Failed to delete. Please try again.");
+      return;
+    }
     setDeleteConfirm(null);
     setSavedProformas(prev => prev.filter(p => p.id !== id));
   }
@@ -495,13 +502,14 @@ export default function QuotesPage() {
                         style={{ fontSize: 11, padding: "5px 10px", borderRadius: BTN_RADIUS, border: "none", background: R, color: WHITE, cursor: "pointer", fontWeight: 700 }}>
                         Confirm
                       </button>
-                      <button onClick={() => setDeleteConfirm(null)}
+                      <button onClick={() => { setDeleteConfirm(null); setDeleteError(""); }}
                         style={{ fontSize: 11, padding: "5px 8px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer" }}>
                         ✕
                       </button>
+                      {deleteError && <span style={{ fontSize: 10, color: R }}>{deleteError}</span>}
                     </>
                   ) : (
-                    <button onClick={() => setDeleteConfirm(p.id)}
+                    <button onClick={() => { setDeleteConfirm(p.id); setDeleteError(""); }}
                       style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: R, cursor: "pointer", fontWeight: 600 }}>
                       Delete
                     </button>
