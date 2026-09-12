@@ -311,7 +311,7 @@ function ProformaContent() {
               <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 20, color: "#000" }}>
                 <h3 style={{ alignSelf: "stretch", margin: 0, fontSize: "inherit", letterSpacing: "-0.25px", lineHeight: "32px", fontWeight: 700, fontFamily: "inherit" }}>{client.name.toUpperCase()}</h3>
                 <div style={{ width: "100%", fontSize: 18, lineHeight: "28px", fontWeight: 500, display: "inline-block", maxWidth: 431 }}>
-                  {(client.address || client.city) ? [client.address, client.city].filter(Boolean).join(", ") : "-"}
+                  {(client.address || client.city) ? (client.address || client.city) : "-"}
                 </div>
               </div>
               <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, fontSize: 16 }}>
