@@ -256,9 +256,9 @@ function HeatmapCard({ products, months, heatMax, period, fmt, tooltipStyle }: {
                     }}
                     onMouseLeave={() => setTooltip(null)}
                   >
-                    {rev > 0 && intensity > 0.2 && (
+                    {rev > 0 && (
                       <span style={{ fontSize: 8, fontWeight: 700, color: intensity > 0.55 ? WHITE : PRIMARY, letterSpacing: "-0.02em", pointerEvents: "none" }}>
-                        {(rev / 1000).toFixed(0) + "K"}
+                        {rev >= 100000 ? (rev / 100000).toFixed(1) + "L" : (rev / 1000).toFixed(0) + "K"}
                       </span>
                     )}
                   </div>
