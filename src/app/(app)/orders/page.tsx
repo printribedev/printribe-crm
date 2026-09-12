@@ -163,6 +163,8 @@ function CostModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const mc = marginColor(marginPct);
   const isHealthy = marginPct > 0.25;
   const isWarn = marginPct >= 0.15 && marginPct <= 0.25;
+  const productLines = parseLines(order.product, order.qty, order.saleValue, order.gst);
+  const [selProd, setSelProd] = useState(0);
 
   const costs = [
     { label: "Fabric / Blank", value: order.fabric, color: BLUE },
@@ -288,6 +290,62 @@ function CostModal({ order, onClose }: { order: Order; onClose: () => void }) {
               </div>
             ))}
           </div>
+
+          {/* Per-product cost/pc — only shown when multiple product lines */}
+          {productLines.length > 1 && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: INK, letterSpacing: "-0.01em", marginBottom: 10 }}>
+                Avg cost / pc by product
+              </div>
+              {/* Tab pills */}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                {productLines.map((l, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelProd(i)}
+                    style={{
+                      fontSize: 11, padding: "5px 12px", borderRadius: 20, cursor: "pointer",
+                      fontWeight: 600, border: `1px solid ${i === selProd ? BLUE : BORDER}`,
+                      background: i === selProd ? BLUE + "18" : WHITE,
+                      color: i === selProd ? BLUE : MID,
+                      transition: "all 150ms ease",
+                    }}
+                  >
+                    {l.name || `Product ${i + 1}`}
+                  </button>
+                ))}
+              </div>
+              {/* Selected product stats */}
+              {(() => {
+                const l = productLines[selProd];
+                const lineCost = lineTotalCost(l);
+                const lineSale = l.qty * l.unitPrice;
+                const lineProfit = lineSale - lineCost;
+                const lineMargin = lineSale > 0 ? lineProfit / lineSale : 0;
+                const mc2 = marginColor(lineMargin);
+                return (
+                  <div style={{
+                    background: "rgba(79,70,229,0.05)", borderRadius: 12,
+                    border: "1px solid rgba(79,70,229,0.1)", padding: "12px 14px",
+                    display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 16px",
+                  }}>
+                    {[
+                      ["Qty", `${l.qty.toLocaleString()} pcs`],
+                      ["Sale / pc", l.qty > 0 ? fmt(lineSale / l.qty) : "—"],
+                      ["Cost / pc", l.qty > 0 ? fmt(lineCost / l.qty) : "—"],
+                      ["Margin", l.qty > 0 ? <span style={{ color: mc2 }}>{pct(lineMargin)}</span> : "—"],
+                    ].map(([label, val]) => (
+                      <div key={label as string} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: 11, color: MID }}>{label}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: INK }}>{val}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </div>
     </div>
