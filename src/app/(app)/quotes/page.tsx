@@ -29,8 +29,8 @@ type PerPcMap = Record<string, boolean>;
 const BLANK_COSTS: Costs = { fabric: 0, printing: 0, jobWork: 0, packaging: 0, transport: 0, design: 0, misc: 0 };
 const BLANK_PER_PC: PerPcMap = { fabric: false, printing: false, jobWork: false, packaging: false, transport: false, design: false, misc: false };
 
-type LineItem = { productId: number | ""; qty: number; unitPrice: number };
-const BLANK_LINE: LineItem = { productId: "", qty: 0, unitPrice: 0 };
+type LineItem = { productId: number | ""; qty: number; unitPrice: number; note: string };
+const BLANK_LINE: LineItem = { productId: "", qty: 0, unitPrice: 0, note: "" };
 
 export default function QuotesPage() {
   const { canDo } = usePermissions();
@@ -116,7 +116,7 @@ export default function QuotesPage() {
         .filter(l => l.productId && l.qty > 0)
         .map(l => {
           const p = products.find(x => x.id === l.productId);
-          return { product: p?.name ?? "Product", hsn: p?.hsn ?? "", qty: l.qty, unitPrice: l.unitPrice, gstPct: p ? parseFloat(p.gstRate) : 5 };
+          return { product: p?.name ?? "Product", hsn: p?.hsn ?? "", qty: l.qty, unitPrice: l.unitPrice, gstPct: p ? parseFloat(p.gstRate) : 5, note: l.note || null };
         });
 
       const yr = new Date().getFullYear();
@@ -171,14 +171,14 @@ export default function QuotesPage() {
     const res = await fetch(`/api/proformas/${p.id}`);
     if (!res.ok) return;
     const full = await res.json();
-    const data = full.data as { items: { productId?: number; qty: number; unitPrice: number; gstPct: number; product: string }[]; client: { name: string } };
+    const data = full.data as { items: { productId?: number; qty: number; unitPrice: number; gstPct: number; product: string; note?: string }[]; client: { name: string } };
     // Restore state from saved proforma
     const matchedClient = clients.find(c => c.name === data.client.name);
     if (matchedClient) { setClientId(matchedClient.id); setClientSearch(matchedClient.name); }
     setQuoteDate(full.date);
     setLines(data.items.map(item => {
       const prod = products.find(x => x.name === item.product);
-      return { productId: prod?.id ?? "", qty: item.qty, unitPrice: item.unitPrice };
+      return { productId: prod?.id ?? "", qty: item.qty, unitPrice: item.unitPrice, note: item.note ?? "" };
     }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -299,7 +299,7 @@ export default function QuotesPage() {
                 const p = products.find(x => x.id === line.productId);
                 return (
                   <div key={i} style={{ overflowX: "auto" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 80px 100px 28px", gap: 8, alignItems: "end", minWidth: 340 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 80px 100px 28px", gap: 8, alignItems: "end", minWidth: 420 }}>
                     <div>
                       {i === 0 && <label style={LBL}>PRODUCT</label>}
                       <select value={line.productId} onChange={e => handleProductSelect(i, e.target.value ? Number(e.target.value) : "")}
@@ -308,6 +308,11 @@ export default function QuotesPage() {
                         {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
                       {p && <div style={{ fontSize: 10, color: MID, marginTop: 2 }}>HSN {p.hsn} · GST {p.gstRate}</div>}
+                    </div>
+                    <div>
+                      {i === 0 && <label style={LBL}>NOTE (IN BILL)</label>}
+                      <input value={line.note} onChange={e => setLine(i, { note: e.target.value })}
+                        placeholder='e.g. "Round neck, sublimation"' style={INP} />
                     </div>
                     <div>
                       {i === 0 && <label style={LBL}>QTY</label>}

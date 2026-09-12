@@ -36,6 +36,7 @@ type InvoiceItem = {
   qty: number;
   saleValue: number;
   gst: number;
+  note?: string | null;
 };
 
 type InvoiceData = {
@@ -402,6 +403,7 @@ function InvoiceContent() {
               }}>
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", minWidth: 163, maxWidth: 432 }}>
                   <div style={{ alignSelf: "stretch", lineHeight: "28px", fontWeight: 600 }}>{item.product}</div>
+                  {item.note && <div style={{ fontSize: 12, color: "#737982", lineHeight: "18px", fontWeight: 400 }}>({item.note})</div>}
                 </div>
                 <div style={{ flex: 1, display: "flex", alignItems: "flex-start", gap: 24, minWidth: 310, maxWidth: "100%", textAlign: "center" }}>
                   <div style={{ flex: 1, lineHeight: "28px", fontWeight: 600, display: "inline-block", minWidth: 44 }}>{item.hsn}</div>

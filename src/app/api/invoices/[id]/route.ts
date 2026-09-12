@@ -26,12 +26,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   try {
     const parsed = JSON.parse(order.product);
     if (Array.isArray(parsed)) {
-      items = parsed.map((line: { name: string; hsn: string; qty: number; unitPrice: number; gstPct: number }) => ({
+      items = parsed.map((line: { name: string; hsn: string; qty: number; unitPrice: number; gstPct: number; note?: string }) => ({
         product: line.name,
         hsn: line.hsn || "6109",
         qty: line.qty,
         saleValue: line.qty * line.unitPrice,
         gst: line.qty * line.unitPrice * line.gstPct / 100,
+        note: line.note || null,
       }));
     } else throw new Error("not array");
   } catch {

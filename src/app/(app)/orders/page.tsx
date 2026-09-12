@@ -31,7 +31,7 @@ const STAGES = [
 ];
 
 type ProductLine = {
-  productId: number | null; name: string; hsn: string; qty: number; unitPrice: number; gstPct: number;
+  productId: number | null; name: string; hsn: string; qty: number; unitPrice: number; gstPct: number; note: string;
   selectedVariants: Record<string, string>;
   // Fabric
   fabricMode: "manual" | "weight"; fabricWeightPerPc: number; fabricPricePerKg: number; fabricManual: number; fabricPerPc: boolean;
@@ -47,7 +47,7 @@ type ProductLine = {
 };
 
 const BLANK_LINE: ProductLine = {
-  productId: null, name: "", hsn: "", qty: 0, unitPrice: 0, gstPct: 5,
+  productId: null, name: "", hsn: "", qty: 0, unitPrice: 0, gstPct: 5, note: "",
   selectedVariants: {},
   fabricMode: "manual", fabricWeightPerPc: 0, fabricPricePerKg: 0, fabricManual: 0, fabricPerPc: false,
   ribMode: "manual", ribWeightPerPc: 0, ribPricePerKg: 0, ribManual: 0, ribPerPc: false,
@@ -362,6 +362,12 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
             options={[{ value: "", label: "— Select product —" }, ...catalogProducts.map(p => ({ value: String(p.id), label: p.name }))]}
             style={SINP}
           />
+        </div>
+        <div style={{ flex: 3, minWidth: 140 }}>
+          <div style={LBL}>Note (appears in bill)</div>
+          <input value={line.note ?? ""} onChange={e => onChange("note", e.target.value)}
+            placeholder='e.g. "Round neck, sublimation print"'
+            style={SINP} />
         </div>
         <div style={{ width: 70 }}>
           <div style={LBL}>HSN</div>
