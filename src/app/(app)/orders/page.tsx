@@ -829,25 +829,40 @@ export default function OrdersPage() {
   useEffect(() => { load(); }, []);
 
   async function handleSave(form: Record<string, unknown>) {
+    const editingId = editModal?.id;
+    const snapshot = editingId ? orders.find(o => o.id === editingId) : null;
+
+    // Optimistic: close modal + update table immediately
+    setEditModal(null);
+    if (editingId && snapshot) {
+      setOrders(prev => prev.map(o => o.id === editingId ? {
+        ...snapshot, ...form,
+        qty: Number(form.qty), saleValue: Number(form.saleValue), gst: Number(form.gst),
+        fabric: Number(form.fabric) || 0, printing: Number(form.printing) || 0,
+        transport: Number(form.transport) || 0, misc: Number(form.misc) || 0,
+        jobWork: Number(form.jobWork) || 0, packaging: Number(form.packaging) || 0,
+        design: Number(form.design) || 0, ribCost: Number(form.ribCost) || 0,
+      } as Order : o));
+    }
+
     setSaving(true);
     try {
-      if (editModal?.id) {
-        const res = await fetch(`/api/orders/${encodeURIComponent(editModal.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (editingId) {
+        const res = await fetch(`/api/orders/${encodeURIComponent(editingId)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
         if (res.ok) {
           const updated = await res.json();
-          setOrders(prev => prev.map(o => o.id === editModal.id ? { ...o, ...updated } : o));
-          setEditModal(null);
-          scheduleRefresh();
+          setOrders(prev => prev.map(o => o.id === editingId ? { ...o, ...updated } : o));
+        } else if (snapshot) {
+          setOrders(prev => prev.map(o => o.id === editingId ? snapshot : o));
         }
       } else {
         const res = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
         if (res.ok) {
           const created = await res.json();
           setOrders(prev => [created, ...prev]);
-          setEditModal(null);
-          scheduleRefresh();
         }
       }
+      scheduleRefresh();
     } finally {
       setSaving(false);
     }
@@ -1005,6 +1020,12 @@ export default function OrdersPage() {
             saving={saving}
           />
         </>
+      )}
+      {saving && (
+        <div style={{ position: "fixed", bottom: 24, right: 24, background: INK, color: WHITE, padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
+          <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: WHITE, borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
+          Syncing…
+        </div>
       )}
     </div>
   );

@@ -134,6 +134,14 @@ export default function VendorsPage() {
   useEffect(() => { load(); }, []);
 
   async function handleSave(form: Partial<Vendor>) {
+    const snapshot = form.id ? vendors.find(v => v.id === form.id) : null;
+
+    // Optimistic: close modal + update list immediately
+    setModal(null);
+    if (form.id && snapshot) {
+      setVendors(prev => prev.map(v => v.id === form.id ? { ...snapshot, ...form, totalPurchased: Number(form.totalPurchased ?? snapshot.totalPurchased) } : v));
+    }
+
     setSaving(true);
     try {
       if (form.id) {
@@ -141,18 +149,17 @@ export default function VendorsPage() {
         if (res.ok) {
           const updated = await res.json();
           setVendors(prev => prev.map(v => v.id === form.id ? { ...v, ...updated, totalPurchased: Number(updated.totalPurchased) } : v));
-          setModal(null);
-          scheduleRefresh();
+        } else if (snapshot) {
+          setVendors(prev => prev.map(v => v.id === form.id ? snapshot : v));
         }
       } else {
         const res = await fetch("/api/vendors", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
         if (res.ok) {
           const created = await res.json();
           setVendors(prev => [...prev, { ...created, totalPurchased: Number(created.totalPurchased) }]);
-          setModal(null);
-          scheduleRefresh();
         }
       }
+      scheduleRefresh();
     } finally {
       setSaving(false);
     }

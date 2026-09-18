@@ -378,6 +378,16 @@ export default function ProductsPage() {
   }
 
   async function handleSave(form: Partial<Product>) {
+    const snapshot = form.id ? products.find(p => p.id === form.id) : null;
+
+    // Optimistic: close modal + update list immediately
+    setEditModal(null);
+    if (form.id && snapshot) {
+      const optimistic = { ...snapshot, ...form, basePrice: Number(form.basePrice ?? snapshot.basePrice), variants: Array.isArray(form.variants) ? form.variants : parseVariants((form.variants ?? "") as string) };
+      setProducts(prev => prev.map(p => p.id === form.id ? optimistic : p));
+      setDetail(optimistic);
+    }
+
     setSaving(true);
     try {
       if (form.id) {
@@ -387,8 +397,9 @@ export default function ProductsPage() {
           const parsed = { ...updated, basePrice: Number(updated.basePrice), variants: parseVariants(updated.variants) };
           setProducts(prev => prev.map(p => p.id === form.id ? parsed : p));
           setDetail(parsed);
-          setEditModal(null);
-          scheduleRefresh();
+        } else if (snapshot) {
+          setProducts(prev => prev.map(p => p.id === form.id ? snapshot : p));
+          setDetail(snapshot);
         }
       } else {
         const res = await fetch("/api/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
@@ -397,10 +408,9 @@ export default function ProductsPage() {
           const parsed = { ...created, basePrice: Number(created.basePrice), variants: parseVariants(created.variants) };
           setProducts(prev => [...prev, parsed]);
           setDetail(null);
-          setEditModal(null);
-          scheduleRefresh();
         }
       }
+      scheduleRefresh();
     } finally {
       setSaving(false);
     }
@@ -515,6 +525,12 @@ export default function ProductsPage() {
             saving={saving}
           />
         </>
+      )}
+      {saving && (
+        <div style={{ position: "fixed", bottom: 24, right: 24, background: "#0f172a", color: "#fff", padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
+          <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
+          Syncing…
+        </div>
       )}
     </div>
   );
