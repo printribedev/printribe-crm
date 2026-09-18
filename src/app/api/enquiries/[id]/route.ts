@@ -22,9 +22,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     where: { id: Number(id) },
     data: {
       title: body.title,
+      clientId: body.clientId ?? null,
       clientName: body.clientName ?? null,
       clientEmail: body.clientEmail ?? null,
       clientPhone: body.clientPhone ?? null,
+      productId: body.productId ?? null,
       product: body.product ?? null,
       notes: body.notes ?? null,
       status: body.status as EnquiryStatus ?? undefined,

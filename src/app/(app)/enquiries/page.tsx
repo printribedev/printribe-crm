@@ -27,10 +27,13 @@ type EnquiryFile = { id: number; label: string; url: string; uploadedBy: string 
 type Enquiry = {
   id: number;
   token: string;
+  ref: string;
   title: string;
+  clientId: number | null;
   clientName: string | null;
   clientEmail: string | null;
   clientPhone: string | null;
+  productId: number | null;
   product: string | null;
   notes: string | null;
   status: string;
@@ -41,6 +44,8 @@ type Enquiry = {
   files: EnquiryFile[];
   createdAt: string;
 };
+type ClientOption = { id: number; name: string; email: string | null; phone: string | null };
+type ProductOption = { id: number; name: string };
 
 const STATUSES = ["open", "design_review", "approved", "converted", "closed"];
 
@@ -78,63 +83,119 @@ function SizeColumnsEditor({ columns, onChange }: { columns: string[]; onChange:
   );
 }
 
-function Modal({ enquiry, onSave, onClose }: {
+function Modal({ enquiry, clients, products, onSave, onClose }: {
   enquiry: Partial<Enquiry> & { id?: number };
+  clients: ClientOption[];
+  products: ProductOption[];
   onSave: (v: Partial<Enquiry>) => void;
   onClose: () => void;
 }) {
   const isNew = !enquiry.id;
   const [form, setForm] = useState<Partial<Enquiry> & { title: string; status: string; teamApproved: boolean }>({
     title: enquiry.title ?? "",
+    clientId: enquiry.clientId ?? null,
     clientName: enquiry.clientName ?? "",
     clientEmail: enquiry.clientEmail ?? "",
     clientPhone: enquiry.clientPhone ?? "",
+    productId: enquiry.productId ?? null,
     product: enquiry.product ?? "",
     notes: enquiry.notes ?? "",
     status: enquiry.status ?? "open",
     teamApproved: enquiry.teamApproved ?? false,
     sizeColumns: enquiry.sizeColumns ?? [],
   });
-  const set = (k: string, v: string | boolean) => setForm(p => ({ ...p, [k]: v }));
+
+  const inputStyle = { width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", boxSizing: "border-box" as const, background: WHITE };
+  const selectStyle = { ...inputStyle, cursor: "pointer" };
+
+  function pickClient(id: number | "") {
+    if (id === "") {
+      setForm(p => ({ ...p, clientId: null, clientName: "", clientEmail: "", clientPhone: "" }));
+    } else {
+      const c = clients.find(c => c.id === Number(id));
+      if (c) setForm(p => ({ ...p, clientId: c.id, clientName: c.name, clientEmail: c.email ?? "", clientPhone: c.phone ?? "" }));
+    }
+  }
+
+  function pickProduct(id: number | "") {
+    if (id === "") {
+      setForm(p => ({ ...p, productId: null, product: "" }));
+    } else {
+      const p = products.find(p => p.id === Number(id));
+      if (p) setForm(p2 => ({ ...p2, productId: p.id, product: p.name }));
+    }
+  }
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 520, maxHeight: "90vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
+      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 540, maxHeight: "92vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "New Enquiry" : "Edit Enquiry"}</div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "New Enquiry" : `Edit — ${enquiry.ref ?? ""}`}</div>
+            {!isNew && enquiry.ref && <div style={{ fontSize: 11, color: MID, marginTop: 2 }}>{enquiry.ref}</div>}
+          </div>
           <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
         </div>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          {[
-            { key: "title", label: "Title / Label", full: true },
-            { key: "product", label: "Product / Item", full: true },
-            { key: "clientName", label: "Client Name" },
-            { key: "clientPhone", label: "Phone" },
-            { key: "clientEmail", label: "Email", full: true },
-          ].map(f => (
-            <div key={f.key} style={{ gridColumn: f.full ? "1 / -1" : "auto" }}>
-              <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>{f.label}</div>
-              <input value={String(form[f.key as keyof typeof form])} onChange={e => set(f.key, e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", boxSizing: "border-box" }} />
-            </div>
-          ))}
+          {/* Title */}
+          <div style={{ gridColumn: "1 / -1" }}>
+            <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>Title / Label *</div>
+            <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+              placeholder="e.g. AC Milan Jerseys – June 2025" style={inputStyle} />
+          </div>
+
+          {/* Client picker */}
+          <div style={{ gridColumn: "1 / -1" }}>
+            <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>Client</div>
+            <select value={form.clientId ?? ""} onChange={e => pickClient(e.target.value === "" ? "" : Number(e.target.value))} style={selectStyle}>
+              <option value="">— Select client —</option>
+              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+
+          {/* Auto-filled client details (editable override) */}
+          <div>
+            <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>Contact Name</div>
+            <input value={form.clientName ?? ""} onChange={e => setForm(p => ({ ...p, clientName: e.target.value }))} style={inputStyle} placeholder="Auto-filled from client" />
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>Phone</div>
+            <input value={form.clientPhone ?? ""} onChange={e => setForm(p => ({ ...p, clientPhone: e.target.value }))} style={inputStyle} placeholder="Auto-filled from client" />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>Email</div>
+            <input value={form.clientEmail ?? ""} onChange={e => setForm(p => ({ ...p, clientEmail: e.target.value }))} style={inputStyle} placeholder="Auto-filled from client" />
+          </div>
+
+          {/* Product picker */}
+          <div style={{ gridColumn: "1 / -1" }}>
+            <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>Product</div>
+            <select value={form.productId ?? ""} onChange={e => pickProduct(e.target.value === "" ? "" : Number(e.target.value))} style={selectStyle}>
+              <option value="">— Select product —</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+
+          {/* Notes */}
           <div style={{ gridColumn: "1 / -1" }}>
             <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>Notes</div>
-            <textarea value={form.notes ?? ""} onChange={e => set("notes", e.target.value)} rows={3}
-              style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+            <textarea value={form.notes ?? ""} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3}
+              style={{ ...inputStyle, resize: "vertical" }} placeholder="Any internal notes for this enquiry" />
           </div>
+
+          {/* Edit-only fields */}
           {!isNew && (
             <div>
               <div style={{ fontSize: 11, color: MID, marginBottom: 4, fontWeight: 600 }}>Status</div>
-              <select value={form.status} onChange={e => set("status", e.target.value)}
-                style={{ width: "100%", padding: "8px 10px", border: `1px solid ${BORDER}`, borderRadius: BTN_RADIUS, fontSize: 13, outline: "none" }}>
+              <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} style={selectStyle}>
                 {STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
               </select>
             </div>
           )}
           {!isNew && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 18 }}>
-              <input type="checkbox" id="teamApproved" checked={form.teamApproved} onChange={e => set("teamApproved", e.target.checked)}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 20 }}>
+              <input type="checkbox" id="teamApproved" checked={form.teamApproved} onChange={e => setForm(p => ({ ...p, teamApproved: e.target.checked }))}
                 style={{ width: 16, height: 16, cursor: "pointer" }} />
               <label htmlFor="teamApproved" style={{ fontSize: 13, cursor: "pointer" }}>Team approved design</label>
             </div>
@@ -149,9 +210,10 @@ function Modal({ enquiry, onSave, onClose }: {
             </div>
           )}
         </div>
+
         <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-          <button onClick={() => onSave(form)} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
+          <button onClick={() => onSave(form)} disabled={!form.title.trim()} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: form.title.trim() ? "pointer" : "not-allowed", fontWeight: 700, opacity: form.title.trim() ? 1 : 0.6 }}>
             {isNew ? "Create enquiry" : "Save changes"}
           </button>
         </div>
@@ -163,6 +225,8 @@ function Modal({ enquiry, onSave, onClose }: {
 export default function EnquiriesPage() {
   const { canDo } = usePermissions();
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<Partial<Enquiry> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -181,7 +245,11 @@ export default function EnquiriesPage() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    fetch("/api/clients").then(r => r.json()).then((data: ClientOption[]) => setClients(data));
+    fetch("/api/products").then(r => r.json()).then((data: ProductOption[]) => setProducts(data.filter((p: ProductOption & { active?: boolean }) => p.active !== false)));
+  }, []);
 
   async function handleSave(form: Partial<Enquiry>) {
     const snapshot = form.id ? enquiries.find(e => e.id === form.id) : null;
@@ -250,7 +318,7 @@ export default function EnquiriesPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ background: BLACK, color: WHITE }}>
-                {["Title", "Client", "Product", "Status", "Design", "Files", "Created", ""].map(h => (
+                {["Ref", "Title", "Client", "Product", "Status", "Design", "Files", "Created", ""].map(h => (
                   <th key={h} style={{ padding: "12px 14px", textAlign: "left", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>{h}</th>
                 ))}
               </tr>
@@ -258,6 +326,9 @@ export default function EnquiriesPage() {
             <tbody>
               {enquiries.map((e, i) => (
                 <tr key={e.id} style={{ borderBottom: `1px solid ${BORDER}`, background: i % 2 === 0 ? WHITE : BG }}>
+                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: BLUE, fontFamily: "monospace" }}>{e.ref}</span>
+                  </td>
                   <td style={{ padding: "12px 14px", fontWeight: 600, maxWidth: 200 }}>{e.title}</td>
                   <td style={{ padding: "12px 14px" }}>
                     <div>{e.clientName || <span style={{ color: MID }}>—</span>}</div>
@@ -306,14 +377,14 @@ export default function EnquiriesPage() {
                 </tr>
               ))}
               {enquiries.length === 0 && (
-                <tr><td colSpan={8} style={{ padding: "36px 14px", textAlign: "center", color: MID, fontSize: 13 }}>No enquiries yet. Click "+ New enquiry" to get started.</td></tr>
+                <tr><td colSpan={9} style={{ padding: "36px 14px", textAlign: "center", color: MID, fontSize: 13 }}>No enquiries yet. Click "+ New enquiry" to get started.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {modal !== null && <Modal enquiry={modal} onSave={handleSave} onClose={() => setModal(null)} />}
+      {modal !== null && <Modal enquiry={modal} clients={clients} products={products} onSave={handleSave} onClose={() => setModal(null)} />}
 
       {saving && (
         <div style={{ position: "fixed", bottom: 24, right: 24, background: BLACK, color: WHITE, padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
