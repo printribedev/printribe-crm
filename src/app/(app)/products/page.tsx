@@ -388,6 +388,7 @@ export default function ProductsPage() {
       setDetail(optimistic);
     }
 
+    await new Promise(r => setTimeout(r, 0));
     setSaving(true);
     try {
       if (form.id) {
@@ -514,17 +515,15 @@ export default function ProductsPage() {
         />
       )}
 
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       {editModal !== null && (
-        <>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <EditModal
-            product={editModal}
-            onSave={handleSave}
-            onClose={() => setEditModal(null)}
-            onDelete={editModal.id && canDo("products", "delete") ? () => handleDelete(editModal.id!) : undefined}
-            saving={saving}
-          />
-        </>
+        <EditModal
+          product={editModal}
+          onSave={handleSave}
+          onClose={() => setEditModal(null)}
+          onDelete={editModal.id && canDo("products", "delete") ? () => handleDelete(editModal.id!) : undefined}
+          saving={saving}
+        />
       )}
       {saving && (
         <div style={{ position: "fixed", bottom: 24, right: 24, background: "#0f172a", color: "#fff", padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>

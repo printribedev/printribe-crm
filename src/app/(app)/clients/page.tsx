@@ -208,6 +208,7 @@ export default function ClientsPage() {
       setClients(prev => prev.map(c => c.id === form.id ? { ...snapshot, ...form } : c));
     }
 
+    await new Promise(r => setTimeout(r, 0));
     setSaving(true);
     try {
       if (form.id) {
@@ -330,18 +331,16 @@ export default function ClientsPage() {
 
       </div>{/* end table-scroll */}
 
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       {modal !== null && (
-        <>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <Modal
-            client={modal}
-            onSave={handleSave}
-            onClose={() => setModal(null)}
-            onDelete={modal.id && canDo("clients", "delete") ? () => handleDelete(modal.id!) : undefined}
-            deleteError={deleteError}
-            saving={saving}
-          />
-        </>
+        <Modal
+          client={modal}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+          onDelete={modal.id && canDo("clients", "delete") ? () => handleDelete(modal.id!) : undefined}
+          deleteError={deleteError}
+          saving={saving}
+        />
       )}
       {saving && (
         <div style={{ position: "fixed", bottom: 24, right: 24, background: "#0f172a", color: "#fff", padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>

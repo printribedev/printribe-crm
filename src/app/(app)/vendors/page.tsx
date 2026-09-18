@@ -142,6 +142,7 @@ export default function VendorsPage() {
       setVendors(prev => prev.map(v => v.id === form.id ? { ...snapshot, ...form, totalPurchased: Number(form.totalPurchased ?? snapshot.totalPurchased) } : v));
     }
 
+    await new Promise(r => setTimeout(r, 0));
     setSaving(true);
     try {
       if (form.id) {
@@ -256,22 +257,21 @@ export default function VendorsPage() {
         </div>
       )}
 
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       {/* Modal */}
       {modal !== null && (
-        <>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <Modal
-            vendor={modal}
-            onSave={handleSave}
-            onClose={() => setModal(null)}
-            onDelete={modal.id && canDo("vendors", "delete") ? () => handleDelete(modal.id!) : undefined}
-            saving={saving}
-          />
-        </>
+        <Modal
+          vendor={modal}
+          onSave={handleSave}
+          onClose={() => setModal(null)}
+          onDelete={modal.id && canDo("vendors", "delete") ? () => handleDelete(modal.id!) : undefined}
+          saving={saving}
+        />
       )}
       {saving && (
-        <div style={{ position: "fixed", bottom: 24, right: 24, background: BLACK, color: WHITE, padding: "10px 18px", borderRadius: 8, fontSize: 12, fontWeight: 600 }}>
-          Saving…
+        <div style={{ position: "fixed", bottom: 24, right: 24, background: BLACK, color: WHITE, padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
+          <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: WHITE, borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
+          Syncing…
         </div>
       )}
     </div>

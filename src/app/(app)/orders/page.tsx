@@ -845,6 +845,8 @@ export default function OrdersPage() {
       } as Order : o));
     }
 
+    // Yield to let React render the optimistic update first, then show syncing toast
+    await new Promise(r => setTimeout(r, 0));
     setSaving(true);
     try {
       if (editingId) {
@@ -1006,20 +1008,18 @@ export default function OrdersPage() {
       </div>{/* end table-scroll */}
 
       {costModal && <CostModal order={costModal} onClose={() => setCostModal(null)} />}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       {editModal !== null && (
-        <>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <EditModal
-            order={editModal}
-            clients={clients}
-            catalogProducts={catalogProducts}
-            allOrders={orders}
-            onSave={handleSave}
-            onClose={() => setEditModal(null)}
-            onDelete={editModal.id && canDo("orders", "delete") ? () => handleDelete(editModal.id!) : undefined}
-            saving={saving}
-          />
-        </>
+        <EditModal
+          order={editModal}
+          clients={clients}
+          catalogProducts={catalogProducts}
+          allOrders={orders}
+          onSave={handleSave}
+          onClose={() => setEditModal(null)}
+          onDelete={editModal.id && canDo("orders", "delete") ? () => handleDelete(editModal.id!) : undefined}
+          saving={saving}
+        />
       )}
       {saving && (
         <div style={{ position: "fixed", bottom: 24, right: 24, background: INK, color: WHITE, padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
