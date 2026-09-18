@@ -224,6 +224,51 @@ model Asset {
   @@map("assets")
 }
 
+model Enquiry {
+  id          Int            @id @default(autoincrement())
+  token       String         @unique @default(cuid())
+  title       String         // internal label e.g. "AC Milan Jerseys – June"
+  clientName  String?        @map("client_name")
+  clientEmail String?        @map("client_email")
+  clientPhone String?        @map("client_phone")
+  product     String?        // free text or product name
+  notes       String?
+  status      EnquiryStatus  @default(open)
+  // Design approval
+  clientApproved  Boolean    @default(false) @map("client_approved")
+  teamApproved    Boolean    @default(false) @map("team_approved")
+  // Size chart columns JSON: string[] e.g. ["Size","Chest","Length","Qty"]
+  sizeColumns Json           @default("[]") @map("size_columns")
+  // Size chart rows JSON: Record<string,string>[]
+  sizeRows    Json           @default("[]") @map("size_rows")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+  files       EnquiryFile[]
+
+  @@map("enquiries")
+}
+
+enum EnquiryStatus {
+  open
+  design_review
+  approved
+  converted
+  closed
+}
+
+model EnquiryFile {
+  id        Int      @id @default(autoincrement())
+  enquiryId Int      @map("enquiry_id")
+  enquiry   Enquiry  @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+  label     String   // "Reference" | "Mockup" | "Other"
+  path      String   // Supabase storage path
+  url       String   // public URL
+  uploadedBy String  @default("team") @map("uploaded_by") // "team" | "client"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("enquiry_files")
+}
+
 model AgentSession {
   id        String   @id @default(cuid())
   key       String   @unique
@@ -239,7 +284,7 @@ model UserPermission {
   userId         String   @unique @map("user_id")
   email          String
   role           String   @default("user")
-  sections       Json     @default("{\"dashboard\":true,\"orders\":true,\"clients\":true,\"vendors\":true,\"products\":true,\"assets\":true,\"quotes\":true,\"production\":true}")
+  sections       Json     @default("{\"dashboard\":true,\"orders\":true,\"clients\":true,\"vendors\":true,\"products\":true,\"assets\":true,\"enquiries\":true,\"quotes\":true,\"production\":true}")
   showFinancials Boolean  @default(true) @map("show_financials")
   showHarvey     Boolean  @default(true) @map("show_harvey")
   createdAt      DateTime @default(now()) @map("created_at")
