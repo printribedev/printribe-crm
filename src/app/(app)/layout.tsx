@@ -62,7 +62,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {showHarvey && <AgentChat />}
+      {/* AgentChat disabled */}
     </div>
   );
 }
