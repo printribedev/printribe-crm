@@ -169,11 +169,12 @@ function ImageUploader({ currentPath, onUploaded }: { currentPath: string | null
   );
 }
 
-function EditModal({ product, onSave, onClose, onDelete }: {
+function EditModal({ product, onSave, onClose, onDelete, saving }: {
   product: Partial<Product> & { id?: number };
   onSave: (v: Partial<Product>) => void;
   onClose: () => void;
   onDelete?: () => void;
+  saving?: boolean;
 }) {
   const [form, setForm] = useState<Omit<Product, "id"> & { id?: number }>({
     ...BLANK, ...product, variants: parseVariants(product.variants),
@@ -255,8 +256,9 @@ function EditModal({ product, onSave, onClose, onDelete }: {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button onClick={() => { onSave(form); onClose(); }} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
-              {isNew ? "Add product" : "Save changes"}
+            <button onClick={() => onSave(form)} disabled={saving} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: saving ? "not-allowed" : "pointer", fontWeight: 700, opacity: saving ? 0.75 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+              {saving && <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />}
+              {saving ? "Saving…" : isNew ? "Add product" : "Save changes"}
             </button>
           </div>
         </div>
@@ -367,22 +369,50 @@ export default function ProductsPage() {
 
   useEffect(() => { load(); }, []);
 
+  const [saving, setSaving] = useState(false);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function scheduleRefresh() {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => load(), 3000);
+  }
+
   async function handleSave(form: Partial<Product>) {
-    if (form.id) {
-      await fetch(`/api/products/${form.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    } else {
-      await fetch("/api/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    setSaving(true);
+    try {
+      if (form.id) {
+        const res = await fetch(`/api/products/${form.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) {
+          const updated = await res.json();
+          const parsed = { ...updated, basePrice: Number(updated.basePrice), variants: parseVariants(updated.variants) };
+          setProducts(prev => prev.map(p => p.id === form.id ? parsed : p));
+          setDetail(parsed);
+          setEditModal(null);
+          scheduleRefresh();
+        }
+      } else {
+        const res = await fetch("/api/products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) {
+          const created = await res.json();
+          const parsed = { ...created, basePrice: Number(created.basePrice), variants: parseVariants(created.variants) };
+          setProducts(prev => [...prev, parsed]);
+          setDetail(null);
+          setEditModal(null);
+          scheduleRefresh();
+        }
+      }
+    } finally {
+      setSaving(false);
     }
-    await load();
-    setDetail(null);
   }
 
   async function handleDelete(id: number) {
     if (!confirm("Delete this product? This cannot be undone.")) return;
     await fetch(`/api/products/${id}`, { method: "DELETE" });
+    setProducts(prev => prev.filter(p => p.id !== id));
     setEditModal(null);
     setDetail(null);
-    await load();
+    scheduleRefresh();
   }
 
   if (loading) return <LoadingScreen />;
@@ -475,12 +505,16 @@ export default function ProductsPage() {
       )}
 
       {editModal !== null && (
-        <EditModal
-          product={editModal}
-          onSave={handleSave}
-          onClose={() => setEditModal(null)}
-          onDelete={editModal.id && canDo("products", "delete") ? () => handleDelete(editModal.id!) : undefined}
-        />
+        <>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <EditModal
+            product={editModal}
+            onSave={handleSave}
+            onClose={() => setEditModal(null)}
+            onDelete={editModal.id && canDo("products", "delete") ? () => handleDelete(editModal.id!) : undefined}
+            saving={saving}
+          />
+        </>
       )}
     </div>
   );

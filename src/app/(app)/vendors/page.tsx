@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import CustomSelect from "@/components/CustomSelect";
 import { usePermissions } from "@/context/PermissionsContext";
@@ -40,11 +40,12 @@ function Badge({ text, color = R }: { text: string; color?: string }) {
   );
 }
 
-function Modal({ vendor, onSave, onClose, onDelete }: {
+function Modal({ vendor, onSave, onClose, onDelete, saving }: {
   vendor: Partial<Vendor> & { id?: number };
   onSave: (v: Partial<Vendor>) => void;
   onClose: () => void;
   onDelete?: () => void;
+  saving?: boolean;
 }) {
   const [form, setForm] = useState({ ...BLANK, ...vendor });
   const set = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
@@ -99,8 +100,9 @@ function Modal({ vendor, onSave, onClose, onDelete }: {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button onClick={() => { onSave(form); onClose(); }} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
-              {isNew ? "Add vendor" : "Save changes"}
+            <button onClick={() => onSave(form)} disabled={saving} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: saving ? "not-allowed" : "pointer", fontWeight: 700, opacity: saving ? 0.75 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+              {saving && <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />}
+              {saving ? "Saving…" : isNew ? "Add vendor" : "Save changes"}
             </button>
           </div>
         </div>
@@ -115,6 +117,12 @@ export default function VendorsPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<Partial<Vendor> | null>(null);
   const [saving, setSaving] = useState(false);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function scheduleRefresh() {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => load(), 3000);
+  }
 
   async function load() {
     const res = await fetch("/api/vendors");
@@ -127,20 +135,35 @@ export default function VendorsPage() {
 
   async function handleSave(form: Partial<Vendor>) {
     setSaving(true);
-    if (form.id) {
-      await fetch(`/api/vendors/${form.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    } else {
-      await fetch("/api/vendors", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    try {
+      if (form.id) {
+        const res = await fetch(`/api/vendors/${form.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) {
+          const updated = await res.json();
+          setVendors(prev => prev.map(v => v.id === form.id ? { ...v, ...updated, totalPurchased: Number(updated.totalPurchased) } : v));
+          setModal(null);
+          scheduleRefresh();
+        }
+      } else {
+        const res = await fetch("/api/vendors", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) {
+          const created = await res.json();
+          setVendors(prev => [...prev, { ...created, totalPurchased: Number(created.totalPurchased) }]);
+          setModal(null);
+          scheduleRefresh();
+        }
+      }
+    } finally {
+      setSaving(false);
     }
-    await load();
-    setSaving(false);
   }
 
   async function handleDelete(id: number) {
     if (!confirm("Delete this vendor? This cannot be undone.")) return;
     await fetch(`/api/vendors/${id}`, { method: "DELETE" });
+    setVendors(prev => prev.filter(v => v.id !== id));
     setModal(null);
-    await load();
+    scheduleRefresh();
   }
 
   const sorted = [...vendors].sort((a, b) => b.totalPurchased - a.totalPurchased);
@@ -228,12 +251,16 @@ export default function VendorsPage() {
 
       {/* Modal */}
       {modal !== null && (
-        <Modal
-          vendor={modal}
-          onSave={handleSave}
-          onClose={() => setModal(null)}
-          onDelete={modal.id && canDo("vendors", "delete") ? () => handleDelete(modal.id!) : undefined}
-        />
+        <>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <Modal
+            vendor={modal}
+            onSave={handleSave}
+            onClose={() => setModal(null)}
+            onDelete={modal.id && canDo("vendors", "delete") ? () => handleDelete(modal.id!) : undefined}
+            saving={saving}
+          />
+        </>
       )}
       {saving && (
         <div style={{ position: "fixed", bottom: 24, right: 24, background: BLACK, color: WHITE, padding: "10px 18px", borderRadius: 8, fontSize: 12, fontWeight: 600 }}>

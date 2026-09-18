@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import { usePermissions } from "@/context/PermissionsContext";
 import DateFilterBar from "@/components/DateFilterBar";
@@ -586,7 +586,7 @@ function ProductLineSection({ line, idx, catalogProducts, onChange, onRemove, ca
   );
 }
 
-function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose, onDelete }: {
+function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose, onDelete, saving }: {
   order: Partial<Order> & { id?: string };
   clients: Client[];
   catalogProducts: CatalogProduct[];
@@ -594,6 +594,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
   onSave: (v: Record<string, unknown>) => void;
   onClose: () => void;
   onDelete?: () => void;
+  saving?: boolean;
 }) {
   const { showFinancials } = usePermissions();
   const today = new Date().toISOString().slice(0, 10);
@@ -772,8 +773,9 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button type="button" onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button type="button" onClick={handleSave} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
-              {isNew ? "Create order" : "Save changes"}
+            <button type="button" onClick={handleSave} disabled={saving} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: saving ? "not-allowed" : "pointer", fontWeight: 700, opacity: saving ? 0.75 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+              {saving && <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: WHITE, borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />}
+              {saving ? "Saving…" : isNew ? "Create order" : "Save changes"}
             </button>
           </div>
         </div>
@@ -803,6 +805,13 @@ export default function OrdersPage() {
   }
   const [costModal, setCostModal] = useState<Order | null>(null);
   const [editModal, setEditModal] = useState<Partial<Order> | null>(null);
+  const [saving, setSaving] = useState(false);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function scheduleRefresh() {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => load(), 3000);
+  }
 
   async function load() {
     try {
@@ -820,19 +829,36 @@ export default function OrdersPage() {
   useEffect(() => { load(); }, []);
 
   async function handleSave(form: Record<string, unknown>) {
-    if (editModal?.id) {
-      await fetch(`/api/orders/${encodeURIComponent(editModal.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    } else {
-      await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    setSaving(true);
+    try {
+      if (editModal?.id) {
+        const res = await fetch(`/api/orders/${encodeURIComponent(editModal.id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) {
+          const updated = await res.json();
+          setOrders(prev => prev.map(o => o.id === editModal.id ? { ...o, ...updated } : o));
+          setEditModal(null);
+          scheduleRefresh();
+        }
+      } else {
+        const res = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) {
+          const created = await res.json();
+          setOrders(prev => [created, ...prev]);
+          setEditModal(null);
+          scheduleRefresh();
+        }
+      }
+    } finally {
+      setSaving(false);
     }
-    await load();
   }
 
   async function handleDelete(id: string) {
     if (!confirm(`Delete order ${id}? This cannot be undone.`)) return;
     await fetch(`/api/orders/${encodeURIComponent(id)}`, { method: "DELETE" });
+    setOrders(prev => prev.filter(o => o.id !== id));
     setEditModal(null);
-    await load();
+    scheduleRefresh();
   }
 
   function toggleSort(col: string) {
@@ -966,15 +992,19 @@ export default function OrdersPage() {
 
       {costModal && <CostModal order={costModal} onClose={() => setCostModal(null)} />}
       {editModal !== null && (
-        <EditModal
-          order={editModal}
-          clients={clients}
-          catalogProducts={catalogProducts}
-          allOrders={orders}
-          onSave={handleSave}
-          onClose={() => setEditModal(null)}
-          onDelete={editModal.id && canDo("orders", "delete") ? () => handleDelete(editModal.id!) : undefined}
-        />
+        <>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <EditModal
+            order={editModal}
+            clients={clients}
+            catalogProducts={catalogProducts}
+            allOrders={orders}
+            onSave={handleSave}
+            onClose={() => setEditModal(null)}
+            onDelete={editModal.id && canDo("orders", "delete") ? () => handleDelete(editModal.id!) : undefined}
+            saving={saving}
+          />
+        </>
       )}
     </div>
   );

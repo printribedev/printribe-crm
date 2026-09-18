@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
 import { usePermissions } from "@/context/PermissionsContext";
 import CustomSelect from "@/components/CustomSelect";
@@ -41,11 +41,12 @@ function Badge({ text, color = R }: { text: string; color?: string }) {
   );
 }
 
-function Modal({ client, onSave, onClose, onDelete, deleteError }: {
+function Modal({ client, onSave, onClose, onDelete, deleteError, saving }: {
   client: Partial<Client> & { id?: number };
   onSave: (v: Partial<Client>) => void;
   onClose: () => void;
   onDelete?: () => void;
+  saving?: boolean;
   deleteError?: string;
 }) {
   const [form, setForm] = useState({ ...BLANK, ...client });
@@ -163,8 +164,9 @@ function Modal({ client, onSave, onClose, onDelete, deleteError }: {
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={onClose} style={{ fontSize: 12, padding: "9px 16px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: MID, cursor: "pointer", fontWeight: 600 }}>Cancel</button>
-            <button onClick={() => { onSave(form); onClose(); }} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: "pointer", fontWeight: 700 }}>
-              {isNew ? "Add client" : "Save changes"}
+            <button onClick={() => onSave(form)} disabled={saving} style={{ fontSize: 12, padding: "9px 20px", borderRadius: BTN_RADIUS, background: BLUE, color: WHITE, border: "none", cursor: saving ? "not-allowed" : "pointer", fontWeight: 700, opacity: saving ? 0.75 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+              {saving && <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />}
+              {saving ? "Saving…" : isNew ? "Add client" : "Save changes"}
             </button>
           </div>
         </div>
@@ -180,6 +182,13 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState<Partial<Client> | null>(null);
   const [deleteError, setDeleteError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function scheduleRefresh() {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => load(), 3000);
+  }
 
   async function load() {
     const res = await fetch("/api/clients");
@@ -191,12 +200,28 @@ export default function ClientsPage() {
   useEffect(() => { load(); }, []);
 
   async function handleSave(form: Partial<Client>) {
-    if (form.id) {
-      await fetch(`/api/clients/${form.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    } else {
-      await fetch("/api/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    setSaving(true);
+    try {
+      if (form.id) {
+        const res = await fetch(`/api/clients/${form.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) {
+          const updated = await res.json();
+          setClients(prev => prev.map(c => c.id === form.id ? { ...c, ...updated } : c));
+          setModal(null);
+          scheduleRefresh();
+        }
+      } else {
+        const res = await fetch("/api/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+        if (res.ok) {
+          const created = await res.json();
+          setClients(prev => [created, ...prev]);
+          setModal(null);
+          scheduleRefresh();
+        }
+      }
+    } finally {
+      setSaving(false);
     }
-    await load();
   }
 
   async function handleDelete(id: number) {
@@ -205,8 +230,9 @@ export default function ClientsPage() {
       const data = await res.json();
       setDeleteError(data.error);
     } else {
+      setClients(prev => prev.filter(c => c.id !== id));
       setModal(null);
-      await load();
+      scheduleRefresh();
     }
   }
 
@@ -298,13 +324,17 @@ export default function ClientsPage() {
       </div>{/* end table-scroll */}
 
       {modal !== null && (
-        <Modal
-          client={modal}
-          onSave={handleSave}
-          onClose={() => setModal(null)}
-          onDelete={modal.id && canDo("clients", "delete") ? () => handleDelete(modal.id!) : undefined}
-          deleteError={deleteError}
-        />
+        <>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <Modal
+            client={modal}
+            onSave={handleSave}
+            onClose={() => setModal(null)}
+            onDelete={modal.id && canDo("clients", "delete") ? () => handleDelete(modal.id!) : undefined}
+            deleteError={deleteError}
+            saving={saving}
+          />
+        </>
       )}
     </div>
   );
