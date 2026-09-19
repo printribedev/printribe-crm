@@ -94,13 +94,34 @@ input[type="number"] {
 /* Sidebar close button — shown only on mobile */
 .sidebar-close-btn { display: none !important; }
 
+/* Page padding — desktop default, overridden at breakpoints below */
+.page-pad { padding: 26px 28px; }
+
+/* Modal inner padding — reduces on small screens */
+.modal-box { padding: clamp(16px, 4vw, 28px); }
+
 /* Table horizontal scroll wrapper */
-.table-scroll { /* layout wrapper only */ }
+.table-scroll { position: relative; }
 .table-scroll > div {
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch;
 }
 .table-scroll > div > table { min-width: 760px; }
+
+/* Scroll-fade hint on mobile — tells users the table continues rightward */
+@media (max-width: 768px) {
+  .table-scroll::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 100%;
+    background: linear-gradient(to right, transparent, #F8FAFC);
+    pointer-events: none;
+    border-radius: 0 8px 8px 0;
+  }
+}
 
 /* ── Mobile  (≤ 768px) ── */
 @media (max-width: 768px) {

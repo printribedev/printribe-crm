@@ -602,7 +602,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="page-pad" style={{ padding: "22px 28px", maxWidth: 1400 }}>
+    <div className="page-pad" style={{ maxWidth: 1400 }}>
       {/* Header */}
       <div className="dash-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <div>

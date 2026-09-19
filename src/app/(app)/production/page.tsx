@@ -308,7 +308,7 @@ export default function ProductionPage() {
 
   if (view === "kanban") {
     return (
-      <div className="page-pad" style={{ padding: "26px 28px", minHeight: "100vh" }}>
+      <div className="page-pad" style={{ minHeight: "100vh" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
           <div>
             <div style={{ fontSize: 20, fontWeight: 700, color: BLACK, letterSpacing: "-0.01em" }}>Production Board</div>
@@ -364,7 +364,7 @@ export default function ProductionPage() {
   });
 
   return (
-    <div className="page-pad" style={{ padding: "26px 28px" }}>
+    <div className="page-pad">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK, letterSpacing: "-0.01em" }}>Production — List View</div>

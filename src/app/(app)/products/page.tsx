@@ -184,7 +184,7 @@ function EditModal({ product, onSave, onClose, onDelete, saving }: {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 600, maxHeight: "93vh", overflowY: "auto", padding: 28 }}>
+      <div className="modal-box" style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 600, maxHeight: "93vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "Add New Product" : `Edit — ${product.name}`}</div>
           <button onClick={onClose} style={{ background: BG, border: "none", borderRadius: BTN_RADIUS, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: MID }}>✕ Close</button>
@@ -429,7 +429,7 @@ export default function ProductsPage() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="page-pad" style={{ padding: "26px 28px" }}>
+    <div className="page-pad">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: BLACK }}>Products</div>

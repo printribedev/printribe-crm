@@ -128,7 +128,7 @@ function Modal({ enquiry, clients, products, onSave, onClose }: {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 540, maxHeight: "92vh", overflowY: "auto", padding: 28 }} onClick={e => e.stopPropagation()}>
+      <div className="modal-box" style={{ background: WHITE, borderRadius: CARD_RADIUS, border: `1px solid ${BORDER}`, width: "100%", maxWidth: 540, maxHeight: "92vh", overflowY: "auto" }} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700 }}>{isNew ? "New Enquiry" : `Edit — ${enquiry.ref ?? ""}`}</div>
@@ -298,7 +298,7 @@ export default function EnquiriesPage() {
   if (loading) return <LoadingScreen />;
 
   return (
-    <div className="page-pad" style={{ padding: "26px 28px" }}>
+    <div className="page-pad">
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 22 }}>
