@@ -207,7 +207,7 @@ function ProformaContent() {
           html { zoom: 0.748 !important; -webkit-text-size-adjust: none !important; }
           body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           .screen-outer { padding: 0 !important; margin: 0 !important; background: #fff !important; min-height: unset !important; overflow: visible !important; min-width: unset !important; }
-          .screen-card { display: block !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 1062px !important; overflow: visible !important; padding-bottom: 60px !important; }
+          .screen-card { display: block !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; width: 1062px !important; overflow: visible !important; }
           .pf-footer { position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; width: 1062px !important; margin: 0 !important; }
         }
       `}</style>
