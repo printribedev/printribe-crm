@@ -71,26 +71,29 @@ function ProformaContent() {
       // Wait for fonts (Inter, La Belle Aurore) before measuring — avoids blank second page
       await document.fonts.ready;
       const el = cardRef.current;
-      const w = el.offsetWidth;
-      const h = el.scrollHeight;
+      const w = Math.round(el.offsetWidth);
+      const h = Math.round(el.scrollHeight);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opts: any = {
+        margin: 0,
+        pagebreak: { mode: [] },  // custom-sized page — disable html2pdf's page-break logic entirely
+        filename: `Proforma_${safeRef}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          width: w,
+          height: h,
+          windowWidth: w,
+          windowHeight: h,
+          scrollX: 0,
+          scrollY: 0,
+        },
+        jsPDF: { unit: "px", format: [w, h], orientation: "portrait" },
+      };
       await html2pdf()
-        .set({
-          margin: 0,
-          filename: `Proforma_${safeRef}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            letterRendering: true,
-            width: w,
-            height: h,
-            windowWidth: w,   // tell html2canvas the viewport = card width (critical on mobile)
-            windowHeight: h,  // prevents extra blank space below content
-            scrollX: 0,
-            scrollY: 0,
-          },
-          jsPDF: { unit: "px", format: [w, h], orientation: "portrait" },
-        })
+        .set(opts)
         .from(el)
         .save();
     } finally {
