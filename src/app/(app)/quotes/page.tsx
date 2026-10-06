@@ -45,6 +45,7 @@ export default function QuotesPage() {
   const [quoteDate, setQuoteDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [savedProformas, setSavedProformas] = useState<SavedProforma[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [converting, setConverting] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState("");
 
@@ -200,6 +201,7 @@ export default function QuotesPage() {
       window.location.href = `/orders`;
       return;
     }
+    setConverting(proforma.id);
     try {
       const res = await fetch(`/api/proformas/${proforma.id}/convert`, { method: "POST" });
       const text = await res.text();
@@ -216,6 +218,8 @@ export default function QuotesPage() {
       }
     } catch (e) {
       alert(`Network error: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setConverting(null);
     }
   }
 
@@ -478,7 +482,7 @@ export default function QuotesPage() {
                 <div style={{ fontWeight: 700, color: BLUE, fontFamily: "monospace", fontSize: 12 }}>{p.ref}</div>
                 <div style={{ fontWeight: 500 }}>{p.clientName}</div>
                 <div style={{ color: MID, fontSize: 12 }}>{new Date(p.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
-                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap", position: "relative", zIndex: 50 }}>
                   <button onClick={() => viewProforma(p.id)}
                     style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>
                     View
@@ -497,8 +501,9 @@ export default function QuotesPage() {
                     </button>
                   ) : (
                     <button onClick={() => convertToOrder(p)}
-                      style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${ORANGE}`, background: WHITE, color: ORANGE, cursor: "pointer", fontWeight: 600 }}>
-                      → Order
+                      disabled={converting === p.id}
+                      style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${ORANGE}`, background: WHITE, color: ORANGE, cursor: converting === p.id ? "default" : "pointer", fontWeight: 600, opacity: converting === p.id ? 0.6 : 1 }}>
+                      {converting === p.id ? "Converting…" : "→ Order"}
                     </button>
                   )}
                   {canDo("quotes", "delete") && (deleteConfirm === p.id ? (
