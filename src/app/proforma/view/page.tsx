@@ -72,7 +72,7 @@ function ProformaContent() {
       await document.fonts.ready;
       const el = cardRef.current;
       const w = Math.round(el.offsetWidth);
-      const h = Math.round(el.scrollHeight);
+      const h = Math.round(el.getBoundingClientRect().height);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const opts: any = {
         margin: 0,
@@ -224,7 +224,7 @@ function ProformaContent() {
         </button>
       </div>
 
-      <div className="screen-outer" style={{ padding: "24px 16px", minHeight: "calc(100vh - 46px)" }}>
+      <div className="screen-outer" style={{ padding: "24px 16px" }}>
         <div ref={cardRef} className="screen-card" style={{
           width: 1062,
           backgroundColor: "#fff",
