@@ -482,7 +482,7 @@ export default function QuotesPage() {
                 <div style={{ fontWeight: 700, color: BLUE, fontFamily: "monospace", fontSize: 12 }}>{p.ref}</div>
                 <div style={{ fontWeight: 500 }}>{p.clientName}</div>
                 <div style={{ color: MID, fontSize: 12 }}>{new Date(p.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
-                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap", position: "relative", zIndex: 50 }}>
+                <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
                   <button onClick={() => viewProforma(p.id)}
                     style={{ fontSize: 11, padding: "5px 12px", borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, color: BLUE, cursor: "pointer", fontWeight: 600 }}>
                     View
@@ -532,11 +532,6 @@ export default function QuotesPage() {
         )}
       </div>
 
-      {/* Delete confirm overlay backdrop */}
-      {deleteConfirm !== null && (
-        <div onClick={() => setDeleteConfirm(null)}
-          style={{ position: "fixed", inset: 0, zIndex: 40 }} />
-      )}
     </div>
   );
 }
