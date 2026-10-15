@@ -843,8 +843,14 @@ export default function OrdersPage() {
     const editingId = editModal?.id as string | undefined;
     const snapshot = editingId ? orders.find(o => o.id === editingId) : null;
 
-    // If editing an order with a saved invoice, require OTP first
-    if (editingId && snapshot?.invoiceKey) {
+    // Fields that appear on the invoice — changes to these require OTP when a saved invoice exists
+    const INVOICE_FIELDS = ["date", "clientId", "product", "hsn", "qty", "saleValue", "gst", "note"];
+    const invoiceFieldChanged = snapshot && INVOICE_FIELDS.some(
+      k => String(form[k] ?? "") !== String((snapshot as Record<string, unknown>)[k] ?? "")
+    );
+
+    // If editing an order with a saved invoice and an invoice field changed, require OTP first
+    if (editingId && snapshot?.invoiceKey && invoiceFieldChanged) {
       setEditModal(null);
       setOtpCode("");
       setOtpError("");
