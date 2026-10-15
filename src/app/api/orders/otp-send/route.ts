@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   await prisma.otp.create({ data: { orderId, code, expiresAt } });
 
   await resend.emails.send({
-    from: "Printribe CRM <noreply@printribe.in>",
+    from: "Printribe <noreply@printribe.in>",
     to: PRINTRIBE_EMAIL,
     subject: `OTP to edit order ${orderId}`,
     html: `
