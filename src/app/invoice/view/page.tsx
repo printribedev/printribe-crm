@@ -91,27 +91,12 @@ function InvoiceContent() {
       };
       const blob: Blob = await html2pdf().set(opts).from(el).outputPdf("blob");
 
-      // Trigger browser download — use window.open for iOS Safari which blocks a.click()
-      const url = URL.createObjectURL(blob);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        window.open(url, "_blank");
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-      } else {
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Invoice_${safeId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-      }
+      const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-      // Upload to R2 and save key on order (shown as separate syncing state)
-      if (id) {
+      if (isMobileDevice && id) {
+        // On mobile: upload to R2 first, then open the signed URL (blob URLs don't work cross-tab on iOS)
         setSyncing(true);
         try {
-          // Get session token so the upload works when the page is opened in a new tab on mobile
           const { createClient: createSupabaseClient } = await import("@/lib/supabase/client");
           const sb = createSupabaseClient();
           const { data: { session } } = await sb.auth.getSession();
@@ -122,17 +107,56 @@ function InvoiceContent() {
           fd.append("orderId", id);
           const up = await fetch("/api/invoices/upload", { method: "POST", headers: authHeader, body: fd });
           if (up.ok) {
-            const { key } = await up.json();
+            const { key, url: signedUrl } = await up.json();
             await fetch(`/api/orders/${encodeURIComponent(id)}/invoice-key`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json", ...authHeader },
               body: JSON.stringify({ invoiceKey: key }),
             });
+            window.open(signedUrl, "_blank");
           }
         } catch {
-          // Upload failure is non-fatal — PDF already downloaded locally
+          // Upload failure is non-fatal
         } finally {
           setSyncing(false);
+        }
+      } else {
+        // On desktop: trigger blob download immediately
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Invoice_${safeId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+        // Then upload to R2 in the background
+        if (id) {
+          setSyncing(true);
+          try {
+            const { createClient: createSupabaseClient } = await import("@/lib/supabase/client");
+            const sb = createSupabaseClient();
+            const { data: { session } } = await sb.auth.getSession();
+            const authHeader: Record<string, string> = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+
+            const fd = new FormData();
+            fd.append("file", blob, `Invoice_${safeId}.pdf`);
+            fd.append("orderId", id);
+            const up = await fetch("/api/invoices/upload", { method: "POST", headers: authHeader, body: fd });
+            if (up.ok) {
+              const { key } = await up.json();
+              await fetch(`/api/orders/${encodeURIComponent(id)}/invoice-key`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json", ...authHeader },
+                body: JSON.stringify({ invoiceKey: key }),
+              });
+            }
+          } catch {
+            // Upload failure is non-fatal — PDF already downloaded locally
+          } finally {
+            setSyncing(false);
+          }
         }
       }
     } finally {
