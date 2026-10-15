@@ -115,7 +115,7 @@ function InvoiceContent() {
           const { createClient: createSupabaseClient } = await import("@/lib/supabase/client");
           const sb = createSupabaseClient();
           const { data: { session } } = await sb.auth.getSession();
-          const authHeader = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+          const authHeader: Record<string, string> = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
 
           const fd = new FormData();
           fd.append("file", blob, `Invoice_${safeId}.pdf`);
