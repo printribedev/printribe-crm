@@ -161,6 +161,7 @@ model Order {
   fabricPricePerKg  Decimal?  @map("fabric_price_per_kg") @db.Decimal(10, 2)
   ribWeightPerPc    Decimal?  @map("rib_weight_per_pc") @db.Decimal(10, 3)
   ribPricePerKg     Decimal?  @map("rib_price_per_kg") @db.Decimal(10, 2)
+  invoiceKey   String?   @map("invoice_key")
   stage        Stage     @default(design)
   priority     Priority  @default(Normal)
   deliveryDate DateTime? @map("delivery_date")
@@ -270,6 +271,16 @@ model EnquiryFile {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("enquiry_files")
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  orderId   String   @map("order_id")
+  code      String
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("otps")
 }
 
 model BusinessSetting {

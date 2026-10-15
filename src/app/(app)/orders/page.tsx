@@ -68,6 +68,7 @@ type Order = {
   jobWork: number; packaging: number; design: number; ribCost: number;
   fabricWeightPerPc: number | null; fabricPricePerKg: number | null;
   ribWeightPerPc: number | null; ribPricePerKg: number | null;
+  invoiceKey: string | null;
   stage: string; priority: string;
   deliveryDate: string | null; paymentDate: string | null;
   flagged: string | null;
@@ -806,6 +807,11 @@ export default function OrdersPage() {
   const [costModal, setCostModal] = useState<Order | null>(null);
   const [editModal, setEditModal] = useState<Partial<Order> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [otpModal, setOtpModal] = useState<{ orderId: string; pendingEdit: Record<string, unknown> } | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpError, setOtpError] = useState("");
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function scheduleRefresh() {
@@ -829,8 +835,23 @@ export default function OrdersPage() {
   useEffect(() => { load(); }, []);
 
   async function handleSave(form: Record<string, unknown>) {
-    const editingId = editModal?.id;
+    const editingId = editModal?.id as string | undefined;
     const snapshot = editingId ? orders.find(o => o.id === editingId) : null;
+
+    // If editing an order with a saved invoice, require OTP first
+    if (editingId && snapshot?.invoiceKey) {
+      setEditModal(null);
+      setOtpCode("");
+      setOtpError("");
+      setOtpSending(true);
+      try {
+        const res = await fetch(`/api/orders/${encodeURIComponent(editingId)}/otp`, { method: "POST" });
+        if (!res.ok) { setOtpError("Failed to send OTP. Please try again."); setOtpSending(false); return; }
+      } catch { setOtpError("Failed to send OTP."); setOtpSending(false); return; }
+      setOtpSending(false);
+      setOtpModal({ orderId: editingId, pendingEdit: form });
+      return;
+    }
 
     // Optimistic: close modal + update table immediately
     setEditModal(null);
@@ -876,6 +897,39 @@ export default function OrdersPage() {
     setOrders(prev => prev.filter(o => o.id !== id));
     setEditModal(null);
     scheduleRefresh();
+  }
+
+  async function verifyOtp() {
+    if (!otpModal) return;
+    setOtpVerifying(true);
+    setOtpError("");
+    try {
+      const res = await fetch(`/api/orders/${encodeURIComponent(otpModal.orderId)}/otp`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: otpCode, pendingEdit: otpModal.pendingEdit }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setOtpError(data.error ?? "Verification failed."); return; }
+      setOrders(prev => prev.map(o => o.id === otpModal.orderId ? { ...o, ...data, invoiceKey: null } : o));
+      setOtpModal(null);
+      setOtpCode("");
+      scheduleRefresh();
+    } finally {
+      setOtpVerifying(false);
+    }
+  }
+
+  async function openInvoice(o: Order) {
+    if (o.invoiceKey) {
+      const res = await fetch(`/api/invoices/download?key=${encodeURIComponent(o.invoiceKey)}`);
+      if (res.ok) {
+        const { url } = await res.json();
+        window.open(url, "_blank");
+      }
+    } else {
+      window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank");
+    }
   }
 
   function toggleSort(col: string) {
@@ -991,7 +1045,7 @@ export default function OrdersPage() {
                     <div style={{ display: "flex", gap: 4 }}>
                       {showFinancials && <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>}
                       {canDo("orders", "edit") && <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>}
-                      <button title="View invoice" onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
+                      <button title={o.invoiceKey ? "Open saved invoice PDF" : "View invoice"} onClick={() => openInvoice(o)} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: o.invoiceKey ? R : WHITE, cursor: "pointer", color: o.invoiceKey ? WHITE : R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
                     </div>
                   </td>
                 </tr>
@@ -1025,6 +1079,38 @@ export default function OrdersPage() {
         <div style={{ position: "fixed", bottom: 24, right: 24, background: INK, color: WHITE, padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
           <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: WHITE, borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
           Syncing…
+        </div>
+      )}
+      {otpModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ background: WHITE, borderRadius: R_MD, padding: 32, width: "100%", maxWidth: 400, boxShadow: "0 8px 32px rgba(0,0,0,0.18)" }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: INK, marginBottom: 6 }}>Confirm Edit</div>
+            <div style={{ fontSize: 13, color: MID, marginBottom: 20, lineHeight: 1.5 }}>
+              This order has a saved invoice. An OTP has been sent to <strong>theprintribe@gmail.com</strong>. Enter it below to confirm the edit and clear the saved invoice.
+            </div>
+            {otpError && <div style={{ fontSize: 12, color: R, marginBottom: 12, fontWeight: 600 }}>{otpError}</div>}
+            <input
+              value={otpCode}
+              onChange={e => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="6-digit OTP"
+              maxLength={6}
+              style={{ width: "100%", padding: "10px 12px", border: `1px solid ${BORDER}`, borderRadius: R_SM, fontSize: 20, letterSpacing: 8, textAlign: "center", outline: "none", boxSizing: "border-box", marginBottom: 16 }}
+            />
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => { setOtpModal(null); setOtpCode(""); setOtpError(""); }} style={{ flex: 1, padding: "9px 0", borderRadius: R_SM, border: `1px solid ${BORDER}`, background: WHITE, color: MID, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+              <button
+                onClick={verifyOtp}
+                disabled={otpCode.length !== 6 || otpVerifying}
+                style={{ flex: 2, padding: "9px 0", borderRadius: R_SM, border: "none", background: otpCode.length !== 6 ? BORDER : R, color: WHITE, fontSize: 13, fontWeight: 700, cursor: otpCode.length !== 6 ? "default" : "pointer", opacity: otpVerifying ? 0.7 : 1 }}>
+                {otpVerifying ? "Verifying…" : "Confirm & Save"}
+              </button>
+            </div>
+            <div style={{ marginTop: 14, textAlign: "center" }}>
+              <button onClick={async () => { setOtpError(""); setOtpSending(true); await fetch(`/api/orders/${encodeURIComponent(otpModal.orderId)}/otp`, { method: "POST" }); setOtpSending(false); }} disabled={otpSending} style={{ fontSize: 12, color: MID, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+                {otpSending ? "Sending…" : "Resend OTP"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -73,31 +73,50 @@ function InvoiceContent() {
     try {
       const html2pdf = (await import("html2pdf.js")).default;
       const safeId = (data?.id ?? "invoice").replace(/\//g, "_");
-      // Wait for fonts before measuring — avoids blank second page on mobile
       await document.fonts.ready;
       const el = cardRef.current;
       const w = el.offsetWidth;
       const h = el.scrollHeight;
-      await html2pdf()
+
+      // Generate PDF as blob so we can upload to R2 and save locally
+      const blob: Blob = await html2pdf()
         .set({
           margin: 0,
           filename: `Invoice_${safeId}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            letterRendering: true,
-            width: w,
-            height: h,
-            windowWidth: w,   // tell html2canvas the viewport = card width (critical on mobile)
-            windowHeight: h,  // prevents extra blank space below content
-            scrollX: 0,
-            scrollY: 0,
-          },
+          html2canvas: { scale: 2, useCORS: true, letterRendering: true, width: w, height: h, windowWidth: w, windowHeight: h, scrollX: 0, scrollY: 0 },
           jsPDF: { unit: "px", format: [w, h], orientation: "portrait" },
         })
         .from(el)
-        .save();
+        .outputPdf("blob");
+
+      // Trigger browser download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Invoice_${safeId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      // Upload to R2 and save key on order
+      if (id) {
+        try {
+          const fd = new FormData();
+          fd.append("file", blob, `Invoice_${safeId}.pdf`);
+          fd.append("orderId", id);
+          const up = await fetch("/api/invoices/upload", { method: "POST", body: fd });
+          if (up.ok) {
+            const { key } = await up.json();
+            await fetch(`/api/orders/${encodeURIComponent(id)}/invoice-key`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ invoiceKey: key }),
+            });
+          }
+        } catch {
+          // Upload failure is non-fatal — PDF already downloaded locally
+        }
+      }
     } finally {
       setDownloading(false);
     }
