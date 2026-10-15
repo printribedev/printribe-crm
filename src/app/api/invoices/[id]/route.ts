@@ -21,11 +21,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Return saved invoice snapshot if it exists
-  if (order.invoiceData) {
-    return NextResponse.json({ ...(order.invoiceData as object), saved: true });
-  }
-
   // Parse product lines — new orders store JSON array, legacy orders store plain string
   let items: { product: string; hsn: string; qty: number; saleValue: number; gst: number }[];
   try {
@@ -61,7 +56,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     items,
     totalSaleValue: Number(order.saleValue),
     totalGst: Number(order.gst),
-    saved: false,
     client: order.client ? {
       name: order.client.name,
       gstin: order.client.gstin,
@@ -75,19 +69,4 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       gstin: null, address: null, city: null, state: null, email: null, phone: null,
     },
   });
-}
-
-export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const user = await requireAuth();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { id } = await params;
-  const body = await req.json();
-
-  await prisma.order.update({
-    where: { id },
-    data: { invoiceData: body },
-  });
-
-  return NextResponse.json({ ok: true });
 }

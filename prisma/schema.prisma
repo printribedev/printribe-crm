@@ -161,7 +161,6 @@ model Order {
   fabricPricePerKg  Decimal?  @map("fabric_price_per_kg") @db.Decimal(10, 2)
   ribWeightPerPc    Decimal?  @map("rib_weight_per_pc") @db.Decimal(10, 3)
   ribPricePerKg     Decimal?  @map("rib_price_per_kg") @db.Decimal(10, 2)
-  invoiceData  Json?     @map("invoice_data")
   stage        Stage     @default(design)
   priority     Priority  @default(Normal)
   deliveryDate DateTime? @map("delivery_date")
