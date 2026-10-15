@@ -844,11 +844,20 @@ export default function OrdersPage() {
     const snapshot = editingId ? orders.find(o => o.id === editingId) : null;
 
     // Fields that appear on the invoice — changes to these require OTP when a saved invoice exists.
-    // product JSON covers qty/saleValue/gst/hsn/note implicitly; clientId covers billed-to section.
+    // product JSON includes cost fields; extract only invoice-visible line fields to compare.
+    function invoiceLineKey(product: string) {
+      try {
+        const lines = JSON.parse(product);
+        if (!Array.isArray(lines)) return product;
+        return JSON.stringify(lines.map((l: Record<string, unknown>) => ({
+          name: l.name, hsn: l.hsn, qty: l.qty, unitPrice: l.unitPrice, gstPct: l.gstPct, note: l.note,
+        })));
+      } catch { return product; }
+    }
     const invoiceFieldChanged = snapshot && (
       (form.date as string)?.slice(0, 10) !== (snapshot.date as string)?.slice(0, 10) ||
       form.clientId !== snapshot.clientId ||
-      form.product !== snapshot.product
+      invoiceLineKey(form.product as string) !== invoiceLineKey(snapshot.product ?? "")
     );
 
     // If editing an order with a saved invoice and an invoice field changed, require OTP first

@@ -17,14 +17,36 @@ export async function POST(req: Request) {
 
   await prisma.otp.delete({ where: { id: otp.id } });
 
+  const b = pendingEdit;
   const updated = await prisma.order.update({
     where: { id: orderId },
     data: {
-      ...pendingEdit,
+      clientId: b.clientId ? Number(b.clientId) : null,
+      clientName: b.clientName,
+      product: b.product,
+      segment: b.segment,
+      date: new Date(b.date),
+      dueDate: b.dueDate ? new Date(b.dueDate) : null,
+      qty: Number(b.qty),
+      saleValue: Number(b.saleValue),
+      gst: Number(b.gst),
+      fabric: Number(b.fabric) || 0,
+      printing: Number(b.printing) || 0,
+      transport: Number(b.transport) || 0,
+      misc: Number(b.misc) || 0,
+      jobWork: Number(b.jobWork) || 0,
+      packaging: Number(b.packaging) || 0,
+      design: Number(b.design) || 0,
+      ribCost: Number(b.ribCost) || 0,
+      fabricWeightPerPc: b.fabricWeightPerPc != null ? Number(b.fabricWeightPerPc) : null,
+      fabricPricePerKg: b.fabricPricePerKg != null ? Number(b.fabricPricePerKg) : null,
+      ribWeightPerPc: b.ribWeightPerPc != null ? Number(b.ribWeightPerPc) : null,
+      ribPricePerKg: b.ribPricePerKg != null ? Number(b.ribPricePerKg) : null,
+      stage: b.stage,
+      priority: b.priority,
+      deliveryDate: b.deliveryDate ? new Date(b.deliveryDate) : null,
+      paymentDate: b.paymentDate ? new Date(b.paymentDate) : null,
       invoiceKey: null,
-      qty: pendingEdit.qty !== undefined ? Number(pendingEdit.qty) : undefined,
-      saleValue: pendingEdit.saleValue !== undefined ? Number(pendingEdit.saleValue) : undefined,
-      gst: pendingEdit.gst !== undefined ? Number(pendingEdit.gst) : undefined,
     },
     include: { notes: true, timeline: true },
   });
