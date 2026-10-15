@@ -711,6 +711,7 @@ function EditModal({ order, clients, catalogProducts, allOrders, onSave, onClose
               onChange={val => setF("stage", val)}
               options={STAGES.map(s => ({ value: s.id, label: s.label }))}
               style={INP}
+              disabled={order.stage === "delivered"}
             />
           </div>
           <div>
