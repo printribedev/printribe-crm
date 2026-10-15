@@ -76,42 +76,56 @@ function InvoiceContent() {
       const safeId = (data?.id ?? "invoice").replace(/\//g, "_");
       await document.fonts.ready;
       const el = cardRef.current;
-      const w = el.offsetWidth;
-      const h = el.scrollHeight;
+      const w = Math.round(el.offsetWidth);
+      const h = Math.round(el.getBoundingClientRect().height);
 
       // Generate PDF as blob so we can upload to R2 and save locally
-      const blob: Blob = await html2pdf()
-        .set({
-          margin: 0,
-          filename: `Invoice_${safeId}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true, width: w, height: h, windowWidth: w, windowHeight: h, scrollX: 0, scrollY: 0 },
-          jsPDF: { unit: "px", format: [w, h], orientation: "portrait" },
-        })
-        .from(el)
-        .outputPdf("blob");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const opts: any = {
+        margin: 0,
+        pagebreak: { mode: [] },
+        filename: `Invoice_${safeId}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, width: w, height: h, windowWidth: w, windowHeight: h, scrollX: 0, scrollY: 0 },
+        jsPDF: { unit: "px", format: [w, h], orientation: "portrait" },
+      };
+      const blob: Blob = await html2pdf().set(opts).from(el).outputPdf("blob");
 
-      // Trigger browser download
+      // Trigger browser download — use window.open for iOS Safari which blocks a.click()
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Invoice_${safeId}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        window.open(url, "_blank");
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Invoice_${safeId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
 
       // Upload to R2 and save key on order (shown as separate syncing state)
       if (id) {
         setSyncing(true);
         try {
+          // Get session token so the upload works when the page is opened in a new tab on mobile
+          const { createClient: createSupabaseClient } = await import("@/lib/supabase/client");
+          const sb = createSupabaseClient();
+          const { data: { session } } = await sb.auth.getSession();
+          const authHeader = session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+
           const fd = new FormData();
           fd.append("file", blob, `Invoice_${safeId}.pdf`);
           fd.append("orderId", id);
-          const up = await fetch("/api/invoices/upload", { method: "POST", body: fd });
+          const up = await fetch("/api/invoices/upload", { method: "POST", headers: authHeader, body: fd });
           if (up.ok) {
             const { key } = await up.json();
             await fetch(`/api/orders/${encodeURIComponent(id)}/invoice-key`, {
               method: "PATCH",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", ...authHeader },
               body: JSON.stringify({ invoiceKey: key }),
             });
           }
