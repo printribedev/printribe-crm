@@ -850,7 +850,7 @@ export default function OrdersPage() {
       setOtpError("");
       setOtpSending(true);
       try {
-        const res = await fetch(`/api/orders/${encodeURIComponent(editingId)}/otp`, { method: "POST" });
+        const res = await fetch(`/api/orders/otp-send`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: editingId }) });
         if (!res.ok) { setOtpError("Failed to send OTP. Please try again."); setOtpSending(false); return; }
       } catch { setOtpError("Failed to send OTP."); setOtpSending(false); return; }
       setOtpSending(false);
@@ -909,10 +909,10 @@ export default function OrdersPage() {
     setOtpVerifying(true);
     setOtpError("");
     try {
-      const res = await fetch(`/api/orders/${encodeURIComponent(otpModal.orderId)}/otp`, {
-        method: "PUT",
+      const res = await fetch(`/api/orders/otp-verify`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: otpCode, pendingEdit: otpModal.pendingEdit }),
+        body: JSON.stringify({ orderId: otpModal.orderId, code: otpCode, pendingEdit: otpModal.pendingEdit }),
       });
       const data = await res.json();
       if (!res.ok) { setOtpError(data.error ?? "Verification failed."); return; }
@@ -1113,7 +1113,7 @@ export default function OrdersPage() {
               </button>
             </div>
             <div style={{ marginTop: 14, textAlign: "center" }}>
-              <button onClick={async () => { setOtpError(""); setOtpSending(true); await fetch(`/api/orders/${encodeURIComponent(otpModal.orderId)}/otp`, { method: "POST" }); setOtpSending(false); }} disabled={otpSending} style={{ fontSize: 12, color: MID, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+              <button onClick={async () => { setOtpError(""); setOtpSending(true); await fetch(`/api/orders/otp-send`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderId: otpModal.orderId }) }); setOtpSending(false); }} disabled={otpSending} style={{ fontSize: 12, color: MID, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
                 {otpSending ? "Sending…" : "Resend OTP"}
               </button>
             </div>
