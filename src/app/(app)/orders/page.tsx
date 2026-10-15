@@ -1050,7 +1050,9 @@ export default function OrdersPage() {
                     <div style={{ display: "flex", gap: 4 }}>
                       {showFinancials && <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>}
                       {canDo("orders", "edit") && <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>}
-                      <button title={o.invoiceKey ? "Open saved invoice PDF" : "View invoice"} onClick={() => openInvoice(o)} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: o.invoiceKey ? R : WHITE, cursor: "pointer", color: o.invoiceKey ? WHITE : R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
+                      {(o.stage === "delivered" || o.stage === "delivered_pending") && (
+                        <button title={o.invoiceKey ? "Open saved invoice PDF" : "View invoice"} onClick={() => openInvoice(o)} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: o.invoiceKey ? R : WHITE, cursor: "pointer", color: o.invoiceKey ? WHITE : R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
+                      )}
                     </div>
                   </td>
                 </tr>
