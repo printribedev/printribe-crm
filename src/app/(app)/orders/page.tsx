@@ -832,7 +832,12 @@ export default function OrdersPage() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   async function handleSave(form: Record<string, unknown>) {
     const editingId = editModal?.id as string | undefined;
