@@ -923,11 +923,19 @@ export default function OrdersPage() {
         body: JSON.stringify({ orderId: otpModal.orderId, code: otpCode, pendingEdit: otpModal.pendingEdit }),
       });
       const data = await res.json();
-      if (!res.ok) { setOtpError(data.error ?? "Verification failed."); return; }
-      setOrders(prev => prev.map(o => o.id === otpModal.orderId ? { ...o, ...data, invoiceKey: null } : o));
+      if (!res.ok) {
+        setOtpError(data.error ?? "Verification failed.");
+        setOtpVerifying(false);
+        return;
+      }
+      const resolvedId = otpModal.orderId;
+      setOrders(prev => prev.map(o => o.id === resolvedId ? { ...o, ...data, invoiceKey: null } : o));
       setOtpModal(null);
       setOtpCode("");
+      setOtpError("");
       scheduleRefresh();
+    } catch {
+      setOtpError("Something went wrong. Please try again.");
     } finally {
       setOtpVerifying(false);
     }
