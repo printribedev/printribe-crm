@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { deleteObject, INVOICES_BUCKET } from "@/lib/r2";
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -16,6 +17,12 @@ export async function POST(req: Request) {
   if (otp.expiresAt < new Date()) return NextResponse.json({ error: "OTP has expired. Please request a new one." }, { status: 400 });
 
   await prisma.otp.delete({ where: { id: otp.id } });
+
+  // Delete the old invoice PDF from R2 before clearing the key
+  const existing = await prisma.order.findUnique({ where: { id: orderId }, select: { invoiceKey: true } });
+  if (existing?.invoiceKey) {
+    try { await deleteObject(INVOICES_BUCKET, existing.invoiceKey); } catch { /* non-fatal */ }
+  }
 
   const b = pendingEdit;
   const updated = await prisma.order.update({
