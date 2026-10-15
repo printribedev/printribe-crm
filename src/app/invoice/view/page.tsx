@@ -64,6 +64,7 @@ function InvoiceContent() {
   const [error, setError] = useState("");
   const [printZoom, setPrintZoom] = useState(0.75);
   const [downloading, setDownloading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [terms, setTerms] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -98,8 +99,9 @@ function InvoiceContent() {
       a.click();
       URL.revokeObjectURL(url);
 
-      // Upload to R2 and save key on order
+      // Upload to R2 and save key on order (shown as separate syncing state)
       if (id) {
+        setSyncing(true);
         try {
           const fd = new FormData();
           fd.append("file", blob, `Invoice_${safeId}.pdf`);
@@ -115,6 +117,8 @@ function InvoiceContent() {
           }
         } catch {
           // Upload failure is non-fatal — PDF already downloaded locally
+        } finally {
+          setSyncing(false);
         }
       }
     } finally {
@@ -606,6 +610,13 @@ function InvoiceContent() {
 
         </div>
       </div>
+      {syncing && (
+        <div className="no-print" style={{ position: "fixed", bottom: 24, right: 24, background: "#0f172a", color: "#fff", padding: "10px 16px", borderRadius: 10, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8, zIndex: 2000, boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
+          <span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} />
+          Saving to cloud…
+        </div>
+      )}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }
