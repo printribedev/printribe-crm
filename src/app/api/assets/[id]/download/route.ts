@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { getDownloadUrl, ASSETS_BUCKET } from "@/lib/r2";
 
 async function requireAuth() {
   const supabase = await createClient();
@@ -16,11 +17,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const asset = await prisma.asset.findUnique({ where: { id: Number(id) } });
   if (!asset?.storagePath) return NextResponse.json({ error: "No file" }, { status: 404 });
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.storage
-    .from("assets")
-    .createSignedUrl(asset.storagePath, 120); // 2 min expiry
-
-  if (error || !data) return NextResponse.json({ error: "Could not generate link" }, { status: 500 });
-  return NextResponse.json({ url: data.signedUrl });
+  const url = await getDownloadUrl(ASSETS_BUCKET, asset.storagePath);
+  return NextResponse.json({ url });
 }

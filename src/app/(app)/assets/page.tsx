@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import LoadingScreen from "@/components/LoadingScreen";
-import { createClient } from "@/lib/supabase/client";
 import { usePermissions } from "@/context/PermissionsContext";
 
 import { PRIMARY, SUCCESS, ERROR, GOLD, PURPLE, ORANGE, INK, MID, BORDER, SURFACE, WHITE, R_SM, R_MD } from "@/lib/tokens";
@@ -64,17 +63,23 @@ function UploadModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
     setError("");
 
     try {
-      const supabase = createClient();
-      const ext = file.name.split(".").pop() || "bin";
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      // Get presigned upload URL from R2
+      const urlRes = await fetch("/api/assets/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, contentType: file.type || "application/octet-stream" }),
+      });
+      if (!urlRes.ok) throw new Error("Failed to get upload URL");
+      const { url, key } = await urlRes.json();
 
-      const { error: uploadError } = await supabase.storage.from("assets").upload(path, file);
-      if (uploadError) throw new Error(uploadError.message);
+      // Upload directly to R2
+      const uploadRes = await fetch(url, { method: "PUT", body: file, headers: { "Content-Type": file.type || "application/octet-stream" } });
+      if (!uploadRes.ok) throw new Error("Upload to storage failed");
 
       await fetch("/api/assets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, storagePath: path }),
+        body: JSON.stringify({ ...form, storagePath: key }),
       });
 
       onSaved();

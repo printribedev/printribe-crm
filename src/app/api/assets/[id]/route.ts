@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { AssetType, ClientType, AssetFormat } from "@prisma/client";
 import { checkPerm } from "@/lib/permissions";
+import { deleteObject, ASSETS_BUCKET } from "@/lib/r2";
 
 async function requireAuth() {
   const supabase = await createClient();
@@ -40,8 +41,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const asset = await prisma.asset.findUnique({ where: { id: Number(id) } });
 
   if (asset?.storagePath) {
-    const supabase = await createClient();
-    await supabase.storage.from("assets").remove([asset.storagePath]);
+    await deleteObject(ASSETS_BUCKET, asset.storagePath);
   }
 
   await prisma.asset.delete({ where: { id: Number(id) } });
