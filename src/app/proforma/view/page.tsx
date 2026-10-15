@@ -57,6 +57,7 @@ export type ProformaData = {
 function ProformaContent() {
   const [data, setData] = useState<ProformaData | null>(null);
   const [error, setError] = useState("");
+  const [terms, setTerms] = useState<string | null>(null);
   const [printZoom, setPrintZoom] = useState(0.75);
   const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -121,6 +122,10 @@ function ProformaContent() {
   }, []);
 
   useEffect(() => {
+    fetch("/api/settings").then(r => r.ok ? r.json() : null).then(s => {
+      if (s?.proforma_terms) setTerms(s.proforma_terms);
+    }).catch(() => null);
+
     const id = searchParams.get("id");
     if (id) {
       fetch(`/api/proformas/${id}`)
@@ -449,12 +454,8 @@ function ProformaContent() {
                 alignItems: "flex-start", padding: 20, gap: 10,
               }}>
                 <div style={{ lineHeight: "28px", fontWeight: 500 }}>Terms and Conditions</div>
-                <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, fontSize: 16, color: "#000" }}>
-                  <div style={{ lineHeight: "24px" }}>
-                    This is a proforma invoice and not a tax invoice. Goods will be dispatched only after advance payment confirmation.<br />
-                    All disputes subject to Bangalore Jurisdiction Only.
-                  </div>
-                  <div style={{ lineHeight: "24px" }}>Thank you for your valuable order.</div>
+                <div style={{ alignSelf: "stretch", fontSize: 16, color: "#000", lineHeight: "24px", whiteSpace: "pre-line" }}>
+                  {terms ?? "This is a proforma invoice and not a tax invoice. Goods will be dispatched only after advance payment confirmation.\nAll disputes subject to Bangalore Jurisdiction Only.\nThank you for your valuable order."}
                 </div>
               </div>
             </div>

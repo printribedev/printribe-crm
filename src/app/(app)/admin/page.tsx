@@ -38,17 +38,44 @@ export default function AdminPage() {
   const [resetPassword, setResetPassword] = useState("");
   const [resetStatus, setResetStatus] = useState<Record<string, string>>({});
 
+  const [invoiceTerms, setInvoiceTerms] = useState("");
+  const [proformaTerms, setProformaTerms] = useState("");
+  const [termsSaving, setTermsSaving] = useState(false);
+  const [termsSaved, setTermsSaved] = useState(false);
+
   useEffect(() => {
     if (!loading && role !== "admin") router.replace("/");
   }, [role, loading, router]);
 
   useEffect(() => {
-    if (role === "admin") loadUsers();
+    if (role === "admin") { loadUsers(); loadSettings(); }
   }, [role]);
 
   async function loadUsers() {
     const res = await fetch("/api/admin/users");
     if (res.ok) setUsers(await res.json());
+  }
+
+  async function loadSettings() {
+    const res = await fetch("/api/settings");
+    if (res.ok) {
+      const d = await res.json();
+      setInvoiceTerms(d.invoice_terms ?? "");
+      setProformaTerms(d.proforma_terms ?? "");
+    }
+  }
+
+  async function saveTerms() {
+    setTermsSaving(true);
+    setTermsSaved(false);
+    await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ invoice_terms: invoiceTerms, proforma_terms: proformaTerms }),
+    });
+    setTermsSaving(false);
+    setTermsSaved(true);
+    setTimeout(() => setTermsSaved(false), 3000);
   }
 
   async function createUser(e: React.FormEvent) {
@@ -272,6 +299,39 @@ export default function AdminPage() {
             ))}
           </div>
         )}
+      {/* ── Document Settings ── */}
+      <div style={{ marginTop: 32 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: INK, marginBottom: 4 }}>Document Settings</div>
+        <div style={{ fontSize: 12, color: MID, marginBottom: 16 }}>Terms and conditions printed on invoices and proformas. Use line breaks to separate paragraphs.</div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+          {[
+            { label: "Invoice Terms & Conditions", value: invoiceTerms, set: setInvoiceTerms },
+            { label: "Proforma Terms & Conditions", value: proformaTerms, set: setProformaTerms },
+          ].map(({ label, value, set }) => (
+            <div key={label} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_MD, padding: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: MID, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>{label}</div>
+              <textarea
+                value={value}
+                onChange={e => set(e.target.value)}
+                rows={5}
+                style={{ ...INP, resize: "vertical", lineHeight: 1.6, fontFamily: "inherit" }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 12 }}>
+          <button
+            onClick={saveTerms}
+            disabled={termsSaving}
+            style={{ fontSize: 12, fontWeight: 700, padding: "8px 20px", borderRadius: R_SM, border: "none", background: PRIMARY, color: WHITE, cursor: termsSaving ? "default" : "pointer", opacity: termsSaving ? 0.6 : 1 }}>
+            {termsSaving ? "Saving…" : "Save Terms"}
+          </button>
+          {termsSaved && <span style={{ fontSize: 12, color: SUCCESS, fontWeight: 600 }}>✓ Saved</span>}
+        </div>
+      </div>
+
       </div>
     </div>
   );

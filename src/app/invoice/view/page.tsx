@@ -64,6 +64,7 @@ function InvoiceContent() {
   const [error, setError] = useState("");
   const [printZoom, setPrintZoom] = useState(0.75);
   const [downloading, setDownloading] = useState(false);
+  const [terms, setTerms] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   async function downloadPdf() {
@@ -123,6 +124,10 @@ function InvoiceContent() {
   }, []);
 
   useEffect(() => {
+    fetch("/api/settings").then(r => r.ok ? r.json() : null).then(s => {
+      if (s?.invoice_terms) setTerms(s.invoice_terms);
+    }).catch(() => null);
+
     if (!id) { setError("No invoice ID provided."); setLoading(false); return; }
     fetch(`/api/invoices/${encodeURIComponent(id)}`)
       .then(r => r.json())
@@ -490,14 +495,8 @@ function InvoiceContent() {
                 <div style={{ width: 189, height: 28, display: "flex", alignItems: "center" }}>
                   <div style={{ lineHeight: "28px", fontWeight: 500, flexShrink: 0 }}>Terms and Conditions</div>
                 </div>
-                <div style={{ alignSelf: "stretch", display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 12, fontSize: 16, color: "#000" }}>
-                  <div style={{ width: "100%", position: "relative", lineHeight: "24px", display: "inline-block" }}>
-                    Our responsibility ceases once the goods leave our premises/factory. Goods once sold cannot be exchanged/returned. All disputes subject to Bangalore Jurisdiction Only.<br />
-                    By signing this copy/accepting delivery, you agree to the above terms of sales.
-                  </div>
-                  <div style={{ alignSelf: "stretch", position: "relative", lineHeight: "24px" }}>
-                    Thank you for your valuable order.
-                  </div>
+                <div style={{ fontSize: 16, color: "#000", lineHeight: "24px", whiteSpace: "pre-line", width: "100%" }}>
+                  {terms ?? "Our responsibility ceases once the goods leave our premises/factory. Goods once sold cannot be exchanged/returned. All disputes subject to Bangalore Jurisdiction Only.\nBy signing this copy/accepting delivery, you agree to the above terms of sales.\nThank you for your valuable order."}
                 </div>
               </div>
             </div>

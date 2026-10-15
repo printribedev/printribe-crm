@@ -272,6 +272,14 @@ model EnquiryFile {
   @@map("enquiry_files")
 }
 
+model BusinessSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("business_settings")
+}
+
 model AgentSession {
   id        String   @id @default(cuid())
   key       String   @unique
