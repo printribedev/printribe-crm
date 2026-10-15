@@ -71,6 +71,7 @@ type Order = {
   stage: string; priority: string;
   deliveryDate: string | null; paymentDate: string | null;
   flagged: string | null;
+  invoiceData: object | null;
   notes: OrderNote[]; timeline: OrderTimeline[];
 };
 
@@ -806,6 +807,7 @@ export default function OrdersPage() {
   const [costModal, setCostModal] = useState<Order | null>(null);
   const [editModal, setEditModal] = useState<Partial<Order> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savingInvoice, setSavingInvoice] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function scheduleRefresh() {
@@ -876,6 +878,23 @@ export default function OrdersPage() {
     setOrders(prev => prev.filter(o => o.id !== id));
     setEditModal(null);
     scheduleRefresh();
+  }
+
+  async function saveInvoice(o: Order) {
+    setSavingInvoice(o.id);
+    try {
+      const res = await fetch(`/api/invoices/${encodeURIComponent(o.id)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      await fetch(`/api/invoices/${encodeURIComponent(o.id)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      setOrders(prev => prev.map(x => x.id === o.id ? { ...x, invoiceData: data } : x));
+    } finally {
+      setSavingInvoice(null);
+    }
   }
 
   function toggleSort(col: string) {
@@ -991,7 +1010,8 @@ export default function OrdersPage() {
                     <div style={{ display: "flex", gap: 4 }}>
                       {showFinancials && <button title="Job Cost" onClick={() => setCostModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>₹</button>}
                       {canDo("orders", "edit") && <button title="Edit order" onClick={() => setEditModal(o)} style={{ fontSize: 13, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: "pointer", color: MID, display: "flex", alignItems: "center", justifyContent: "center" }}>✎</button>}
-                      <button title="View invoice" onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: WHITE, cursor: "pointer", color: R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
+                      <button title={o.invoiceData ? "View saved invoice" : "View invoice"} onClick={() => window.open(`/invoice/view?id=${encodeURIComponent(o.id)}`, "_blank")} style={{ fontSize: 12, width: 28, height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${R}`, background: o.invoiceData ? R : WHITE, cursor: "pointer", color: o.invoiceData ? WHITE : R, display: "flex", alignItems: "center", justifyContent: "center" }}>⧉</button>
+                      <button title="Save invoice" onClick={() => saveInvoice(o)} disabled={savingInvoice === o.id} style={{ fontSize: 10, padding: "0 7px", height: 26, borderRadius: BTN_RADIUS, border: `1px solid ${BORDER}`, background: WHITE, cursor: savingInvoice === o.id ? "default" : "pointer", color: MID, fontWeight: 700, opacity: savingInvoice === o.id ? 0.5 : 1 }}>{savingInvoice === o.id ? "…" : "Save"}</button>
                     </div>
                   </td>
                 </tr>
