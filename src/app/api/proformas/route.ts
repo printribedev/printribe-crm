@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   const prefix = `PF/${String(yr).slice(-2)}-${String(yr + 1).slice(-2)}/`;
   const latest = await prisma.proforma.findFirst({
     where: { ref: { startsWith: prefix } },
-    orderBy: { id: "desc" },
+    orderBy: { ref: "desc" },
     select: { ref: true },
   });
   const lastSeq = latest?.ref ? (parseInt(latest.ref.split("/").pop() ?? "0") || 0) : 0;
