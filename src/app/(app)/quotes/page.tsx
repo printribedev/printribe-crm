@@ -119,15 +119,8 @@ export default function QuotesPage() {
           return { product: p?.name ?? "Product", hsn: p?.hsn ?? "", qty: l.qty, unitPrice: l.unitPrice, gstPct: p ? parseFloat(p.gstRate) : 5, note: l.note || null };
         });
 
-      const yr = new Date().getFullYear();
-      const yrPrefix = `PF/${String(yr).slice(-2)}-${String(yr + 1).slice(-2)}/`;
-      const maxSeq = savedProformas
-        .map(p => { const m = p.ref?.match(/\/(\d+)$/); return m ? parseInt(m[1]) : 0; })
-        .reduce((a, b) => Math.max(a, b), 0);
-      const proformaRef = `${yrPrefix}${String(maxSeq + 1).padStart(3, "0")}`;
-
       const proformaData = {
-        ref: proformaRef,
+        ref: "",
         date: quoteDate,
         items: proformaItems,
         totalSaleValue,
@@ -146,7 +139,7 @@ export default function QuotesPage() {
       const res = await fetch("/api/proformas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ref: proformaRef, date: quoteDate, clientId: selectedClient.id, clientName: selectedClient.name, data: proformaData }),
+        body: JSON.stringify({ date: quoteDate, clientId: selectedClient.id, clientName: selectedClient.name, data: proformaData }),
       });
 
       if (!res.ok) throw new Error("Failed to save");

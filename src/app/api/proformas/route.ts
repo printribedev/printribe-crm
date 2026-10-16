@@ -23,9 +23,21 @@ export async function POST(req: Request) {
   if (!await checkPerm(user.id, "quotes", "create")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
+
+  // Generate ref server-side to avoid client count collisions
+  const yr = new Date().getFullYear();
+  const prefix = `PF/${String(yr).slice(-2)}-${String(yr + 1).slice(-2)}/`;
+  const latest = await prisma.proforma.findFirst({
+    where: { ref: { startsWith: prefix } },
+    orderBy: { id: "desc" },
+    select: { ref: true },
+  });
+  const lastSeq = latest?.ref ? (parseInt(latest.ref.split("/").pop() ?? "0") || 0) : 0;
+  const ref = `${prefix}${String(lastSeq + 1).padStart(3, "0")}`;
+
   const proforma = await prisma.proforma.create({
     data: {
-      ref: body.ref,
+      ref,
       date: body.date,
       clientId: body.clientId ?? null,
       clientName: body.clientName,
