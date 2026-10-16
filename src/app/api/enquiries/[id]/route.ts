@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { checkPerm } from "@/lib/permissions";
 import { EnquiryStatus } from "@prisma/client";
+import { getDownloadUrl, ENQUIRIES_BUCKET } from "@/lib/r2";
 
 async function requireAuth() {
   const supabase = await createClient();
@@ -26,17 +27,30 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       clientName: body.clientName ?? null,
       clientEmail: body.clientEmail ?? null,
       clientPhone: body.clientPhone ?? null,
+      orgName: body.orgName ?? null,
       productId: body.productId ?? null,
       product: body.product ?? null,
       notes: body.notes ?? null,
       status: body.status as EnquiryStatus ?? undefined,
       teamApproved: body.teamApproved ?? undefined,
+      nameNumberEnabled: body.nameNumberEnabled ?? undefined,
       sizeColumns: body.sizeColumns ?? undefined,
       sizeRows: body.sizeRows ?? undefined,
     },
     include: { files: true },
   });
-  return NextResponse.json(enquiry);
+
+  // Attach signed URLs to files
+  const files = await Promise.all(
+    enquiry.files.map(async f => ({ ...f, url: await getDownloadUrl(ENQUIRIES_BUCKET, f.r2Key).catch(() => "") }))
+  );
+
+  let mockupUrl = null;
+  if (enquiry.mockupKey) {
+    mockupUrl = await getDownloadUrl(ENQUIRIES_BUCKET, enquiry.mockupKey).catch(() => null);
+  }
+
+  return NextResponse.json({ ...enquiry, files, mockupUrl });
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {

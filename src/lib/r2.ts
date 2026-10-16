@@ -14,6 +14,7 @@ export const r2 = new S3Client({
 
 export const ASSETS_BUCKET = process.env.R2_ASSETS_BUCKET ?? "printribe-assets";
 export const INVOICES_BUCKET = process.env.R2_INVOICES_BUCKET ?? "printribe-invoices";
+export const ENQUIRIES_BUCKET = process.env.R2_ENQUIRIES_BUCKET ?? "printribe-assets";
 
 export async function getUploadUrl(bucket: string, key: string, contentType: string) {
   return getSignedUrl(

@@ -321,6 +321,7 @@ export default function AdminPage() {
           ))}
         </div>
 
+
         <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={saveTerms}

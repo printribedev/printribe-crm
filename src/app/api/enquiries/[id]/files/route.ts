@@ -1,35 +1,26 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { deleteObject, ENQUIRIES_BUCKET } from "@/lib/r2";
 
-// POST /api/enquiries/[id]/files — save a file record after client-side upload
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const body = await req.json();
-  // Accepts: { label, path, url, uploadedBy }
-
-  const file = await prisma.enquiryFile.create({
-    data: {
-      enquiryId: Number(id),
-      label: body.label ?? "Other",
-      path: body.path,
-      url: body.url,
-      uploadedBy: body.uploadedBy ?? "team",
-    },
-  });
-  return NextResponse.json(file);
+async function requireAuth() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const supabase = await createClient();
+  const user = await requireAuth();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   const { fileId } = await req.json();
 
-  const file = await prisma.enquiryFile.findUnique({ where: { id: Number(fileId) } });
+  const file = await prisma.enquiryFile.findFirst({ where: { id: Number(fileId), enquiryId: Number(id) } });
   if (!file) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Remove from Supabase storage
-  await supabase.storage.from("enquiry-files").remove([file.path]);
+  try { await deleteObject(ENQUIRIES_BUCKET, file.r2Key); } catch { /* non-fatal */ }
   await prisma.enquiryFile.delete({ where: { id: Number(fileId) } });
+
   return NextResponse.json({ ok: true });
 }
