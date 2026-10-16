@@ -48,7 +48,6 @@ export default function QuotesPage() {
   const [converting, setConverting] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState("");
-
   useEffect(() => {
     fetch("/api/clients").then(r => r.json()).then(setClients);
     fetch("/api/products").then(r => r.json()).then((data: Product[]) =>
@@ -121,7 +120,11 @@ export default function QuotesPage() {
         });
 
       const yr = new Date().getFullYear();
-      const proformaRef = `PF/${String(yr).slice(-2)}-${String(yr + 1).slice(-2)}/${String(savedProformas.length + 1).padStart(3, "0")}`;
+      const yrPrefix = `PF/${String(yr).slice(-2)}-${String(yr + 1).slice(-2)}/`;
+      const maxSeq = savedProformas
+        .map(p => { const m = p.ref?.match(/\/(\d+)$/); return m ? parseInt(m[1]) : 0; })
+        .reduce((a, b) => Math.max(a, b), 0);
+      const proformaRef = `${yrPrefix}${String(maxSeq + 1).padStart(3, "0")}`;
 
       const proformaData = {
         ref: proformaRef,
