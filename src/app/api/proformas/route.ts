@@ -35,13 +35,14 @@ export async function POST(req: Request) {
   const lastSeq = latest?.ref ? (parseInt(latest.ref.split("/").pop() ?? "0") || 0) : 0;
   const ref = `${prefix}${String(lastSeq + 1).padStart(3, "0")}`;
 
+  const dataWithRef = typeof body.data === "object" ? { ...body.data, ref } : body.data;
   const proforma = await prisma.proforma.create({
     data: {
       ref,
       date: body.date,
       clientId: body.clientId ?? null,
       clientName: body.clientName,
-      data: body.data,
+      data: dataWithRef,
     },
   });
   return NextResponse.json(proforma, { status: 201 });

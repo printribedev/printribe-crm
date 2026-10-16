@@ -145,7 +145,7 @@ export default function QuotesPage() {
       if (!res.ok) throw new Error("Failed to save");
       const saved = await res.json();
 
-      sessionStorage.setItem("printribe_proforma", JSON.stringify(proformaData));
+      sessionStorage.setItem("printribe_proforma", JSON.stringify({ ...proformaData, ref: saved.ref }));
       await loadProformas();
       window.open(`/proforma/view?id=${saved.id}`, "_blank");
     } catch (e) {
